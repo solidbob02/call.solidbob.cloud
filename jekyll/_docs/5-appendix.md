@@ -38,7 +38,7 @@ status: agreed
 
 작업 기록에 사용하는 서식. 규칙 정본은 저장소 루트의 `CLAUDE.md`.
 
-### 개발 로그 (`_posts/YYYY-MM-DD-슬러그.md`)
+### 개발 로그 (`jekyll/_posts/YYYY-MM-DD-슬러그.md`)
 
 ```yaml
 ---
@@ -57,7 +57,7 @@ metrics_touched: false
 ## 다음 세션 첫 작업
 ```
 
-### 문서 (`_docs/*.md`)
+### 문서 (`jekyll/_docs/*.md`)
 
 ```yaml
 ---
@@ -74,7 +74,7 @@ status: draft       # draft | agreed | frozen
 
 맥락 / 선택지 / 결정 / 근거 / 결과·되돌리는 법
 
-### 측정값 (`_data/metrics.yml`)
+### 측정값 (`jekyll/_data/metrics.yml`)
 
 ```yaml
 value: 0.66
@@ -84,7 +84,7 @@ command: "python eval/run.py --error-rate 0.10"
 n: 150
 ```
 
-### 미결 항목 (`_data/open_items.yml`)
+### 미결 항목 (`jekyll/_data/open_items.yml`)
 
 ```yaml
 - id: OI-01

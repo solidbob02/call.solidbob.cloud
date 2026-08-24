@@ -48,12 +48,16 @@ status: agreed
 ### 저장소 구조
 
 ```
-CLAUDE.md      작업 규칙 (세션 시작 시 필독)
-_posts/        개발 로그 — 과거, 수정하지 않음
-_docs/         제안서 각 절 + 세부 문서 — 현재 사실, 계속 덮어씀
-_data/         milestones.yml 진행률 · metrics.yml 수치 · open_items.yml 미결 항목
-_project/      비공개 — 기획서 원본, STATE.md, 결정 기록, 템플릿 (사이트 미게시)
+CLAUDE.md            작업 규칙 (세션 시작 시 필독)
+_project/            비공개 — 기획서 원본, STATE.md, 결정 기록, 템플릿 (사이트 미게시)
+jekyll/              지킬 사이트 루트 — 지킬 명령은 전부 이 안에서 실행
+  _posts/            개발 로그 — 과거, 수정하지 않음
+  _docs/             제안서 각 절 + 세부 문서 — 현재 사실, 계속 덮어씀
+  _data/             milestones.yml 진행률 · metrics.yml 수치 · open_items.yml 미결 항목
 ```
+
+저장소 루트에는 지킬 사이트(`jekyll/`)와 함께 앞으로 추가될 애플리케이션 코드가 나란히 놓인다.
+브랜치는 역할별로 나눈다 — `PM` / `frontend` / `backend` / `flutter`.
 
 ### 커밋 규칙
 
@@ -98,7 +102,7 @@ data(metrics): 오류율 10% 구간 Recall@5 실측 반영
 
 ### 수치 기록 형식
 
-모든 성능 수치는 `_data/metrics.yml` 한 곳에서 온다. 값 하나에 다음 네 가지가 반드시 붙는다.
+모든 성능 수치는 `jekyll/_data/metrics.yml` 한 곳에서 온다. 값 하나에 다음 네 가지가 반드시 붙는다.
 
 ```yaml
 value: 0.66
