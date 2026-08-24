@@ -1,0 +1,194 @@
+---
+# 이 파일은 minima 테마 스타일을 불러온 뒤 제안서용 스타일을 덧붙인다.
+---
+
+@import "minima";
+
+/* ── 공통 ─────────────────────────────────────────────── */
+$accent: #1a56b8;
+$muted: #6b7280;
+$rule: #e5e7eb;
+
+.page-content { padding: 40px 0 60px; }
+
+/* ── 표지 ─────────────────────────────────────────────── */
+.cover {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 48px 0 24px;
+  text-align: center;
+}
+
+.cover__label {
+  font-size: 13px;
+  letter-spacing: 0.5em;
+  color: $muted;
+  margin-bottom: 44px;
+  text-indent: 0.5em;
+}
+
+.cover__title {
+  font-size: 32px;
+  line-height: 1.45;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 28px;
+}
+
+.cover__title-sub { font-size: 26px; font-weight: 700; }
+
+.cover__title-goal {
+  font-size: 21px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.cover__subtitle {
+  font-size: 13px;
+  line-height: 1.9;
+  color: $muted;
+  margin-bottom: 56px;
+}
+
+.cover__meta {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 18px 24px;
+  text-align: left;
+  max-width: 520px;
+  margin: 0 auto 40px;
+  font-size: 14px;
+
+  dt { color: #4b5563; font-weight: 600; }
+  dd { margin: 0; color: #111827; line-height: 1.6; }
+  a { color: $accent; word-break: break-all; }
+}
+
+.cover__meta-note {
+  display: block;
+  font-size: 12px;
+  color: $muted;
+  margin-top: 4px;
+}
+
+.cover__note {
+  max-width: 520px;
+  margin: 0 auto 44px;
+  padding: 12px 16px;
+  border-left: 3px solid $rule;
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: $muted;
+  text-align: left;
+}
+
+.cover__next {
+  margin-top: 8px;
+  font-size: 15px;
+  a { color: #374151; text-decoration: none; }
+  a:hover { color: $accent; }
+}
+
+/* ── 목차 ─────────────────────────────────────────────── */
+.toc__section {
+  margin-bottom: 34px;
+
+  h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: $accent;
+    margin: 0 0 4px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid $rule;
+    a { color: inherit; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  }
+}
+
+.toc__section--sub h2 { color: #374151; }
+
+.toc__items {
+  list-style: none;
+  margin: 14px 0 0 14px;
+  padding: 0;
+  font-size: 14.5px;
+
+  li { margin-bottom: 11px; }
+  span { display: inline-block; width: 26px; color: $muted; }
+  a { color: #1f2937; text-decoration: none; }
+  a:hover { color: $accent; text-decoration: underline; }
+}
+
+.toc__status {
+  font-size: 12px;
+  color: $muted;
+  font-style: normal;
+  margin-left: 6px;
+}
+
+.toc__back {
+  margin-top: 44px;
+  font-size: 14px;
+  a { color: $muted; text-decoration: none; }
+  a:hover { color: $accent; }
+}
+
+/* ── 개발 로그 목록 ───────────────────────────────────── */
+.log-list { list-style: none; margin: 24px 0 0; padding: 0; }
+
+.log-list__item {
+  padding: 14px 0;
+  border-bottom: 1px solid $rule;
+}
+
+.log-list__meta {
+  display: block;
+  font-size: 12px;
+  color: $muted;
+  margin-bottom: 5px;
+  code { font-size: 11px; background: #f3f4f6; padding: 1px 5px; border-radius: 3px; }
+}
+
+.log-list__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  text-decoration: none;
+  &:hover { color: $accent; }
+}
+
+/* ── 미결 항목 ────────────────────────────────────────── */
+.oi__item {
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  border: 1px solid $rule;
+  border-left: 3px solid $accent;
+  border-radius: 3px;
+}
+
+.oi__title { font-size: 16px; margin: 0 0 8px; }
+
+.oi__id {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: $accent;
+  padding: 2px 7px;
+  border-radius: 3px;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.oi__why { margin: 0 0 8px; font-size: 14px; line-height: 1.7; color: #374151; }
+
+.oi__meta {
+  margin: 0;
+  font-size: 12px;
+  color: $muted;
+  code { font-size: 11px; background: #f3f4f6; padding: 1px 5px; border-radius: 3px; }
+}
+
+/* ── 본문 표 가독성 ───────────────────────────────────── */
+.post-content table { font-size: 14px; }
+.post-content table th { background: #f9fafb; }

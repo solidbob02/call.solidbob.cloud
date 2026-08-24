@@ -1,0 +1,47 @@
+# ── 사이트 기본 정보 ────────────────────────────────────────────────
+title: 실시간 상담원 어시스트 RAG
+description: >-
+  통화를 실시간으로 들으면서, 고객이 방금 물은 내용에 필요한 사내 문서를
+  상담원 화면에 자동으로 띄워주는 시스템. 8주간의 설계·실험·측정 기록.
+baseurl: ""
+url: "https://call.solidbob.cloud"
+github_username: solidbob02
+timezone: Asia/Seoul
+
+# ── 빌드 설정 ──────────────────────────────────────────────────────
+theme: minima
+header_pages:
+  - toc.md
+  - log.md
+  - open-items.md
+plugins:
+  - jekyll-feed
+
+# ── 컬렉션 ─────────────────────────────────────────────────────────
+# _posts   : 진행 로그 (시간 순서, 수정하지 않음)
+# _docs    : 현재 사실 문서 (아키텍처·스키마·평가 설계, 계속 갱신)
+# _project : 내부 문서. 앞에 _ 가 붙었고 컬렉션으로 선언하지 않았으므로
+#            지킬이 빌드에서 제외한다 → git 에는 남지만 사이트에는 공개되지 않는다.
+collections:
+  docs:
+    output: true
+    permalink: /docs/:name/
+
+defaults:
+  - scope:
+      path: ""
+      type: "docs"
+    values:
+      layout: "page"
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"
+
+exclude:
+  - CLAUDE.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
+  - node_modules/
