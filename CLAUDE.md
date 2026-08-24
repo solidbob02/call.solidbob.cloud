@@ -54,7 +54,7 @@ Python / FastAPI · Node.js WebSocket 게이트웨이 · Google STT · Elasticse
 ## 2. 절대 원칙 (사용자의 명시적 지시 없이는 위반 금지)
 
 1. **LLM 을 채점자로 쓰지 않는다.** 모든 평가 지표는 규칙 기반으로 계산해 재현 가능해야 한다. 답을 만든 모델이 자기 답을 심판하면 순환이다.
-2. **측정하지 않은 수치를 기록하지 않는다.** 기획서 4.2 의 성능 표는 *형식 예시*다. `_data/metrics.yml` 에는 실제로 실행해서 나온 값만 넣고, 미측정은 `null` 로 둔다. 예시 숫자를 실측처럼 옮겨 적는 것은 이 프로젝트에서 가장 심각한 오류다.
+2. **측정하지 않은 수치를 기록하지 않는다.** 기획서 4.2 의 성능 표는 *형식 예시*다. `jekyll/_data/metrics.yml` 에는 실제로 실행해서 나온 값만 넣고, 미측정은 `null` 로 둔다. 예시 숫자를 실측처럼 옮겨 적는 것은 이 프로젝트에서 가장 심각한 오류다.
 3. **컴플라이언스 감지는 재현율 우선.** 놓치는 것(FN)이 과잉 경고(FP)보다 위험하다. 임계값 조정은 이 비대칭을 전제로 한다.
 4. **기준선은 여러 번 실행한 값 중 최저치로 고정한다.** 생성 모델은 같은 입력에도 답이 달라진다.
 5. **기준선 미달은 CI 실패.** 개선이 아니라 회귀 방지가 목적이다.
@@ -69,37 +69,46 @@ Python / FastAPI · Node.js WebSocket 게이트웨이 · Google STT · Elasticse
 사이트는 **개발 제안서 형식**이다. 표지(`/`) → 목차(`/toc/`) → 5개 절(`/docs/1~5-*`) 구조를 유지한다.
 
 ```
-CLAUDE.md                  이 파일. 규칙과 프로젝트 헌법
-index.html                 표지 — 사업명, 기간, 팀, 저장소·데모 주소
-toc.md                     목차 — 제안서 전체의 진입점 (/toc/)
-log.md                     개발 로그 목록 (/log/)
-open-items.md              미결 항목 (/open-items/)
-progress.md                진행 상황 — 체크리스트 + 실측 지표 (/progress/)
-_docs/
-  1-business.md            1. 사업 개요
-  2-requirements.md        2. 개발 요구 사항
-  3-guidelines.md          3. 주요 개발 수행 지침
-  4-schedule.md            4. 개발 일정 및 추진 체계
-  5-appendix.md            5. 부록 (용어 정의 · 서식 · 참고 자료)
-  architecture.md          세부 문서 — 시스템 아키텍처       (nav_order 91)
-  interface-contract.md    세부 문서 — 인터페이스 계약        (92)
-  golden-set.md            세부 문서 — 골든셋 설계            (93)
-  evaluation.md            세부 문서 — 평가 설계              (94)
-  how-to-read.md           세부 문서 — 이 기록을 읽는 법      (95)
-_posts/                    개발 로그. 시간 순서. 한 번 쓴 건 고치지 않음
-_data/
-  milestones.yml           8주 체크리스트 + 상태. 기계가 읽는 진행률
-  metrics.yml              지표 목표치 / 실측치. 숫자의 단일 출처
-  open_items.yml           미결 항목. /open-items/ 로 렌더됨
-_project/                  ⚠ 비공개. 지킬 빌드에서 제외되어 사이트에 안 올라감
-  STATE.md                 현재 상태 단 하나. 매 세션 갱신 (가장 중요)
-  plan.md                  원본 기획서 사본 (수정하지 않음)
-  decisions/               결정 기록 (ADR). NNN-제목.md
-  templates/               로그·결정 기록 템플릿
-assets/main.scss           제안서 표지·목차 스타일 (minima 위에 덧씌움)
+CLAUDE.md                    이 파일. 규칙과 프로젝트 헌법 (저장소 전체 기준)
+README.md                    저장소 소개
+_project/                    ⚠ 비공개. 지킬 루트 밖이라 사이트에 올라가지 않음
+  STATE.md                   현재 상태 단 하나. 매 세션 갱신 (가장 중요)
+  plan.md                    원본 기획서 사본 (수정하지 않음)
+  decisions/                 결정 기록 (ADR). NNN-제목.md
+  templates/                 로그·결정 기록 템플릿
+jekyll/                      ← 지킬 사이트 루트. 지킬 명령은 전부 이 안에서 실행한다
+  _config.yml                사이트 설정 (collections, header_pages)
+  Gemfile / Gemfile.lock     루비 의존성
+  index.html                 표지 — 사업명, 기간, 팀, 저장소·데모 주소
+  toc.md                     목차 — 제안서 전체의 진입점 (/toc/)
+  log.md                     개발 로그 목록 (/log/)
+  open-items.md              미결 항목 (/open-items/)
+  progress.md                진행 상황 — 체크리스트 + 실측 지표 (/progress/)
+  404.html
+  _docs/
+    1-business.md            1. 사업 개요
+    2-requirements.md        2. 개발 요구 사항
+    3-guidelines.md          3. 주요 개발 수행 지침
+    4-schedule.md            4. 개발 일정 및 추진 체계
+    5-appendix.md            5. 부록 (용어 정의 · 서식 · 참고 자료)
+    architecture.md          세부 문서 — 시스템 아키텍처       (nav_order 91)
+    interface-contract.md    세부 문서 — 인터페이스 계약        (92)
+    golden-set.md            세부 문서 — 골든셋 설계            (93)
+    evaluation.md            세부 문서 — 평가 설계              (94)
+    how-to-read.md           세부 문서 — 이 기록을 읽는 법      (95)
+  _posts/                    개발 로그. 시간 순서. 한 번 쓴 건 고치지 않음
+  _data/
+    milestones.yml           8주 체크리스트 + 상태. 기계가 읽는 진행률
+    metrics.yml              지표 목표치 / 실측치. 숫자의 단일 출처
+    open_items.yml           미결 항목. /open-items/ 로 렌더됨
+  assets/main.scss           제안서 표지·목차 스타일 (minima 위에 덧씌움)
 ```
 
-**헤더 내비게이션은 목차 / 개발 로그 / 미결 항목 3개로 고정한다** (`_config.yml` 의 `header_pages`). 페이지를 늘릴 때는 내비가 아니라 목차에 추가한다.
+**지킬 사이트는 `jekyll/` 안에만 둔다.** 루트에는 저장소 전체에 걸리는 것(CLAUDE.md, README.md, `_project/`)과 앞으로 추가될 다른 코드(Flutter 앱 등)가 온다.
+`_project/` 는 이제 지킬 루트 밖이므로 언더스코어와 무관하게 사이트에 게시되지 않는다.
+
+
+**헤더 내비게이션은 목차 / 개발 로그 / 미결 항목 3개로 고정한다** (`jekyll/_config.yml` 의 `header_pages`). 페이지를 늘릴 때는 내비가 아니라 목차에 추가한다.
 
 새 절을 만들지 말고 기존 5개 절 안에 넣는다. 절 구조를 바꿔야 한다면 결정 기록을 먼저 쓴다.
 
@@ -107,18 +116,18 @@ assets/main.scss           제안서 표지·목차 스타일 (minima 위에 덧
 
 | | 무엇 | 시간 축 | 수정 | 비유 |
 |---|---|---|---|---|
-| `_posts/` | 그날 한 일과 왜 | 과거 (append) | 안 함 | 항해 일지 |
-| `_docs/` | 지금 맞는 사실 | 현재 (overwrite) | 계속 | 해도(海圖) |
+| `jekyll/_posts/` | 그날 한 일과 왜 | 과거 (append) | 안 함 | 항해 일지 |
+| `jekyll/_docs/` | 지금 맞는 사실 | 현재 (overwrite) | 계속 | 해도(海圖) |
 | `_project/STATE.md` | 지금 어디 있고 다음은 뭔가 | 현재 (overwrite) | 매 세션 | 나침반 |
-| `_data/open_items.yml` | 아직 정하지 못한 것 | 현재 | 해소 시 닫음 | 항해 중 미해결 표시 |
+| `jekyll/_data/open_items.yml` | 아직 정하지 못한 것 | 현재 | 해소 시 닫음 | 항해 중 미해결 표시 |
 
-같은 내용을 세 곳에 복사하지 않는다. 로그는 "무엇을 했다 + `_docs/x` 갱신함"으로 쓰고 상세는 `_docs` 에 둔다.
+같은 내용을 세 곳에 복사하지 않는다. 로그는 "무엇을 했다 + `jekyll/_docs/x` 갱신함"으로 쓰고 상세는 `_docs` 에 둔다.
 
 ---
 
 ## 4. 기록 규칙
 
-### 4.1 진행 로그 — `_posts/YYYY-MM-DD-슬러그.md`
+### 4.1 진행 로그 — `jekyll/_posts/YYYY-MM-DD-슬러그.md`
 
 작업이 있었던 **모든 세션은 로그 1건**을 남긴다. 여러 세션이 같은 날이면 슬러그로 구분한다.
 템플릿: `_project/templates/log-post.md`
@@ -150,7 +159,7 @@ metrics_touched: false       # _data/metrics.yml 을 고쳤으면 true
 ⚠ `date` 는 **실제 작성 시각**으로 쓴다. 미래 시각을 적으면 지킬이 그 글을 건너뛰어 사이트에 나오지 않는다
 (`date '+%Y-%m-%d %H:%M:%S %z'` 로 확인). 글을 쓴 뒤 `/log/` 에 실제로 떴는지 확인한다.
 
-### 4.2 사실 문서 — `_docs/*.md` (제안서 각 절 + 세부 문서)
+### 4.2 사실 문서 — `jekyll/_docs/*.md` (제안서 각 절 + 세부 문서)
 
 설계·스키마·측정 결과처럼 **"지금 무엇이 맞는가"** 는 로그가 아니라 여기에 쓴다.
 읽는 사람이 최신 파일 하나만 보면 되도록, 과거 내용은 지우고 덮어쓴다 (이력은 git 과 `_posts` 에 있다).
@@ -177,7 +186,7 @@ status: draft              # draft | agreed | frozen
 예: 지식베이스 도메인 선택, 트리거 전략, 청킹 방식, 임베딩 모델, 기획서와 다르게 간 모든 지점.
 템플릿: `_project/templates/decision.md` (맥락 / 선택지 / 결정 / 결과 / 되돌리는 법)
 
-### 4.4 숫자 — `_data/metrics.yml`
+### 4.4 숫자 — `jekyll/_data/metrics.yml`
 
 **모든 성능 수치는 이 파일이 유일한 출처다.** 포스트나 문서에 숫자를 직접 타이핑하지 않고 `site.data.metrics` 를 참조한다.
 측정값 한 건에는 반드시 이 4가지가 붙는다.
@@ -192,12 +201,12 @@ status: draft              # draft | agreed | frozen
 
 이 4개 중 하나라도 못 채우면 그 숫자는 아직 기록할 준비가 안 된 것이다.
 
-### 4.5 진행률 — `_data/milestones.yml`
+### 4.5 진행률 — `jekyll/_data/milestones.yml`
 
 체크박스 상태는 여기서만 바꾼다. 상태값: `todo` | `doing` | `done` | `blocked` | `dropped`.
 `dropped` 는 반드시 `note` 에 이유를 적는다. 기획서에 있던 항목을 조용히 지우지 않는다.
 
-### 4.6 미결 항목 — `_data/open_items.yml` (공개)
+### 4.6 미결 항목 — `jekyll/_data/open_items.yml` (공개)
 
 아직 정하지 못한 것, 사용자 답을 기다리는 것은 여기에 쓴다. `STATE.md` 의 "미결 질문"과 짝을 이루되,
 **남에게 보여도 되는 것은 이 파일에, 내부 사정은 STATE.md 에** 둔다.
@@ -226,9 +235,9 @@ status: draft              # draft | agreed | frozen
 작업이 있었다면 아래를 모두 수행하고 마친다. (조사·질의응답만 한 세션은 3만 수행)
 
 1. `_project/STATE.md` 갱신 — 현재 주차, 진행 중, **다음 작업(우선순위 순)**, 블로커, 미결 질문
-2. `_posts/` 에 로그 1건 — 4.1 형식
-3. 바뀐 사실은 `_docs/` 해당 절에 반영, 새 숫자는 `_data/metrics.yml`, 체크박스는 `_data/milestones.yml`
-4. 새로 생긴 미결 사항은 `_data/open_items.yml` 에 추가, 해소된 것은 `resolved` 처리
+2. `jekyll/_posts/` 에 로그 1건 — 4.1 형식
+3. 바뀐 사실은 `jekyll/_docs/` 해당 절에 반영, 새 숫자는 `jekyll/_data/metrics.yml`, 체크박스는 `jekyll/_data/milestones.yml`
+4. 새로 생긴 미결 사항은 `jekyll/_data/open_items.yml` 에 추가, 해소된 것은 `resolved` 처리
 5. 되돌리기 어려운 선택을 했으면 `_project/decisions/` 에 1건
 6. `bundle exec jekyll build` 로 빌드 통과 확인 (front matter·리퀴드 오류가 여기서 잡힌다)
 7. 커밋 — 6절 규칙
@@ -288,19 +297,19 @@ rule: 세션 기록 규칙에 결정 기록 추가
 
 ```bash
 # Ruby 3.3.12 (rbenv), Jekyll 4.4.1 — 이미 설치됨
-cd /home/hi/call.solidbob.cloud
+cd /home/hi/call.solidbob.cloud/jekyll                # ⚠ 저장소 루트가 아니라 jekyll/ 안에서 실행
 bundle exec jekyll serve --host 0.0.0.0 --port 4001   # ⚠ 4000 은 다른 사이트가 점유 중
 bundle exec jekyll build                              # 기록 커밋 전 검증용
 ```
 
-- `_config.yml` 을 고치면 서버를 재시작해야 반영된다 (자동 리로드 대상이 아님).
+- `jekyll/_config.yml` 을 고치면 서버를 재시작해야 반영된다 (자동 리로드 대상이 아님).
 - 외부(Tailscale 등) 접근은 이 머신에 Tailscale 이 없고 WSL2 가 NAT 이라 추가 설정이 필요하다. 로컬 미리보기는 `http://localhost:4001`.
 
 ---
 
 ## 10. 8주 마일스톤 요약
 
-상세 체크리스트와 현재 상태는 `_data/milestones.yml` 이 정본이다.
+상세 체크리스트와 현재 상태는 `jekyll/_data/milestones.yml` 이 정본이다.
 
 | 주차 | 주제 | 이 주차의 산출물 |
 |---|---|---|

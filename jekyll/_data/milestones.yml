@@ -18,7 +18,7 @@ weeks:
         note: "휴대폰 본인인증 필요. 신청일을 여기에 기록할 것."
       - id: w1.schema
         title: 인터페이스 스키마 확정
-        doc: _docs/20-interface-contract.md
+        doc: jekyll/_docs/interface-contract.md
         status: doing
         note: "초안 작성됨(draft). 팀 합의 후 agreed 로."
       - id: w1.domain
@@ -27,12 +27,12 @@ weeks:
         note: "통신/보험/카드 중 택1. 기획서 권장 = 통신 요금제 약관."
       - id: w1.golden50
         title: 골든셋 시나리오 50개 작성
-        doc: _docs/30-golden-set.md
+        doc: jekyll/_docs/golden-set.md
         status: todo
         note: "먼저 10건 시범 작성으로 라벨링 가능성 검증."
       - id: w1.harness
         title: 평가 하네스 골격 + CI 연결
-        doc: _docs/40-evaluation.md
+        doc: jekyll/_docs/evaluation.md
         status: todo
 
   - week: 2
@@ -44,7 +44,7 @@ weeks:
       - id: w2.baseline_metrics
         title: Recall@5 / MRR 측정 → 기준선 기록
         status: todo
-        note: "_data/metrics.yml 의 baseline 항목을 채운다."
+        note: "jekyll/_data/metrics.yml 의 baseline 항목을 채운다."
       - id: w2.stt_batch
         title: STT 연동 (녹음 파일 배치 모드)
         status: todo
@@ -93,7 +93,7 @@ weeks:
       - id: w5.curve
         title: 오류율 0~20% 구간별 성능 곡선
         status: todo
-        note: "프로젝트 대표 실험. metrics.yml 의 error_tolerance 를 채운다."
+        note: "프로젝트 대표 실험. jekyll/_data/metrics.yml 의 error_tolerance 를 채운다."
       - id: w5.jamo
         title: 자모 분해 필터 추가 후 재측정
         status: todo
