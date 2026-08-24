@@ -1,0 +1,75 @@
+# 성능 수치의 단일 출처.
+# 규칙 (CLAUDE.md 4.4):
+#   1) 실제로 실행해서 나온 값만 넣는다. 미측정은 null. 기획서의 예시 숫자를 옮겨 적지 않는다.
+#   2) 측정값 한 건에는 value / measured_at / commit / command / n 이 모두 붙는다.
+#   3) 여러 번 실행했으면 최저치를 기록한다 (기준선 고정 원칙).
+#   4) 포스트·문서는 숫자를 직접 쓰지 않고 site.data.metrics 를 참조한다.
+
+updated: 2026-08-24
+
+# ── 목표 기준선 (기획서 6.1). 이 값은 합의로만 바꾼다 ──────────────
+targets:
+  retrieval:
+    recall_at_5_clean: 0.70      # STT 오류 0%
+    recall_at_5_err10: 0.60      # STT 오류 10%
+    mrr: 0.55
+  trigger:
+    fire_precision: 0.85         # 적절 시점 발동률
+    false_fire_rate: 0.15        # 불필요 발동률 (이하)
+  generation:
+    hallucinated_numbers_max: 5  # 150문항 기준 건수
+    citation_rate: 1.00
+  compliance:
+    recall: 0.90                 # 누락이 오탐보다 위험 → 재현율 우선
+    precision: 0.60
+  latency:
+    p95_ms: 1000
+
+# ── 실측값 ────────────────────────────────────────────────────────
+# 아직 아무것도 측정하지 않았다. 채울 때 measured_at/commit/command/n 을 함께 채운다.
+measured:
+
+  baseline:                      # 2주차: 고정 청킹 + BM25만
+    recall_at_5:
+      value: null
+      measured_at: null
+      commit: null
+      command: null
+      n: null
+    mrr:
+      value: null
+      measured_at: null
+      commit: null
+      command: null
+      n: null
+
+  error_tolerance:               # 5주차 대표 실험: STT 오류율별 Recall@5
+    # error_rate 는 0.00 / 0.05 / 0.10 / 0.15 / 0.20 구간
+    bm25:      {"0.00": null, "0.05": null, "0.10": null, "0.15": null, "0.20": null}
+    vector:    {"0.00": null, "0.05": null, "0.10": null, "0.15": null, "0.20": null}
+    hybrid:    {"0.00": null, "0.05": null, "0.10": null, "0.15": null, "0.20": null}
+    meta:
+      measured_at: null
+      commit: null
+      command: null
+      n: null
+      note: "이 곡선이 프로젝트 대표 지표. BM25/벡터/하이브리드 3계열 비교."
+
+  trigger:
+    fire_precision: {value: null, measured_at: null, commit: null, command: null, n: null}
+    false_fire_rate: {value: null, measured_at: null, commit: null, command: null, n: null}
+
+  compliance:
+    recall: {value: null, measured_at: null, commit: null, command: null, n: null}
+    precision: {value: null, measured_at: null, commit: null, command: null, n: null}
+
+  latency_ms:                    # 7주차
+    p50: null
+    p95: null
+    p99: null
+    meta: {measured_at: null, commit: null, command: null, n: null}
+
+  cost:
+    tokens_per_call: null
+    krw_per_call: null
+    meta: {measured_at: null, commit: null, command: null, n: null}

@@ -1,0 +1,156 @@
+# 8주 마일스톤 — 진행 상태의 정본
+# status: todo | doing | done | blocked | dropped
+# dropped 는 note 에 이유를 반드시 적는다. 기획서 항목을 조용히 지우지 않는다.
+# 갱신 시 updated 를 함께 고친다.
+
+updated: 2026-08-24
+current_week: 1
+start_date: 2026-08-24
+
+weeks:
+  - week: 1
+    theme: 기반 + 평가셋
+    tasks:
+      - id: w1.aihub
+        title: AI Hub 데이터 신청 (최우선, 승인 지연 대비)
+        owner: user
+        status: todo
+        note: "휴대폰 본인인증 필요. 신청일을 여기에 기록할 것."
+      - id: w1.schema
+        title: 인터페이스 스키마 확정
+        doc: _docs/20-interface-contract.md
+        status: doing
+        note: "초안 작성됨(draft). 팀 합의 후 agreed 로."
+      - id: w1.domain
+        title: 지식베이스 도메인 확정 및 문서 수집
+        status: todo
+        note: "통신/보험/카드 중 택1. 기획서 권장 = 통신 요금제 약관."
+      - id: w1.golden50
+        title: 골든셋 시나리오 50개 작성
+        doc: _docs/30-golden-set.md
+        status: todo
+        note: "먼저 10건 시범 작성으로 라벨링 가능성 검증."
+      - id: w1.harness
+        title: 평가 하네스 골격 + CI 연결
+        doc: _docs/40-evaluation.md
+        status: todo
+
+  - week: 2
+    theme: 베이스라인
+    tasks:
+      - id: w2.naive_rag
+        title: 가장 단순한 RAG 구현 (고정 청킹, BM25만, 필터 없음)
+        status: todo
+      - id: w2.baseline_metrics
+        title: Recall@5 / MRR 측정 → 기준선 기록
+        status: todo
+        note: "_data/metrics.yml 의 baseline 항목을 채운다."
+      - id: w2.stt_batch
+        title: STT 연동 (녹음 파일 배치 모드)
+        status: todo
+      - id: w2.golden150
+        title: 골든셋 150개까지 확장
+        status: todo
+
+  - week: 3
+    theme: 실시간화
+    tasks:
+      - id: w3.stream
+        title: 스트리밍 STT + WebSocket 파이프라인
+        status: todo
+      - id: w3.diarization
+        title: 화자 분리
+        status: todo
+      - id: w3.trigger_v1
+        title: 트리거 판정 v1 (침묵 기반)
+        status: todo
+      - id: w3.caption_ui
+        title: React 자막 화면
+        status: todo
+
+  - week: 4
+    theme: 검색 품질
+    tasks:
+      - id: w4.nori
+        title: nori 형태소 인덱스
+        status: todo
+      - id: w4.dense
+        title: dense_vector 필드 + 임베딩 인덱싱
+        status: todo
+      - id: w4.rrf
+        title: RRF 하이브리드 병합
+        status: todo
+      - id: w4.chunking
+        title: 청킹 전략 3종 비교 → 지표 재측정
+        status: todo
+
+  - week: 5
+    theme: 오류 내성 실험 (핵심 주차)
+    tasks:
+      - id: w5.inject
+        title: STT 오류 주입 스크립트 (자모 치환/띄어쓰기/동음이의)
+        status: todo
+      - id: w5.curve
+        title: 오류율 0~20% 구간별 성능 곡선
+        status: todo
+        note: "프로젝트 대표 실험. metrics.yml 의 error_tolerance 를 채운다."
+      - id: w5.jamo
+        title: 자모 분해 필터 추가 후 재측정
+        status: todo
+      - id: w5.rerank
+        title: 리랭커 적용 후 재측정
+        status: todo
+      - id: w5.plot
+        title: matplotlib 곡선 시각화
+        status: todo
+
+  - week: 6
+    theme: 생성 + 컴플라이언스
+    tasks:
+      - id: w6.cards
+        title: 근거 기반 카드 생성, 출처 표시
+        status: todo
+      - id: w6.no_answer
+        title: '"관련 문서 없음" 처리'
+        status: todo
+      - id: w6.classifier
+        title: 컴플라이언스 분류기 파인튜닝 (재현율 우선)
+        status: todo
+      - id: w6.hallucination
+        title: 환각 수치 발생률 측정
+        status: todo
+
+  - week: 7
+    theme: 운영 관점
+    tasks:
+      - id: w7.latency
+        title: 레이턴시 측정 및 최적화 (p95 ≤ 1000ms)
+        status: todo
+      - id: w7.cache
+        title: 캐싱 적용 및 효과 측정
+        status: todo
+      - id: w7.cost
+        title: 통화당 토큰 비용 계산
+        status: todo
+      - id: w7.postcall
+        title: 통화 후 요약 + 지식베이스 공백 리포트
+        status: todo
+      - id: w7.docker
+        title: Docker 구성
+        status: todo
+
+  - week: 8
+    theme: 마감
+    tasks:
+      - id: w8.arch
+        title: 아키텍처 다이어그램
+        status: todo
+      - id: w8.failures
+        title: 실패 사례 분석 섹션 (여전히 틀리는 질문과 원인)
+        status: todo
+      - id: w8.report
+        title: 성능 리포트 (전후 비교 수치)
+        status: todo
+      - id: w8.deck
+        title: 발표 자료 및 데모 시나리오
+        status: todo
