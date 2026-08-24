@@ -53,3 +53,15 @@
   owner: search
   status: open
   opened: 2026-08-24
+
+- id: OI-06
+  title: 사이트 배포 방식 — GitHub Pages 소스 경로
+  why: >-
+    지킬 사이트를 jekyll/ 하위로 옮기면서 Pages 의 "Deploy from a branch" 를 쓸 수 없게 됐다.
+    이 방식은 소스로 저장소 루트 또는 /docs 만 지원한다. jekyll/ 에서 빌드하려면
+    GitHub Actions 워크플로(jekyll-build-pages + deploy-pages)를 추가해야 한다.
+    Pages 는 아직 활성화되지 않은 상태라 지금 정하면 손실 없이 넘어갈 수 있다.
+  blocks: []
+  owner: user
+  status: open
+  opened: 2026-08-24
