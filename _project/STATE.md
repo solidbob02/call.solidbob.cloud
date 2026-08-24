@@ -3,9 +3,9 @@
 > 이 파일이 프로젝트의 현재 상태다. 매 세션 종료 시 갱신한다.
 > 다음 세션의 Claude 는 사람의 기억이 아니라 이 파일을 믿는다.
 
-**최종 갱신**: 2026-08-24 (세션 #2)
+**최종 갱신**: 2026-08-24 (세션 #3)
 **현재 주차**: 1주차 (기반 + 평가셋) — D+0 / 8주 (2026-08-24 ~ 2026-10-18)
-**전체 상태**: 🟡 착수. 제안서 골격 + 기록 체계 구축 완료, 도메인·데이터·인원 미확정
+**전체 상태**: 🟡 착수. 제안서 골격 + 기록 체계 + 저장소 구조 정리 완료, 도메인·데이터·인원 미확정
 
 ---
 
@@ -21,7 +21,7 @@
 1. **AI Hub 데이터 신청** ⚠ 최우선·사용자 직접 수행
    회원가입 → 휴대폰 본인인증 → 「상담 음성」「고객 응대 음성」 신청.
    승인에 시간이 걸리고, 늦어지면 5주차 핵심 실험이 통째로 밀린다.
-   → 신청일을 `_data/milestones.yml` 의 `w1.aihub.note` 에 기록할 것.
+   → 신청일을 `jekyll/_data/milestones.yml` 의 `w1.aihub.note` 에 기록할 것.
 
 2. **지식베이스 도메인 확정** (통신 요금제 약관 / 보험 / 카드 중 택 1)
    기획서 권장은 통신 요금제 약관 + 응대 매뉴얼(직접 작성).
@@ -46,11 +46,11 @@
 
 ## 미결 질문
 
-공개 항목은 `_data/open_items.yml` 이 정본이다 (사이트 `/open-items/`). 현재 OI-01 ~ OI-05 가 열려 있다.
+공개 항목은 `jekyll/_data/open_items.yml` 이 정본이다 (사이트 `/open-items/`). 현재 OI-01 ~ OI-05 가 열려 있다.
 그중 **OI-01 인원 구성**과 **OI-02 지식베이스 도메인**은 1주차 안에 답이 나와야 8주 일정이 유지된다.
 
 내부 메모:
-- 표지의 개발팀 칸이 "미정"으로 나가 있다. 인원이 확정되면 `index.html` 의 `cover__meta` 를 채운다.
+- 표지의 개발팀 칸이 "미정"으로 나가 있다. 인원이 확정되면 `jekyll/index.html` 의 `cover__meta` 를 채운다.
 - 표지 제목의 수치는 목표치다. 실측이 나오면 표기를 "목표"에서 "달성"으로 바꿀지 결정해야 한다 —
   단, 실측 없이 달성 표기를 하는 일은 절대 없어야 한다 (CLAUDE.md 절대 원칙 2).
 
@@ -62,7 +62,10 @@
 |---|---|
 | Ruby | 3.3.12 (rbenv, `~/.rbenv/versions/3.3.12`) |
 | Jekyll | 4.4.1 + minima 2.5.2, jekyll-feed |
-| 미리보기 | `bundle exec jekyll serve --host 0.0.0.0 --port 4001` (4000 은 다른 사이트가 점유) |
-| 원격 | github.com/solidbob02/call.solidbob.cloud — **아직 푸시 안 함** |
+| 미리보기 | `cd jekyll && bundle exec jekyll serve --host 0.0.0.0 --port 4001` (4000 은 다른 사이트가 점유) |
+| 원격 | github.com/solidbob02/call.solidbob.cloud (PUBLIC). main + PM/frontend/backend 푸시 완료 |
+| 브랜치 | main / PM / frontend / backend / flutter — 역할별. flutter 는 아직 로컬만 |
+| 저장소 구조 | 지킬 사이트는 `jekyll/` 하위. 루트에는 CLAUDE.md, README.md, _project/ |
+| 배포 | GitHub Pages 미활성. jekyll/ 하위라 classic 빌드 불가 → Actions 필요 (OI-06) |
 | apt 빌드 의존성 | 미설치 (gcc 없음). 현재 gem 은 전부 미리 컴파일된 바이너리라 문제 없음. 소스 빌드가 필요한 gem 추가 시 설치 필요 |
 | 미착수 | Python/FastAPI, Node.js, Elasticsearch, MySQL, Docker — 아직 아무것도 세팅 안 됨 |
