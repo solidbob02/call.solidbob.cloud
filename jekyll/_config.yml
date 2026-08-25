@@ -37,6 +37,21 @@ header_pages:
   - toc.markdown
   - progress.markdown
 
+# 백로그(칸반 티켓) — 항목 1건 = 파일 1개.
+# 한 파일을 여러 명이 동시에 고치면 병합 충돌이 나므로, 담당자가 자기 티켓 파일만
+# 만들고 고치도록 컬렉션으로 분리한다. 렌더링은 /kanban/ 이 담당한다.
+collections:
+  backlogs:
+    output: true
+    permalink: /backlog/:name/
+
+defaults:
+  - scope:
+      path: ""
+      type: backlogs
+    values:
+      layout: doc
+
 # Exclude from processing.
 # The following items will not be processed, by default.
 # Any item listed under the `exclude:` key here will be automatically added to
