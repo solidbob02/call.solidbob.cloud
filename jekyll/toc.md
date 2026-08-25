@@ -12,6 +12,7 @@ permalink: /toc/
     <li><span>1)</span> <a href="{{ '/docs/1-business/' | relative_url }}#1-사업-목적">사업 목적</a></li>
     <li><span>2)</span> <a href="{{ '/docs/1-business/' | relative_url }}#2-주요-사업-내용">주요 사업 내용</a></li>
     <li><span>3)</span> <a href="{{ '/docs/1-business/' | relative_url }}#3-기대-효과">기대 효과</a></li>
+    <li><span>4)</span> <a href="{{ '/docs/1-business/' | relative_url }}#4-성공-조건">성공 조건</a></li>
   </ol>
 </section>
 
@@ -22,9 +23,10 @@ permalink: /toc/
     <li><span>2)</span> <a href="{{ '/docs/2-requirements/' | relative_url }}#2-개발-범위">개발 범위</a></li>
     <li><span>3)</span> <a href="{{ '/docs/2-requirements/' | relative_url }}#3-음성-데이터-수집-및-연계">음성 데이터 수집 및 연계</a></li>
     <li><span>4)</span> <a href="{{ '/docs/2-requirements/' | relative_url }}#4-실시간-문서-추천-처리--rag-핵심">실시간 문서 추천 처리 (RAG 핵심)</a></li>
-    <li><span>5)</span> <a href="{{ '/docs/2-requirements/' | relative_url }}#5-상담원-지원-화면-기능">상담원 지원 화면 기능</a></li>
-    <li><span>6)</span> <a href="{{ '/docs/2-requirements/' | relative_url }}#6-시스템-아키텍처">시스템 아키텍처</a></li>
-    <li><span>7)</span> <a href="{{ '/docs/2-requirements/' | relative_url }}#7-보안-및-개인정보-보호">보안 및 개인정보 보호</a></li>
+    <li><span>5)</span> <a href="{{ '/docs/2-requirements/' | relative_url }}#5-개인정보-마스킹-c-5--코어">개인정보 마스킹 (C-5) — 코어</a></li>
+    <li><span>6)</span> <a href="{{ '/docs/2-requirements/' | relative_url }}#6-상담원-지원-화면-기능">상담원 지원 화면 기능</a></li>
+    <li><span>7)</span> <a href="{{ '/docs/2-requirements/' | relative_url }}#7-시스템-아키텍처">시스템 아키텍처</a></li>
+    <li><span>8)</span> <a href="{{ '/docs/2-requirements/' | relative_url }}#8-보안-및-개인정보-보호">보안 및 개인정보 보호</a></li>
   </ol>
 </section>
 
@@ -51,7 +53,9 @@ permalink: /toc/
   <ol class="toc__items">
     <li><span>1)</span> <a href="{{ '/docs/5-appendix/' | relative_url }}#1-용어-정의">용어 정의</a></li>
     <li><span>2)</span> <a href="{{ '/docs/5-appendix/' | relative_url }}#2-관련-서식">관련 서식</a></li>
-    <li><span>3)</span> <a href="{{ '/docs/5-appendix/' | relative_url }}#3-참고-자료">참고 자료</a></li>
+    <li><span>3)</span> <a href="{{ '/docs/5-appendix/' | relative_url }}#3-민감-기능-공통-설계-원칙">민감 기능 공통 설계 원칙</a></li>
+    <li><span>4)</span> <a href="{{ '/docs/5-appendix/' | relative_url }}#4-개정-이력">개정 이력</a></li>
+    <li><span>5)</span> <a href="{{ '/docs/5-appendix/' | relative_url }}#5-참고-자료">참고 자료</a></li>
   </ol>
 </section>
 

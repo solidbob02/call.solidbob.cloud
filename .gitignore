@@ -3,3 +3,6 @@ _site
 .jekyll-cache
 .jekyll-metadata
 vendor
+
+# Claude Code 개인 설정 — 팀 공유 대상이 아니다 (.claude/settings.json 은 공유)
+.claude/settings.local.json
