@@ -30,7 +30,6 @@ date: 2026-08-25
 | 1 | 할당량 `Audio seconds per day` **600** (기본 1,728,000) | ✅ |
 | 2 | 할당량 `Concurrent StreamingRecognize sessions (global endpoint)` **5** | ✅ |
 | 3 | 예산 `callguard` — 월 ₩30,000, 임계값 50/90/100% | ⚠ 알림만 (반영 24시간 지연) |
-| 4 | 앱 가드 `STT_MAX_SECONDS_PER_DAY=600` / `_MONTH=3600` | ❌ `services/gateway` 미구현이라 **작동 안 함** |
 
 > 예산 생성 시 **절감(크레딧) 체크박스는 해제**해야 한다. 켜두면 크레딧을 뺀 금액으로 산정되어
 > 크레딧으로 결제되는 동안 비용이 0원으로 잡히고 **알림이 오지 않는다.**

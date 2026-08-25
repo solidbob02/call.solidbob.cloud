@@ -18,7 +18,7 @@ permalink: /open-items/
 ## 이번 주 할 일 (1주차)
 
 - [ ] AI Hub 회원가입 + 휴대폰 인증 + 데이터 신청 (**최우선**)
-- [x] **Google Cloud STT 키 발급 + 쿼터 하드 리밋 완료** (2026-08-25) — 프로젝트 `callguard-506606`, 서비스 계정 `callguard-stt@`. 할당량: `Audio seconds per day` 1,728,000 → **600**, `Concurrent StreamingRecognize (global endpoint)` → **5**. 예산 `callguard`(월 ₩30,000, 50/90/100% 알림)도 설정 완료 — 단 알림일 뿐 차단은 아니며 반영에 24시간 걸린다. 지출 한도 기능은 Cloud Run·Vertex AI 등만 지원해 STT 에는 걸 수 없다. 코드 쪽 가드(`STT_MAX_SECONDS_PER_DAY`/`_MONTH`)는 `.env` 에 값만 넣어둔 상태이며 [services/gateway] 스캐폴딩 전까지 **작동하지 않는다**
+- [x] **Google Cloud STT 키 발급 + 쿼터 하드 리밋 완료** (2026-08-25) — 프로젝트 `callguard-506606`, 서비스 계정 `callguard-stt@`. 할당량: `Audio seconds per day` 1,728,000 → **600**, `Concurrent StreamingRecognize (global endpoint)` → **5**. 예산 `callguard`(월 ₩30,000, 50/90/100% 알림)도 설정 완료 — 단 알림일 뿐 차단은 아니며 반영에 24시간 걸린다. 지출 한도 기능은 Cloud Run·Vertex AI 등만 지원해 STT 에는 걸 수 없다.
 - [x] **[5.6절](/docs/05/) V1 확인** — AI Hub 데이터 전부 모노. diarization 필수, 데모는 물리 2채널 우회 필요
 - [x] **[5.6절](/docs/05/) V2 확인** — GPU: Apple M5 MacBook Air, 24GB 통합메모리, CUDA 없음(MPS 가속)
 - [ ] **[5.6절](/docs/05/) V3·V4 확인** (STT 숫자 출력 형태 / 부분 결과 지연) — **전제 해소됨**(결제 계정 연결·키 발급·연결 확인 200 완료). 이제 측정용 음성 샘플만 있으면 진행 가능 → [티켓](/backlog/w1-v3-v4-stt/)
