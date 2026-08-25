@@ -30,3 +30,21 @@ def test_closure_gate_wiring_with_fake_predictor():
     result = report["closure_gate"]
     assert result["n"] == 3  # GS-008, GS-009, GS-010
     assert result["absolute_rule_passed"] is True
+
+
+class _FixedDelayTrigger:
+    """항상 발화 종료 900ms 뒤에 발동하는 가짜 predictor — 배선과 지연 분포 계산만 검증한다."""
+
+    def trigger_at(self, item) -> int:
+        return item.utterance_end_ms + 900
+
+
+def test_trigger_wiring_reports_latency_distribution():
+    items = load_golden_set()
+    report = run_eval(items, Predictors(trigger=_FixedDelayTrigger()))
+    result = report["trigger"]
+    assert result["n"] == 3  # utterance_end_ms가 있는 GS-001~GS-003
+    assert result["on_time_rate"] == 1.0  # 900ms는 0~1,500ms 허용 창 안
+    assert result["latency_ms"]["p50"] == 900
+    assert result["latency_ms"]["p95"] == 900
+    assert result["latency_ms"]["n"] == 3

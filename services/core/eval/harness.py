@@ -21,6 +21,7 @@ from typing import Protocol
 from .golden_set import GoldenItem, load_golden_set
 from .metrics import closure_gate as closure_gate_metrics
 from .metrics import compliance as compliance_metrics
+from .metrics import latency as latency_metrics
 from .metrics import masking as masking_metrics
 from .metrics import retrieval as retrieval_metrics
 from .metrics import trigger as trigger_metrics
@@ -85,16 +86,23 @@ def run_eval(items: list[GoldenItem], predictors: Predictors) -> dict:
         report["retrieval"] = retrieval_metrics.aggregate_recall_mrr(pairs)
 
     # B-1: 트리거 (GS-001처럼 trigger_examples가 있는 항목만 채점 가능)
+    # 허용 창(0~1,500ms)은 합/불 판정선일 뿐이므로, 판정 결과와 별개로 발동
+    # 지연시간(delta = trigger_at - utterance_end_ms) 분포를 p50/p95로 함께 낸다
+    # ([핵심 기술 난제 4.1절], [평가 설계 6.1절] — 2026-08-25 팀 컨펌).
     if predictors.trigger is None:
         report["trigger"] = NOT_IMPLEMENTED
     else:
         labels = []
+        deltas: list[float] = []
         for it in items:
             if it.utterance_end_ms is None:
                 continue
             trigger_at = predictors.trigger.trigger_at(it)
+            deltas.append(trigger_at - it.utterance_end_ms)
             labels.append(trigger_metrics.classify_trigger(it.utterance_end_ms, trigger_at))
-        report["trigger"] = trigger_metrics.aggregate_trigger(labels)
+        result = trigger_metrics.aggregate_trigger(labels)
+        result["latency_ms"] = latency_metrics.summarize_latency(deltas)
+        report["trigger"] = result
 
     # C-1~C-4: 컴플라이언스 (재현율/정밀도)
     c_items = [it for it in items if it.module in ("C-1", "C-2", "C-3", "C-4")]
