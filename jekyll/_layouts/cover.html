@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ page.title | default: site.title }}</title>
+<style>
+  :root{
+    --fg:#111318;
+    --muted:#6b7280;
+    --border:#e5e7eb;
+    --accent:#2f6fed;
+    --bg:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--fg);
+    font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  }
+  header.site-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:1.25rem 2rem;
+    border-bottom:1px solid var(--border);
+  }
+  header.site-header .site-name{
+    font-weight:700;
+    font-size:1rem;
+    color:var(--fg);
+    text-decoration:none;
+  }
+  header.site-header nav a{
+    color:var(--fg);
+    text-decoration:none;
+    margin-left:1.75rem;
+    font-size:0.9rem;
+  }
+  header.site-header nav a:hover{ color:var(--accent); }
+
+  main{
+    max-width:720px;
+    margin:0 auto;
+    padding:4.5rem 1.5rem 3rem;
+    text-align:center;
+  }
+  .eyebrow{
+    letter-spacing:0.6em;
+    font-size:0.8rem;
+    color:var(--muted);
+    margin:0 0 2.75rem;
+  }
+  h1{
+    font-size:1.85rem;
+    line-height:1.55;
+    font-weight:800;
+    margin:0 0 2.75rem;
+    word-break:keep-all;
+    overflow-wrap:break-word;
+  }
+  h1 .metric{
+    font-size:1.3rem;
+    display:block;
+  }
+  .subtitle{
+    color:var(--muted);
+    font-size:0.85rem;
+    margin:-1.75rem 0 3rem;
+  }
+  dl.meta{
+    text-align:left;
+    display:inline-block;
+    margin:0 auto 2.75rem;
+  }
+  .meta-row{
+    display:grid;
+    grid-template-columns:140px 1fr;
+    gap:1.75rem;
+    padding:0.65rem 0;
+    font-size:0.9rem;
+    align-items:baseline;
+  }
+  .meta-row dt{ color:var(--muted); margin:0; }
+  .meta-row dd{ margin:0; }
+  .meta-row .sub{ display:block; color:var(--muted); font-size:0.8rem; margin-top:0.25rem; }
+  .meta-row a{ color:var(--accent); text-decoration:none; }
+  .meta-row a:hover{ text-decoration:underline; }
+
+  .toc-link{
+    display:inline-block;
+    color:var(--accent);
+    text-decoration:none;
+    font-size:0.95rem;
+  }
+  .toc-link:hover{ text-decoration:underline; }
+
+  footer{
+    border-top:1px solid var(--border);
+    padding:2.5rem 2rem;
+    display:grid;
+    grid-template-columns:1.1fr 0.8fr 1.4fr;
+    gap:2rem;
+    font-size:0.85rem;
+    color:var(--muted);
+  }
+  footer .col strong{ display:block; color:var(--fg); margin-bottom:0.5rem; }
+  footer a{ color:var(--muted); text-decoration:none; }
+  footer a:hover{ color:var(--accent); }
+
+  @media (max-width:640px){
+    footer{ grid-template-columns:1fr; }
+    .meta-row{ grid-template-columns:110px 1fr; }
+    h1{ font-size:1.5rem; }
+  }
+</style>
+</head>
+<body>
+  <header class="site-header">
+    <a class="site-name" href="{{ '/' | relative_url }}">{{ site.title }}</a>
+    <nav>
+      <a href="{{ '/toc/' | relative_url }}">목차</a>
+      <a href="{{ '/progress/' | relative_url }}">개발 로그</a>
+      <a href="{{ '/open-items/' | relative_url }}">미결 항목</a>
+    </nav>
+  </header>
+
+  <main>
+    <p class="eyebrow">{{ page.eyebrow }}</p>
+    <h1>
+      {% for line in page.title_lines %}{% if forloop.last and line contains "(" %}<span class="metric">{{ line }}</span>{% else %}{{ line }}{% unless forloop.last %}<br>{% endunless %}{% endif %}{% endfor %}
+    </h1>
+    <p class="subtitle">{{ page.subtitle }}</p>
+
+    <dl class="meta">
+      {% for row in page.meta %}
+      <div class="meta-row">
+        <dt>{{ row.label }}</dt>
+        <dd>
+          {% if row.url %}<a href="{{ row.url }}">{{ row.value }}</a>{% else %}{{ row.value }}{% endif %}
+          {% if row.sub %}<span class="sub">{{ row.sub }}</span>{% endif %}
+        </dd>
+      </div>
+      {% endfor %}
+    </dl>
+
+    <a class="toc-link" href="{{ '/toc/' | relative_url }}">목차 →</a>
+  </main>
+
+  <footer>
+    <div class="col">
+      <strong>{{ site.title }}</strong>
+      {{ page.footer_tagline }}<br>
+      <a href="mailto:{{ page.contact_email }}">{{ page.contact_email }}</a>
+    </div>
+    <div class="col">
+      <strong>{{ page.team_handle }}</strong>
+    </div>
+    <div class="col">
+      {{ page.footer_description }}
+    </div>
+  </footer>
+</body>
+</html>

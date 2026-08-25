@@ -1,0 +1,78 @@
+---
+layout: doc
+title: 3. 시스템 아키텍처
+permalink: /docs/03/
+---
+
+```
+[상담원 브라우저]
+       │ React 대시보드 (자막 / 카드 / 경고 / 종결 모달)
+       │
+   WebSocket (양방향)
+       │
+[Node.js 게이트웨이]
+       │  - 오디오 청크 중계
+       │  - 자막/카드/경고 푸시
+       │
+       ├──→ [Google STT] ──→ 부분 전사 결과
+       │
+       ▼
+[FastAPI 코어]
+       │
+       ├─ C-5 마스킹 모듈 ──→ 자막·저장 양쪽 앞단
+       │
+       ├─ 트리거 판정 모듈
+       │     └─ 발화 완결성 / 침묵 길이 / 의도 신호
+       │
+       ├─ 검색 모듈 ──→ [Elasticsearch]
+       │                  ├─ nori 형태소 (BM25)
+       │                  ├─ dense_vector (임베딩)
+       │                  └─ RRF 병합
+       │
+       ├─ 생성 모듈 ──→ [HF Transformers] 근거 기반 요약
+       │
+       ├─ 컴플라이언스 모듈 ──→ [분류기]
+       │
+       └─ F-2 게이트 모듈 ──→ 같은 ES 인덱스 조회 + 규칙 판정
+       │
+       ▼
+   [MySQL]
+     ├─ call            통화 메타
+     ├─ transcript      마스킹된 전사
+     ├─ recommendation  추천 이력
+     ├─ closure         종결 사유 + 근거 필드   ← F-2
+     └─ eval_result     평가 결과
+```
+
+**F-2는 새 구성요소가 아니라 기존 FastAPI 코어 내 모듈로 들어간다.**
+
+## 3.1 도구 매핑 (투입자원 기준 — 목록 밖 도구 없음)
+
+| 투입자원 | 활용 방식 | 필수도 |
+|---|---|---|
+| Python | 전체 백엔드 | 필수 |
+| FastAPI | 검색·생성·게이트 API | 필수 |
+| Node.js | WebSocket 게이트웨이 | 필수 |
+| WebSocket | 실시간 양방향 통신 | 필수 |
+| Google STT | 스트리밍 음성인식 + 화자분리 | 필수 |
+| Elasticsearch | nori + dense_vector 하이브리드 검색 | 필수 |
+| **HuggingFace Transformers** | **① 임베딩 모델 ② 컴플라이언스 분류기 ③ 카드 요약 생성** | 필수 |
+| React | 상담원 대시보드 | 필수 |
+| MySQL | 통화 메타·전사·추천·종결·평가 결과 | 필수 |
+| Git | 형상관리 | 필수 |
+| Docker | 서비스 컨테이너화 | 필수 |
+| matplotlib | 오류율별 성능 곡선, 레이턴시 분포 | 필수 |
+| VSCode / Ubuntu | 개발 환경 / 서버 OS | 필수 |
+| Kubernetes / AWS Console | 배포 | 선택 |
+| VirtualBox | 로컬 테스트 환경 | 선택 |
+| OpenCV | 본 주제에서 활용처 없음 | 제외 |
+
+> **생성 모델 확정**: 별도 상용 API를 도입하지 않는다. **HuggingFace Transformers로 소형 한국어 오픈 모델을 로드해 카드 요약을 생성**한다. 카드 요약은 검색된 근거를 2~3문장으로 다듬는 제한된 작업이라 대형 모델이 필요 없고, 레이턴시에도 유리하다.
+>
+> **[V2 확인 완료]** 개발 환경은 Apple M5 MacBook Air(통합메모리 24GB) — CUDA GPU는 없고 PyTorch MPS 백엔드로 가속한다. `EleutherAI/polyglot-ko-1.3b`급 소형 모델부터 시작해 골든셋으로 첫 토큰 지연·품질을 실측하고, 필요할 때만 단계적으로 올린다. bitsandbytes 등 CUDA 전용 양자화 도구는 이 환경에서 쓸 수 없다.
+
+> **캐시 저장소**: 별도 저장소를 두지 않는다. **프로세스 인메모리 LRU + MySQL 영속화**로 처리한다.
+
+---
+
+[← 개발목차로 돌아가기](/toc/)
