@@ -8,12 +8,12 @@ name: Deploy Jekyll site to Pages
 #    Settings → Pages → Build and deployment → Source: GitHub Actions
 #    설정 전에는 deploy 단계가 실패한다.
 
+# main 에 무엇이 머지되든 배포한다. PM·frontend·backend·flutter 어느 브랜치에서 오든
+# "머지 = 배포"로 규칙을 단순하게 유지한다. (경로 조건을 걸면 jekyll/ 밖만 바뀐 머지에서
+# 배포가 조용히 건너뛰어져 "왜 반영이 안 되지?"가 생긴다.)
 on:
   push:
     branches: [main]
-    paths:
-      - 'jekyll/**'
-      - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 permissions:
