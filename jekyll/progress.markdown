@@ -31,7 +31,7 @@ permalink: /progress/
 - 평가 하네스 골격 설계 완료 — `services/core/eval/`(golden_set 로더 + metrics/retrieval·trigger·compliance·masking·closure_gate·latency + harness.py) + `services/core/tests/` 단위테스트 24개, 전부 통과
 - 검색/트리거/컴플라이언스/마스킹/F-2 모듈은 Protocol로 추상화해두고 아직 `None`(미구현) — 실제 시스템 없이도 하네스가 크래시 없이 "측정 불가 — 모듈 미구현"으로 정직하게 보고하는 것까지 확인. 나중에 Predictor 구현체만 꽂으면 됨
 - `pytest.ini` 추가(통합 테스트 마커 분리), `requirements.txt`에 pytest 추가, `_config.yml` exclude에 `services/` 추가
-- 이걸로 서비스 코드베이스([Task 1](/.claude/rules/rfp-harness.md))의 첫 조각(`services/core/eval/`)이 생김 — 나머지 스캐폴딩은 아직
+- 이걸로 서비스 코드베이스([Task 1](https://github.com/solidbob02/call.solidbob.cloud/blob/main/.claude/rules/rfp-harness.md))의 첫 조각(`services/core/eval/`)이 생김 — 나머지 스캐폴딩은 아직
 
 ### 2026-08-25 (4)
 - 지식베이스 초안 작성 완료 — `knowledge-base/`에 요금제약관(TERM, 7장)·응대매뉴얼(MANUAL, 8장)·내부처리규정(POLICY) 3종, 가상 사업자 "한별텔레콤" 기준. 조항마다 ID(`TERM-3.2` 등) 부여
@@ -45,7 +45,7 @@ permalink: /progress/
 - 다음: V1(채널 구성)·V3(STT 숫자 출력)·V4(부분 결과 지연) 확인, 인터페이스 스키마 3종 확정, 골든셋 10개 작성
 
 ### 2026-08-25 (2)
-- STT 엔진 결정: Web Speech API(브라우저 내장, 무료) 대체안을 검토했으나 배치 파일 STT 불가·화자분리 미지원·비공식 API라 기각. **Google Cloud STT를 유지하되 무료 크레딧/무료 한도 내로만 쓰도록 이중 캡** 적용 — GCP 쿼터 하드 리밋(1차) + `services/gateway` 애플리케이션 가드(COST-1, `.env.example`의 `STT_MAX_SECONDS_PER_DAY`/`_MONTH`) 2차 방어. [리스크 및 대응](/docs/11/), [rfp-harness.md](/.claude/rules/rfp-harness.md) 반영
+- STT 엔진 결정: Web Speech API(브라우저 내장, 무료) 대체안을 검토했으나 배치 파일 STT 불가·화자분리 미지원·비공식 API라 기각. **Google Cloud STT를 유지하되 무료 크레딧/무료 한도 내로만 쓰도록 이중 캡** 적용 — GCP 쿼터 하드 리밋(1차) + `services/gateway` 애플리케이션 가드(COST-1, `.env.example`의 `STT_MAX_SECONDS_PER_DAY`/`_MONTH`) 2차 방어. [리스크 및 대응](/docs/11/), [rfp-harness.md](https://github.com/solidbob02/call.solidbob.cloud/blob/main/.claude/rules/rfp-harness.md) 반영
 - `.env.example`을 CallGuard 스택(MySQL·Elasticsearch·Google STT) 기준으로 재작성 — 이전 AdPass의 Aurora PostgreSQL(pgvector) 템플릿을 대체
 
 ### 2026-08-25
