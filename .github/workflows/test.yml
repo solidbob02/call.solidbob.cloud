@@ -1,0 +1,47 @@
+name: 평가 하네스 테스트
+
+# 회귀 방지용이다. "완성됐는가"가 아니라 "어제 되던 게 오늘도 되는가"를 본다.
+# 3인이 4개 브랜치에서 병합하는 구조라, 누군가의 머지가 하네스를 깨도
+# 자동으로 돌지 않으면 다음에 손으로 돌린 사람이 우연히 발견하게 된다.
+#
+# 범위를 좁게 유지한다:
+#  - pytest 만 설치한다. requirements.txt 의 torch·transformers 는 테스트가 쓰지 않는다
+#    (services/core/tests 는 표준 라이브러리와 프로젝트 모듈만 import 한다)
+#  - 기준선 미달 시 실패(기획서 6.2절)는 아직 넣지 않는다. 측정값이 없어서
+#    무조건 실패하거나 가짜 기준선을 넣게 된다 — 절대 원칙 2번 위반.
+#    2주차 잠정 베이스라인이 나온 뒤 별도로 붙인다.
+#  - 실제 DB·ES·외부 API 가 필요한 테스트는 pytest.ini 의 `-m "not integration"` 로 빠진다
+
+on:
+  push:
+    branches: [main, PM, backend, frontend, flutter]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 파이썬 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: pytest 설치
+        # requirements.txt 전체를 설치하지 않는다. 테스트에 필요한 건 pytest 뿐이고,
+        # 모델 의존성까지 받으면 매 실행이 몇 분씩 걸린다.
+        run: pip install pytest==9.1.1
+
+      - name: 테스트 실행
+        run: pytest
