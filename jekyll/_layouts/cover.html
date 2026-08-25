@@ -4,75 +4,165 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ page.title | default: site.title }}</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+
 <style>
   :root{
-    --fg:#111318;
-    --muted:#6b7280;
-    --border:#e5e7eb;
-    --accent:#2f6fed;
-    --bg:#ffffff;
+    --room:   #080B12;
+    --panel:  #10151F;
+    --steel:  #6E8FD6;
+    --core:   #FFE6A8;
+    --gold:   #F5A623;
+    --deep:   #B45309;
+    --text:   #DFE4EE;
+    --dim:    #79839B;
+    --border: rgba(223,228,238,.12);
+
+    --f-display: 'Syne', 'Pretendard Variable', sans-serif;
+    --f-body:    'Pretendard Variable', -apple-system, 'Apple SD Gothic Neo', sans-serif;
+    --f-mono:    'IBM Plex Mono', monospace;
   }
   *{box-sizing:border-box;}
   body{
     margin:0;
-    background:var(--bg);
-    color:var(--fg);
-    font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    background:var(--room);
+    color:var(--text);
+    font-family:var(--f-body);
+    -webkit-font-smoothing:antialiased;
   }
+
   header.site-header{
     display:flex;
     justify-content:space-between;
     align-items:center;
     padding:1.25rem 2rem;
     border-bottom:1px solid var(--border);
+    position:relative;
+    z-index:2;
   }
   header.site-header .site-name{
-    font-weight:700;
-    font-size:1rem;
-    color:var(--fg);
+    font-family:var(--f-mono);
+    font-weight:600;
+    font-size:0.85rem;
+    letter-spacing:.08em;
+    color:var(--text);
     text-decoration:none;
   }
   header.site-header nav a{
-    color:var(--fg);
+    font-family:var(--f-mono);
+    color:var(--dim);
     text-decoration:none;
     margin-left:1.75rem;
-    font-size:0.9rem;
+    font-size:0.75rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
   }
-  header.site-header nav a:hover{ color:var(--accent); }
+  header.site-header nav a:hover{ color:var(--gold); }
 
-  main{
-    max-width:720px;
-    margin:0 auto;
-    padding:4.5rem 1.5rem 3rem;
-    text-align:center;
+  /* ── 홀로그램 ─────────────────────────────── */
+  .hologram-stage{
+    position:relative;
+    height:min(64vh, 560px);
+    min-height:340px;
+    overflow:hidden;
   }
-  .eyebrow{
-    letter-spacing:0.6em;
-    font-size:0.8rem;
-    color:var(--muted);
-    margin:0 0 2.75rem;
+  .hologram-stage::before{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse at 50% 40%, rgba(245,166,35,.10), transparent 60%),
+      linear-gradient(180deg, #0A0E17 0%, #080B12 55%, var(--room) 100%);
+    z-index:0;
   }
-  h1{
-    font-size:1.85rem;
-    line-height:1.55;
-    font-weight:800;
-    margin:0 0 2.75rem;
-    word-break:keep-all;
-    overflow-wrap:break-word;
-  }
-  h1 .metric{
-    font-size:1.3rem;
+  canvas#hologram{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    z-index:1;
     display:block;
   }
+  .hologram-hud{
+    position:absolute;
+    top:1.25rem; left:0; right:0;
+    display:flex;
+    justify-content:space-between;
+    padding:0 2rem;
+    z-index:2;
+    font-family:var(--f-mono);
+    font-size:0.7rem;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--dim);
+  }
+  button#hologramMic{
+    font:500 0.68rem/1 var(--f-mono);
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--text);
+    background:rgba(245,166,35,.06);
+    border:1px solid rgba(245,166,35,.32);
+    border-radius:999px;
+    padding:0.4rem 0.85rem;
+    cursor:pointer;
+    transition:.2s;
+  }
+  button#hologramMic:hover{ border-color:var(--gold); color:var(--gold); background:rgba(245,166,35,.14); }
+  button#hologramMic[data-live="true"]{ border-color:var(--core); color:var(--core); }
+
+  main{
+    max-width:760px;
+    margin:-3.5rem auto 0;
+    padding:0 1.5rem 3.5rem;
+    text-align:center;
+    position:relative;
+    z-index:2;
+  }
+  .eyebrow{
+    font-family:var(--f-mono);
+    letter-spacing:0.5em;
+    font-size:0.72rem;
+    color:var(--dim);
+    margin:0 0 1.5rem;
+    text-transform:uppercase;
+  }
+  h1{
+    font-family:var(--f-display);
+    font-weight:800;
+    font-size:1.9rem;
+    line-height:1.5;
+    letter-spacing:-.01em;
+    margin:0 0 1.75rem;
+    word-break:keep-all;
+    overflow-wrap:break-word;
+    background:linear-gradient(96deg, var(--text) 8%, var(--core) 46%, var(--gold) 88%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  h1 .metric{
+    font-size:1.15rem;
+    display:block;
+    -webkit-text-fill-color:var(--dim);
+    color:var(--dim);
+    font-family:var(--f-mono);
+    font-weight:500;
+    letter-spacing:0;
+    margin-top:.5rem;
+  }
   .subtitle{
-    color:var(--muted);
-    font-size:0.85rem;
-    margin:-1.75rem 0 3rem;
+    font-family:var(--f-mono);
+    color:var(--dim);
+    font-size:0.78rem;
+    letter-spacing:.03em;
+    margin:0 0 2.75rem;
   }
   dl.meta{
     text-align:left;
     display:inline-block;
     margin:0 auto 2.75rem;
+    border-top:1px solid var(--border);
+    padding-top:1.5rem;
   }
   .meta-row{
     display:grid;
@@ -82,19 +172,33 @@
     font-size:0.9rem;
     align-items:baseline;
   }
-  .meta-row dt{ color:var(--muted); margin:0; }
-  .meta-row dd{ margin:0; }
-  .meta-row .sub{ display:block; color:var(--muted); font-size:0.8rem; margin-top:0.25rem; }
-  .meta-row a{ color:var(--accent); text-decoration:none; }
+  .meta-row dt{
+    font-family:var(--f-mono);
+    font-size:0.72rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--dim);
+    margin:0;
+  }
+  .meta-row dd{ margin:0; color:var(--text); }
+  .meta-row .sub{ display:block; color:var(--dim); font-size:0.78rem; margin-top:0.25rem; font-family:var(--f-mono); }
+  .meta-row a{ color:var(--gold); text-decoration:none; }
   .meta-row a:hover{ text-decoration:underline; }
 
   .toc-link{
     display:inline-block;
-    color:var(--accent);
+    font-family:var(--f-mono);
+    color:var(--gold);
     text-decoration:none;
-    font-size:0.95rem;
+    font-size:0.8rem;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    border:1px solid rgba(245,166,35,.35);
+    border-radius:999px;
+    padding:0.55rem 1.4rem;
+    transition:.2s;
   }
-  .toc-link:hover{ text-decoration:underline; }
+  .toc-link:hover{ background:rgba(245,166,35,.12); border-color:var(--gold); }
 
   footer{
     border-top:1px solid var(--border);
@@ -102,18 +206,29 @@
     display:grid;
     grid-template-columns:1.1fr 0.8fr 1.4fr;
     gap:2rem;
-    font-size:0.85rem;
-    color:var(--muted);
+    font-size:0.82rem;
+    color:var(--dim);
+    position:relative; z-index:2;
   }
-  footer .col strong{ display:block; color:var(--fg); margin-bottom:0.5rem; }
-  footer a{ color:var(--muted); text-decoration:none; }
-  footer a:hover{ color:var(--accent); }
+  footer .col strong{
+    display:block;
+    font-family:var(--f-mono);
+    font-size:0.75rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--text);
+    margin-bottom:0.5rem;
+  }
+  footer a{ color:var(--dim); text-decoration:none; }
+  footer a:hover{ color:var(--gold); }
 
   @media (max-width:640px){
     footer{ grid-template-columns:1fr; }
     .meta-row{ grid-template-columns:110px 1fr; }
     h1{ font-size:1.5rem; }
+    .hologram-stage{ height:46vh; }
   }
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
 </style>
 </head>
 <body>
@@ -127,8 +242,15 @@
     </nav>
   </header>
 
+  <div class="hologram-stage">
+    <canvas id="hologram" aria-hidden="true"></canvas>
+    <div class="hologram-hud">
+      <span>{{ page.eyebrow }}</span>
+      <button id="hologramMic" data-live="false">음성으로 확인하기</button>
+    </div>
+  </div>
+
   <main>
-    <p class="eyebrow">{{ page.eyebrow }}</p>
     <h1>
       {% for line in page.title_lines %}{% if forloop.last and line contains "(" %}<span class="metric">{{ line }}</span>{% else %}{{ line }}{% unless forloop.last %}<br>{% endunless %}{% endif %}{% endfor %}
     </h1>
@@ -145,7 +267,7 @@
       </div>
       {% endfor %}
     </dl>
-
+    <br>
     <a class="toc-link" href="{{ '/toc/' | relative_url }}">목차 →</a>
   </main>
 
@@ -162,5 +284,7 @@
       {{ page.footer_description }}
     </div>
   </footer>
+
+  <script src="{{ '/assets/js/hologram.js' | relative_url }}"></script>
 </body>
 </html>
