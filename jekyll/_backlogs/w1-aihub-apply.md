@@ -1,6 +1,6 @@
 ---
 title: "AI Hub 데이터 신청"
-assignee: "정성윤"
+assignee: "류준"
 role: "infra"
 status: "done"
 sprint: 1
