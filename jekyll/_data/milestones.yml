@@ -1,71 +1,134 @@
-# 8주 마일스톤 — 진행 상태의 정본
+# 8주 마일스톤 — 진행 상태의 정본. 기준: 기획서 rev.4 8절 + 보완지시서.
 # status: todo | doing | done | blocked | dropped
+# owner: 정성윤(인프라) | 류준(백엔드·AI) | 장민석(앱·프론트) | 공동 | user
 # dropped 는 note 에 이유를 반드시 적는다. 기획서 항목을 조용히 지우지 않는다.
-# 갱신 시 updated 를 함께 고친다.
 
-updated: 2026-08-24
+updated: 2026-08-25
 current_week: 1
 start_date: 2026-08-24
+plan_revision: "rev.4 (3인 팀) + 보완지시서 1~3"
 
 weeks:
   - week: 1
-    theme: 기반 + 평가셋
+    theme: 기반 + 전제 확인
     tasks:
       - id: w1.aihub
         title: AI Hub 데이터 신청 (최우선, 승인 지연 대비)
-        owner: user
+        owner: 공동
         status: todo
         note: "휴대폰 본인인증 필요. 신청일을 여기에 기록할 것."
+      - id: w1.v1_channel
+        title: "V1 — AI Hub 데이터 채널 구성 확인 (2채널 스테레오 / 모노)"
+        owner: 정성윤
+        status: todo
+        note: "화자 분리 난이도가 여기서 갈린다. C-1~C-3, C-5 전체에 영향."
+      - id: w1.v2_gpu
+        title: "V2 — GPU 가용 여부 확인"
+        owner: 정성윤
+        status: todo
+        note: "미확보 시 생성 폴백 모드(검색 스니펫만 표시)로 전환 판단. 보완지시서 2."
+      - id: w1.v3_stt_number
+        title: "V3 — Google STT 한국어 숫자 출력 형태 확인"
+        owner: 정성윤
+        status: todo
+        note: "C-5 정규화 단계 설계의 전제."
+      - id: w1.v4_partial_delay
+        title: "V4 — STT 스트리밍 부분 결과 지연 측정"
+        owner: 정성윤
+        status: todo
+        note: "E2E 지표 기준값."
+      - id: w1.silence_threshold
+        title: 침묵 임계값 N 결정 및 트리거 허용 창 검증
+        owner: 류준
+        status: todo
+        note: "보완지시서 1. 허용 창 0~1,500ms 가 침묵 임계값 + 판정 지연을 담는지 확인."
       - id: w1.schema
-        title: 인터페이스 스키마 확정
+        title: 인터페이스 스키마 3종 확정 (전사 · 카드 · 종결)
         doc: jekyll/_docs/interface-contract.md
+        owner: 류준
         status: doing
-        note: "초안 작성됨(draft). 팀 합의 후 agreed 로."
-      - id: w1.domain
-        title: 지식베이스 도메인 확정 및 문서 수집
+        note: "초안 작성됨(draft). 3인 합의 후 agreed 로."
+      - id: w1.db_schema
+        title: MySQL 스키마 확정 (call · transcript · recommendation · closure · eval_result)
+        doc: docs/erd/schema.mmd
+        owner: 정성윤
         status: todo
-        note: "통신/보험/카드 중 택1. 기획서 권장 = 통신 요금제 약관."
-      - id: w1.golden50
-        title: 골든셋 시나리오 50개 작성
+        note: >-
+          ERD 는 docs/erd/schema.mmd (3NF 정규화 후 16개 테이블, 근거는 normalization.md).
+          기획서 rev.4 3절이 정한 것은 테이블 5종의 이름뿐이고 컬럼·타입·관계는 계약에서 유도하거나
+          추론한 것이므로 승인이 필요하다. w1.schema(계약 3종)와 같은 회의에서 함께 정한다.
+          16개를 한 번에 만들지 않는다 — 이번 주는 eval_run·eval_metric 만, 전사·마스킹 계열은 3주차.
+          미결: 컴플라이언스 경고 테이블 분리 여부(OI-13), 골든셋을 파일로 둘지 DB 로 옮길지.
+      - id: w1.kb_ingest
+        title: 지식베이스 문서 수집 + 청킹 + ID 부여
+        owner: 공동
+        status: todo
+        note: "통신사 약관 + 응대 매뉴얼 + 내부 처리 규정을 한 ES 인덱스로. 문서 ID 가 있어야 골든셋 라벨링이 가능하다."
+      - id: w1.golden10
+        title: 골든셋 10개 + 스펙 확정 (발화 종료 시각 · 개인정보 패턴 포함)
         doc: jekyll/_docs/golden-set.md
+        owner: 공동
         status: todo
-        note: "먼저 10건 시범 작성으로 라벨링 가능성 검증."
       - id: w1.harness
-        title: 평가 하네스 골격 + CI 연결
+        title: 평가 하네스 골격 설계(류준) + CI 연결(정성윤)
         doc: jekyll/_docs/evaluation.md
+        owner: 류준
         status: todo
+      - id: w1.role_split
+        title: F-2 규정 작성 / 요건 스키마 구현 / 골든셋 라벨링 담당 분리 합의
+        owner: 공동
+        status: todo
+        note: "보완지시서 3. 같은 사람이 규정을 쓰고 게이트를 짜면 해석 오류가 드러나지 않는다."
 
   - week: 2
     theme: 베이스라인
     tasks:
       - id: w2.naive_rag
-        title: 가장 단순한 RAG 구현 (고정 청킹, BM25만, 필터 없음)
+        title: 가장 단순한 RAG 구현 (고정 청킹, BM25만)
+        owner: 류준
         status: todo
-      - id: w2.baseline_metrics
-        title: Recall@5 / MRR 측정 → 기준선 기록
+      - id: w2.golden50
+        title: 골든셋 50개 → 잠정 베이스라인 측정
+        owner: 공동
         status: todo
-        note: "jekyll/_data/metrics.yml 의 baseline 항목을 채운다."
+        note: "방향 확인용. CI 회귀 검사에 고정하지 않는다."
       - id: w2.stt_batch
         title: STT 연동 (녹음 파일 배치 모드)
-        status: todo
-      - id: w2.golden150
-        title: 골든셋 150개까지 확장
+        owner: 정성윤
         status: todo
 
   - week: 3
-    theme: 실시간화
+    theme: 실시간화 + 마스킹
     tasks:
       - id: w3.stream
         title: 스트리밍 STT + WebSocket 파이프라인
+        owner: 정성윤
         status: todo
       - id: w3.diarization
-        title: 화자 분리
+        title: 화자 분리 (V1 결과에 따라 채널 분리 또는 diarization)
+        owner: 정성윤
         status: todo
       - id: w3.trigger_v1
         title: 트리거 판정 v1 (침묵 기반)
+        owner: 류준
         status: todo
       - id: w3.caption_ui
         title: React 자막 화면
+        owner: 장민석
+        status: todo
+      - id: w3.masking_regex
+        title: "C-5 마스킹 P1~P5 (정규화 + 정규식) + 파이프라인 배선"
+        owner: 정성윤
+        status: todo
+        note: "자막 표시 전 + DB 저장 전 양쪽. 보완지시서 4로 NER 분리."
+      - id: w3.masking_ner
+        title: "C-5 마스킹 P6~P7 (인명·상세주소 NER)"
+        owner: 류준
+        status: todo
+        note: "보완지시서 4. HF 모델 로드·튜닝이라 AI 담당. 지연 시 절대 규칙 범위를 P1~P5 로 한정하고 문서에 명시."
+      - id: w3.golden150
+        title: 골든셋 150개 → 공식 기준선 확정
+        owner: 공동
         status: todo
 
   - week: 4
@@ -73,15 +136,19 @@ weeks:
     tasks:
       - id: w4.nori
         title: nori 형태소 인덱스
+        owner: 류준
         status: todo
       - id: w4.dense
         title: dense_vector 필드 + 임베딩 인덱싱
+        owner: 류준
         status: todo
       - id: w4.rrf
         title: RRF 하이브리드 병합
+        owner: 류준
         status: todo
       - id: w4.chunking
         title: 청킹 전략 3종 비교 → 지표 재측정
+        owner: 류준
         status: todo
 
   - week: 5
@@ -89,68 +156,121 @@ weeks:
     tasks:
       - id: w5.inject
         title: STT 오류 주입 스크립트 (자모 치환/띄어쓰기/동음이의)
+        owner: 류준
         status: todo
       - id: w5.curve
-        title: 오류율 0~20% 구간별 성능 곡선
+        title: 오류율 0~20% 구간별 검색 성능 곡선
+        owner: 류준
         status: todo
-        note: "프로젝트 대표 실험. jekyll/_data/metrics.yml 의 error_tolerance 를 채운다."
-      - id: w5.jamo
-        title: 자모 분해 필터 추가 후 재측정
+        note: "프로젝트 대표 실험. metrics.yml 의 error_tolerance 를 채운다."
+      - id: w5.masking_curve
+        title: 구간별 C-5 마스킹 재현율 곡선
+        owner: 류준
         status: todo
-      - id: w5.rerank
-        title: 리랭커 적용 후 재측정
+        note: "보완지시서 4. 오류 주입 스크립트와 맞물리므로 AI 담당."
+      - id: w5.jamo_rerank
+        title: 자모 분해 필터 / 리랭커 적용 후 각각 재측정
+        owner: 류준
         status: todo
       - id: w5.plot
-        title: matplotlib 곡선 시각화
+        title: matplotlib 시각화 (성능 곡선 · 레이턴시 분포)
+        owner: 장민석
         status: todo
 
   - week: 6
     theme: 생성 + 컴플라이언스
     tasks:
       - id: w6.cards
-        title: 근거 기반 카드 생성, 출처 표시
+        title: 근거 기반 카드 생성 (HF Transformers), 스트리밍 출력
+        owner: 류준
         status: todo
+      - id: w6.fallback
+        title: 생성 폴백 모드 (검색 스니펫만 표시) 구현 및 비교
+        owner: 류준
+        status: todo
+        note: "보완지시서 2. GPU 미확보·첫 토큰 500ms 초과 시 기본값. 생성 모드 대비 카드 유용성 비교."
       - id: w6.no_answer
         title: '"관련 문서 없음" 처리'
+        owner: 류준
         status: todo
       - id: w6.classifier
         title: 컴플라이언스 분류기 파인튜닝 (재현율 우선)
+        owner: 류준
         status: todo
       - id: w6.hallucination
         title: 환각 수치 발생률 측정
+        owner: 류준
         status: todo
+      - id: w6.core_gate
+        title: "코어(A~E, C-5) 기준선 통과 확인"
+        owner: 공동
+        status: todo
+        note: "미통과 시 F·G·H·I 착수하지 않는다."
 
   - week: 7
-    theme: 운영 관점
+    theme: 운영 관점 + F-2 체크포인트
     tasks:
       - id: w7.latency
-        title: 레이턴시 측정 및 최적화 (p95 ≤ 1000ms)
+        title: 내부 처리 / E2E 레이턴시 각각 측정
+        owner: 정성윤
         status: todo
       - id: w7.cache
-        title: 캐싱 적용 및 효과 측정
+        title: 캐싱(인메모리 LRU) 적용 및 효과 측정
+        owner: 류준
         status: todo
       - id: w7.cost
         title: 통화당 토큰 비용 계산
+        owner: 류준
         status: todo
       - id: w7.postcall
         title: 통화 후 요약 + 지식베이스 공백 리포트
+        owner: 류준
         status: todo
       - id: w7.docker
         title: Docker 구성
+        owner: 정성윤
         status: todo
+      - id: w7.f2_checkpoint
+        title: F-2 체크포인트 — 구현 진행 또는 설계 문서 전환 결정
+        owner: 공동
+        status: todo
+        note: "코어 기준선 통과 + 궤도 정상이면 구현. 하나라도 미달이면 설계 문서(시퀀스 다이어그램 + 요건 스키마)로 전환."
 
   - week: 8
     theme: 마감
     tasks:
+      - id: w8.f2
+        title: (조건부) F-2 마무리 또는 설계 문서 작성
+        owner: 류준
+        status: todo
+      - id: w8.optional
+        title: (여유 시) G-2 또는 부록 B의 H·I 중 택1
+        owner: 공동
+        status: todo
+        note: "둘 다 하지 않는다. 택1, 그것도 여유 시."
       - id: w8.arch
         title: 아키텍처 다이어그램
+        owner: 장민석
         status: todo
       - id: w8.failures
-        title: 실패 사례 분석 섹션 (여전히 틀리는 질문과 원인)
+        title: 실패 사례 분석 섹션
+        owner: 공동
+        status: todo
+      - id: w8.limits
+        title: 데이터 한계 섹션 (rev.4 5.5절 반영)
+        owner: 공동
         status: todo
       - id: w8.report
-        title: 성능 리포트 (전후 비교 수치)
+        title: 성능 리포트 · 발표 자료 · 데모 시나리오
+        owner: 공동
         status: todo
-      - id: w8.deck
-        title: 발표 자료 및 데모 시나리오
+      - id: w8.freeze
+        title: 후반 3일 발표·문서 전용 고정 (개발 태스크 금지)
+        owner: 공동
         status: todo
+
+# 성공 조건 (rev.4 8절) — F-2 가 아니라 아래 두 가지로 판단한다
+success_criteria:
+  - "STT 오류 내성 실험(4.2절) 결과"
+  - "검색 품질 개선 수치"
+  - "F-2 는 달성 시 추가 성과로 본다"
