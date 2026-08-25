@@ -1,0 +1,161 @@
+{
+  "version": "v1",
+  "created": "2026-08-25",
+  "size": 10,
+  "note": "1주차 골든셋 10개. 2주차 50개(잠정 베이스라인) → 3주차 150개(공식 기준선)로 확장 예정 (데이터 확보 계획 5.3절). 문서 ID는 knowledge-base/의 실제 조항 ID를 그대로 참조한다.",
+  "items": [
+    {
+      "id": "GS-001",
+      "module": "B",
+      "customer_utterance": "아 저번에 가입할 때 6개월 할인 된다고 했는데 지금 요금 보니까 안 빠진 것 같아서요",
+      "utterance_end_ms": 3100,
+      "trigger_examples": [
+        {"trigger_at_ms": 2900, "label": "조기 발동 (발화 종료 전)"},
+        {"trigger_at_ms": 3500, "label": "적절 (0~800ms)"},
+        {"trigger_at_ms": 4200, "label": "지연 발동 (800ms 초과)"}
+      ],
+      "expected_doc_ids": ["TERM-3.2"],
+      "distractor_doc_ids": ["TERM-3.3", "TERM-2.3"],
+      "compliance_violation": null,
+      "pii_patterns": [],
+      "f2_case": null,
+      "notes": "2.1절 화면 예시와 동일 케이스. 프로모션 할인 문의 → 요금제약관 3.2조."
+    },
+    {
+      "id": "GS-002",
+      "module": "B",
+      "customer_utterance": "다음 달부터 다른 요금제로 바꾸고 싶은데 언제부터 적용되나요",
+      "utterance_end_ms": 2600,
+      "expected_doc_ids": ["TERM-2.3"],
+      "distractor_doc_ids": ["TERM-2.1", "TERM-3.2"],
+      "compliance_violation": null,
+      "pii_patterns": [],
+      "f2_case": null,
+      "notes": "요금제 변경 시점 문의 → 요금제약관 2.3조."
+    },
+    {
+      "id": "GS-003",
+      "module": "B",
+      "customer_utterance": "위약금이 얼마나 나오는지 알고 싶어서요 지금 해지하면",
+      "utterance_end_ms": 2200,
+      "expected_doc_ids": ["TERM-4.2"],
+      "distractor_doc_ids": ["TERM-4.3", "TERM-3.2"],
+      "compliance_violation": null,
+      "pii_patterns": [],
+      "f2_case": null,
+      "notes": "위약금 vs 잔여할부금(TERM-4.3)을 구분해서 검색하는지 확인하는 케이스 — 형태소가 유사해 오분류 위험."
+    },
+    {
+      "id": "GS-004",
+      "module": "C-1",
+      "speaker": "agent",
+      "agent_utterance": "무조건 환불해드릴게요 걱정하지 마세요",
+      "compliance_violation": {
+        "type": "C-1",
+        "phrase": "무조건 환불해드릴게요",
+        "expected_alternative_source": "MANUAL-1.4"
+      },
+      "expected_doc_ids": [],
+      "distractor_doc_ids": [],
+      "pii_patterns": [],
+      "f2_case": null,
+      "notes": "확정적 보장 표현 탐지 — 응대매뉴얼 1.1·1.4 위반. 재현율 우선(놓치면 안 됨)."
+    },
+    {
+      "id": "GS-005",
+      "module": "C-2",
+      "speaker": "agent",
+      "agent_utterance": "본인확인 위해서 카드번호 전체 다 불러주시겠어요?",
+      "compliance_violation": {
+        "type": "C-2",
+        "phrase": "카드번호 전체 다 불러주시겠어요",
+        "expected_alternative_source": "MANUAL-1.4"
+      },
+      "expected_doc_ids": [],
+      "distractor_doc_ids": [],
+      "pii_patterns": [],
+      "f2_case": null,
+      "notes": "불필요한 개인정보 구두 요구 탐지 — 응대매뉴얼 1.2 위반."
+    },
+    {
+      "id": "GS-006",
+      "module": "C-5",
+      "speaker": "customer",
+      "customer_utterance": "주민번호는 900101-1234567이고 카드번호는 1234 5678 9012 3456이에요",
+      "pii_patterns": [
+        {"pattern": "P1", "raw_span": "900101-1234567", "masked_expected": true},
+        {"pattern": "P2", "raw_span": "1234 5678 9012 3456", "masked_expected": true}
+      ],
+      "expected_doc_ids": [],
+      "distractor_doc_ids": [],
+      "compliance_violation": null,
+      "f2_case": null,
+      "notes": "구분자(하이픈/공백)가 있는 표준 형태 — 정규식 매칭 기본 케이스."
+    },
+    {
+      "id": "GS-007",
+      "module": "C-5",
+      "speaker": "customer",
+      "customer_utterance": "제 번호는 01012345678이고 문자로 남겨주세요",
+      "pii_patterns": [
+        {"pattern": "P4", "raw_span": "01012345678", "masked_expected": true}
+      ],
+      "expected_doc_ids": [],
+      "distractor_doc_ids": [],
+      "compliance_violation": null,
+      "f2_case": null,
+      "notes": "구분자 없이 붙어있는 형태 — [기능 명세 2.4절] STT 주 실패 모드(구분자 부재) 대응 검증용 핵심 케이스."
+    },
+    {
+      "id": "GS-008",
+      "module": "F-2",
+      "closure_intent": "상담원이 '고지 완료' 사유로 해지 처리 종결 시도",
+      "f2_case": {
+        "closure_type": "해지",
+        "evidence": {"위약금_안내": true, "잔여할부_안내": true, "고객확인_기록": true},
+        "expected_verdict": "approved",
+        "expected_missing": [],
+        "source": "POLICY-CANCEL-1"
+      },
+      "expected_doc_ids": [],
+      "distractor_doc_ids": [],
+      "pii_patterns": [],
+      "compliance_violation": null,
+      "notes": "3건 전부 충족 → 종결 승인되는 정상 케이스."
+    },
+    {
+      "id": "GS-009",
+      "module": "F-2",
+      "closure_intent": "상담원이 '고지 완료' 사유로 해지 처리 종결 시도",
+      "f2_case": {
+        "closure_type": "해지",
+        "evidence": {"위약금_안내": true, "잔여할부_안내": false, "고객확인_기록": false},
+        "expected_verdict": "blocked",
+        "expected_missing": ["잔여할부_안내", "고객확인_기록"],
+        "source": "POLICY-CANCEL-1"
+      },
+      "expected_doc_ids": [],
+      "distractor_doc_ids": [],
+      "pii_patterns": [],
+      "compliance_violation": null,
+      "notes": "7.3절 인터페이스 계약 예시와 동일 케이스 — 3건 중 1건만 충족 → 종결 차단. 절대 규칙(6.2절): 평균으로 통과시키지 않는다."
+    },
+    {
+      "id": "GS-010",
+      "module": "F-2",
+      "closure_intent": "상담원이 명의변경 처리 종결 시도, 양수인 본인확인 없이 진행",
+      "f2_case": {
+        "closure_type": "명의변경",
+        "evidence": {"본인확인_수단": false, "요청경위_확인": true},
+        "expected_verdict": "blocked",
+        "expected_missing": ["본인확인_수단"],
+        "source": "POLICY-CHANGE-1"
+      },
+      "expected_doc_ids": [],
+      "distractor_doc_ids": [],
+      "pii_patterns": [],
+      "compliance_violation": null,
+      "notes": "해지 외 처리유형(명의변경)도 같은 F-2 패턴으로 검증 — POLICY-CHANGE 필드 구조가 다름을 확인하는 케이스."
+    }
+  ]
+}

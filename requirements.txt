@@ -1,0 +1,21 @@
+# CallGuard — 모델 다운로드/실험용 Python 의존성.
+# services/core 스캐폴딩([Task 1], .claude/rules/rfp-harness.md) 이후에는 이 파일을
+# services/core/requirements.txt로 옮기거나 pyproject.toml로 대체할 수 있다.
+#
+# 설치:
+#   python3 -m venv .venv && source .venv/bin/activate
+#   pip install -r requirements.txt
+#
+# 모델 받기:
+#   python scripts/download_models.py
+#
+# 버전은 매주 월요일 09:00에 로컬 launchd(com.callguard.requirements-check)가 PyPI
+# 최신 버전을 확인해 이 파일과 .venv를 자동 갱신한다 (scripts/check_requirements_updates.py).
+# 결과는 logs/requirements_check.log 참고. 수동 실행: .venv/bin/python scripts/check_requirements_updates.py
+
+torch==2.13.0
+transformers==5.15.1
+huggingface_hub==1.28.0
+sentencepiece==0.2.2
+accelerate==1.14.0
+pytest==9.1.1
