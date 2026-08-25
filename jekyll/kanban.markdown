@@ -5,21 +5,21 @@ permalink: /kanban/
 ---
 
 <style>
-  .kb-legend{ display:flex; gap:1rem; flex-wrap:wrap; font-size:0.8rem; color:#6b7280; margin:0 0 2rem; }
+  .kb-legend{ display:flex; gap:1rem; flex-wrap:wrap; font-family:'IBM Plex Mono',monospace; font-size:0.72rem; letter-spacing:.03em; color:#79839B; margin:0 0 2rem; }
   .kb-person{ margin:0 0 2.5rem; }
   .kb-person h2{ display:flex; align-items:center; gap:0.6rem; }
-  .kb-person h2 .count{ font-size:0.75rem; font-weight:600; color:#6b7280; }
+  .kb-person h2 .count{ font-family:'IBM Plex Mono',monospace; font-size:0.72rem; font-weight:500; color:#79839B; }
   .kanban{ display:grid; grid-template-columns:repeat(3,1fr); align-items:start; gap:0.9rem; margin:1rem 0 0; }
-  .kanban .col{ background:#f6f7f9; border-radius:8px; padding:0.75rem; min-height:4rem; }
-  .kanban .col h4{ margin:0 0 0.75rem; font-size:0.8rem; color:#6b7280; font-weight:700; }
-  .kanban .card{ background:#fff; border:1px solid #e5e7eb; border-radius:6px; padding:0.6rem 0.7rem; margin-bottom:0.6rem; font-size:0.85rem; line-height:1.5; }
-  .kanban .card a{ color:#111318; text-decoration:none; font-weight:600; }
-  .kanban .card a:hover{ color:#2f6fed; text-decoration:underline; }
-  .kanban .card .role{ display:inline-block; font-size:0.7rem; font-weight:700; padding:0.1rem 0.45rem; border-radius:999px; margin-bottom:0.35rem; white-space:nowrap; }
-  .role-infra{ background:#e8f0fe; color:#1a56b8; }
-  .role-ai{ background:#e9f7ef; color:#1b7a44; }
-  .role-app{ background:#fdf0e6; color:#b45309; }
-  .kanban .col.empty-hint{ color:#9ca3af; font-size:0.8rem; }
+  .kanban .col{ background:#10151F; border:1px solid rgba(223,228,238,.12); border-radius:8px; padding:0.75rem; min-height:4rem; }
+  .kanban .col h4{ margin:0 0 0.75rem; font-family:'IBM Plex Mono',monospace; font-size:0.72rem; letter-spacing:.05em; text-transform:uppercase; color:#79839B; font-weight:600; }
+  .kanban .card{ background:#080B12; border:1px solid rgba(223,228,238,.12); border-radius:6px; padding:0.6rem 0.7rem; margin-bottom:0.6rem; font-size:0.85rem; line-height:1.5; }
+  .kanban .card a{ color:#DFE4EE; text-decoration:none; font-weight:600; }
+  .kanban .card a:hover{ color:#F5A623; text-decoration:underline; }
+  .kanban .card .role{ display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:0.65rem; letter-spacing:.04em; font-weight:600; padding:0.15rem 0.5rem; border-radius:999px; margin-bottom:0.35rem; white-space:nowrap; border:1px solid currentColor; }
+  .role-infra{ background:rgba(110,143,214,.12); color:#8FA8E8; }
+  .role-ai{ background:rgba(245,166,35,.12); color:#F5A623; }
+  .role-app{ background:rgba(255,230,168,.10); color:#FFE6A8; }
+  .kanban .col.empty-hint{ color:#4d5568; font-size:0.8rem; }
   @media (max-width:640px){ .kanban{ grid-template-columns:1fr; } }
 </style>
 
