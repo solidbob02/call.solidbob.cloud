@@ -4,6 +4,16 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-25 (12)
+- **인터페이스 스키마 v2 — 정성윤 조건부 컨펌 반영** ((11)의 "초안 그대로 확정"을 정정한다). 정성윤이 v1을 `db/schema.sql`·`golden-set/v1-10.json`과 필드 단위로 대조해 불일치 4건을 확인했고, 내(류준)가 코드로 직접 재검증 후 전부 사실로 확인했다: ① `verdict`는 `approved`/`blocked`(`allowed` 아님, DB ENUM·골든셋과 일치) ② `source`는 사람이 읽는 이름이 아니라 `doc_id`+`title` (DB FK·골든셋 `expected_doc_ids`가 ID 기준) ③ `evidence`는 `closure_type`별 부분집합(해지/명의변경/보상 컬럼이 다름), `missing`은 `false`인 키만 ④ 전사 이벤트에 `segment_id` 추가(interim 199건/20초를 구분할 식별자 필요). [7.3절](/docs/07/) v2로 갱신, 결정 기록 `_project/decisions/003-인터페이스-스키마-v2.md`
+- **3주차 트리거 v1을 STT `is_final` 기반으로 설계 변경** — 자체 침묵 타이머를 따로 두면 STT 자체 엔드포인팅 지연(+346ms, V4 실측)과 이중으로 쌓인다는 정성윤 지적을 받아들여, `is_final` 도착을 발화 종료 신호로 쓰기로 했다. 1,500ms 허용 창의 근거도 "침묵 대기 최대 1,000ms"에서 "STT 엔드포인팅 +346ms 실측 + 판정·큐잉 여유 500ms"로 갱신([4.1절](/docs/04/))
+- **평가 하네스에 트리거 지연 분포(p50/p95/p99) 배선 완료** — `services/core/eval/harness.py`의 `run_eval`이 트리거 delta를 모아 기존 `metrics/latency.py`(`summarize_latency`)로 계산, `report["trigger"]["latency_ms"]`에 싣는다. 가짜 predictor로 배선 테스트 추가(`test_harness.py`), 전체 25개 테스트 통과
+- 티켓 갱신: `w1-interface-contract.md`·`w1-trigger-window.md` 모두 `done` 처리
+
+### 2026-08-25 (11)
+- **인터페이스 스키마 3종(전사·카드·종결) 팀 컨펌 완료** — [7.3절](/docs/07/) 초안 그대로 확정, 결정 기록 `_project/decisions/002-인터페이스-스키마-확정.md` 작성. 이제 각자 파트가 이 계약 기준으로 병렬 진행 가능
+- **트리거 허용 창 800ms → 1,500ms로 확정** — 보완지시서 1번 안 A 채택(2026-08-25 팀 컨펌). 침묵 기반 트리거(700~1,000ms 대기) 특성상 800ms 창으로는 적절 발동률 0.85가 구조적으로 불가능했던 문제 해소. 안 B(침묵 임계값 실측 후 역산)는 검토했으나 보유 AI Hub 데이터가 발화 단위로 이미 분절돼 있어(세션 JSON에 타임스탬프 없음) 발화 간 침묵 길이를 잴 수 없어 기각. [4.1절](/docs/04/)·[6.1절](/docs/06/)(p50/p95 기록 항목 추가)·`services/core/eval/metrics/trigger.py`(`ON_TIME_WINDOW_MS`)·테스트 반영, `_backlogs/w1-trigger-window.md` done 처리
+
 ### 2026-08-25 (10)
 - **Google STT 키 발급 + 연결 테스트 성공** — GCP 콘솔에서 서비스 계정 키(JSON) 발급, `.env`의 `GOOGLE_APPLICATION_CREDENTIALS`(경로만)·`GOOGLE_CLOUD_PROJECT` 설정. `scripts/test_stt.py`로 실제 오디오 1건 전사 성공 확인(키 파일 내용은 스크립트도 사람도 읽지 않음, 경로만 사용)
 - **[5.6절](/docs/05/) V3·V4 실측 완료** — V3(한국어 숫자 출력 형태): 실제 AI Hub 오디오 3건으로 확인한 결과 완전 정규화/부분 정규화/오인식이 케이스마다 혼재, 자릿수 낭독형(인증코드류)은 저품질 통화 음성에서 오인식 위험 큼. V4(스트리밍 부분 결과 지연): 20.58초 실통화 음성 실시간 페이싱 전송 결과 첫 interim 962ms, 최종 결과는 발화 종료 후 +346ms. 재현 스크립트 `scripts/test_stt_v3.py`·`scripts/test_stt_v4_streaming.py`, 상세는 [5.6절](/docs/05/)·[미결 항목](/open-items/)에 반영

@@ -6,12 +6,12 @@ def test_on_time_at_lower_bound():
     assert classify_trigger(utterance_end_ms=3100, trigger_at_ms=3100) == "on_time"
 
 
-def test_on_time_at_upper_bound_800ms():
-    assert classify_trigger(utterance_end_ms=3100, trigger_at_ms=3900) == "on_time"
+def test_on_time_at_upper_bound_1500ms():
+    assert classify_trigger(utterance_end_ms=3100, trigger_at_ms=4600) == "on_time"
 
 
-def test_late_just_over_800ms():
-    assert classify_trigger(utterance_end_ms=3100, trigger_at_ms=3901) == "late"
+def test_late_just_over_1500ms():
+    assert classify_trigger(utterance_end_ms=3100, trigger_at_ms=4601) == "late"
 
 
 def test_early_before_utterance_ends():
