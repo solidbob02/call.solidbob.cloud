@@ -20,27 +20,10 @@ permalink: /docs/08/
 
 ### 1주차 보드 (2026-08-20 ~ 08-26) — 기반 + 전제 확인
 
-<div class="kanban">
-  <div class="col">
-    <h4>대기</h4>
-    <div class="card"><span class="role role-ai">백엔드·AI · 류준</span><br>지식베이스 문서 수집 + 청킹 + ID 부여</div>
-  </div>
-  <div class="col">
-    <h4>예정</h4>
-    <div class="card"><span class="role role-infra">인프라 · 정성윤</span><br>평가 하네스 CI 연결</div>
-  </div>
-  <div class="col">
-    <h4>진행중</h4>
-    <div class="card"><span class="role role-app">앱·프론트 · 장민석</span><br>골든셋 10개 + 스펙 확정</div>
-  </div>
-  <div class="col">
-    <h4>완료</h4>
-    <div class="card"><span class="role role-ai">백엔드·AI · 류준</span><br>기획서 rev.4 반영 — 사업명 <strong>CallGuard</strong>(StreamRAG : CallGuard) 확정</div>
-    <div class="card"><span class="role role-infra">인프라 · 정성윤</span><br>AI Hub 회원가입 + 휴대폰 인증 + 데이터 신청</div>
-    <div class="card"><span class="role role-ai">백엔드·AI · 류준</span><br>인터페이스 스키마 3종(전사·카드·종결) 확정</div>
-    <div class="card"><span class="role role-app">앱·프론트 · 장민석</span><br>평가 하네스 골격 설계</div>
-  </div>
-</div>
+> **담당자별 진행 상황은 → [칸반 보드](/kanban/)**
+>
+> 이 페이지에 보드를 직접 그려두면 세 사람이 같은 파일을 동시에 고쳐 병합 충돌이 난다.
+> 티켓은 `jekyll/_backlogs/` 에 **1건당 1파일**로 두고 `/kanban/` 이 모아서 렌더링한다.
 
 **일자별 진행 내역은 → [Sprint 1 진행 로그](/sprints/01/)**
 

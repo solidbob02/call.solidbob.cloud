@@ -27,6 +27,7 @@ permalink: /open-items/
 - [x] 골든셋 10개 초안 작성 완료 (`golden-set/v1-10.json`), 팀 리뷰 대기
 - [x] 평가 하네스 골격 설계 완료(류준) — `services/core/eval/`, 단위테스트 24개 통과. CI 연결(정성윤)은 남음
 - [ ] **기획서 정본 확정** — 사이트 문서(`docs/01~16`)는 5인 트랙 rev.4 기준, `_project/plan.md`는 3인 실명 rev.4다. 트리거 허용 창(800ms vs 1,500ms), 팀 분업표 등에서 값이 갈린다. 어느 판을 정본으로 할지 정한 뒤 한쪽으로 맞춘다
+- [ ] **스케줄러를 무엇으로 할지 확정** — 현재는 지킬 칸반([/kanban/](/kanban/), `_backlogs/` 컬렉션). GitHub Projects를 메인 보드로 쓰고 지킬은 산출물 기록만 담당하는 방식도 있다. Projects는 드래그 앤 드롭·이슈 연동이 되지만 저장소 밖에 상태가 생겨 기록이 두 곳으로 갈린다. 한쪽으로 정한다
 - [ ] **GitHub Pages 활성화** — Settings → Pages → Source를 "GitHub Actions"로 변경 (solidbob02 계정 권한). 워크플로는 `.github/workflows/pages.yml`에 있으며 설정 전까지는 배포 단계가 실패한다
 
 세부 진행은 [8주 마일스톤](/docs/08/)의 칸반 보드, 완료 기록은 [진행상황](/progress/)에서 확인하세요.
