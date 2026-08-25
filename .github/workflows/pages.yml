@@ -1,0 +1,67 @@
+name: Deploy Jekyll site to Pages
+
+# 지킬 사이트가 저장소 루트가 아니라 jekyll/ 하위에 있어
+# Pages 의 "Deploy from a branch"(루트 또는 /docs 만 지원)를 쓸 수 없다.
+# 그래서 Actions 로 빌드해 배포한다. → 미결 항목 OI-06
+#
+# ⚠ 이 워크플로가 동작하려면 저장소 설정이 필요하다 (solidbob02 계정에서):
+#    Settings → Pages → Build and deployment → Source: GitHub Actions
+#    설정 전에는 deploy 단계가 실패한다.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'jekyll/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 배포는 한 번에 하나만. 진행 중인 배포를 취소하지 않는다.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 루비 설치 (Gemfile.lock 기준)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: jekyll
+
+      - name: Pages 설정 로드
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: 지킬 빌드
+        run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
+        working-directory: jekyll
+        env:
+          JEKYLL_ENV: production
+
+      - name: 산출물 업로드
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: jekyll/_site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Pages 배포
+        id: deployment
+        uses: actions/deploy-pages@v4
