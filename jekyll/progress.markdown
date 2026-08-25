@@ -4,6 +4,12 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-25 (14)
+- **정성윤의 GCP 쿼터·Pages 배포 개선 병합** — 병합 작업 중 `origin/backend`에 정성윤이 먼저 올린 커밋(STT 쿼터 하드 리밋 상세 기록, 예산 알림 설정, Pages 배포 워크플로를 "main에 머지되면 항상 배포"로 단순화, 완료 티켓 3건 상태 갱신)을 확인. `open-items.markdown`의 트리거 허용 창 항목에서 충돌 1건(내가 방금 갱신한 1,500ms 내용 vs 정성윤의 예전 800ms 줄 + 새 GCP 정리 할 일) — 미리보기 병합으로 확인 후 양쪽 내용을 모두 살려 수동 해결. 병합 후 테스트 25개·빌드 재확인 (`9eab5b1`)
+
+### 2026-08-25 (13)
+- **로그 백필 — Python 의존성 자동화** (세션 초반에 했으나 이 로그에 기록이 누락됐던 작업, 뒤늦게 기록). `requirements.txt`에 torch·transformers·huggingface_hub·sentencepiece·accelerate·pytest 고정, `scripts/check_requirements_updates.py` + 로컬 launchd(`com.callguard.requirements-check.plist`, 매주 월요일 09:00)로 PyPI 버전 자동 확인·갱신 체계 구축(클라우드 RemoteTrigger는 로컬 `.venv`에 못 닿아 로컬 예약 작업으로 결정). `scripts/download_models.py`로 오픈소스 모델 4종(~8.9GB) 다운로드 완료. 신규 티켓 `w1-visual-redesign`·`w1-repo-integration`·`w1-requirements-automation` 추가 — 지킬 비주얼 통일((9))·저장소 통합((7)(8))·이 항목이 지금까지 칸반 보드에 없었다
+
 ### 2026-08-25 (12)
 - **인터페이스 스키마 v2 — 정성윤 조건부 컨펌 반영** ((11)의 "초안 그대로 확정"을 정정한다). 정성윤이 v1을 `db/schema.sql`·`golden-set/v1-10.json`과 필드 단위로 대조해 불일치 4건을 확인했고, 내(류준)가 코드로 직접 재검증 후 전부 사실로 확인했다: ① `verdict`는 `approved`/`blocked`(`allowed` 아님, DB ENUM·골든셋과 일치) ② `source`는 사람이 읽는 이름이 아니라 `doc_id`+`title` (DB FK·골든셋 `expected_doc_ids`가 ID 기준) ③ `evidence`는 `closure_type`별 부분집합(해지/명의변경/보상 컬럼이 다름), `missing`은 `false`인 키만 ④ 전사 이벤트에 `segment_id` 추가(interim 199건/20초를 구분할 식별자 필요). [7.3절](/docs/07/) v2로 갱신, 결정 기록 `_project/decisions/003-인터페이스-스키마-v2.md`
 - **3주차 트리거 v1을 STT `is_final` 기반으로 설계 변경** — 자체 침묵 타이머를 따로 두면 STT 자체 엔드포인팅 지연(+346ms, V4 실측)과 이중으로 쌓인다는 정성윤 지적을 받아들여, `is_final` 도착을 발화 종료 신호로 쓰기로 했다. 1,500ms 허용 창의 근거도 "침묵 대기 최대 1,000ms"에서 "STT 엔드포인팅 +346ms 실측 + 판정·큐잉 여유 500ms"로 갱신([4.1절](/docs/04/))
