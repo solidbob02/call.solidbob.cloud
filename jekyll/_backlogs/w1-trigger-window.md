@@ -2,7 +2,7 @@
 title: "트리거 허용 창 — 안 A(0~1,500ms) 반영"
 assignee: "류준"
 role: "ai"
-status: "in-progress"
+status: "done"
 sprint: 1
 priority: 14
 date: 2026-08-25
