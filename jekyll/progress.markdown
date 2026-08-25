@@ -4,6 +4,11 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-25 (10)
+- **Google STT 키 발급 + 연결 테스트 성공** — GCP 콘솔에서 서비스 계정 키(JSON) 발급, `.env`의 `GOOGLE_APPLICATION_CREDENTIALS`(경로만)·`GOOGLE_CLOUD_PROJECT` 설정. `scripts/test_stt.py`로 실제 오디오 1건 전사 성공 확인(키 파일 내용은 스크립트도 사람도 읽지 않음, 경로만 사용)
+- **[5.6절](/docs/05/) V3·V4 실측 완료** — V3(한국어 숫자 출력 형태): 실제 AI Hub 오디오 3건으로 확인한 결과 완전 정규화/부분 정규화/오인식이 케이스마다 혼재, 자릿수 낭독형(인증코드류)은 저품질 통화 음성에서 오인식 위험 큼. V4(스트리밍 부분 결과 지연): 20.58초 실통화 음성 실시간 페이싱 전송 결과 첫 interim 962ms, 최종 결과는 발화 종료 후 +346ms. 재현 스크립트 `scripts/test_stt_v3.py`·`scripts/test_stt_v4_streaming.py`, 상세는 [5.6절](/docs/05/)·[미결 항목](/open-items/)에 반영
+- `requirements.txt`에 `google-cloud-speech==2.40.0` 추가
+
 ### 2026-08-25 (9)
 - **사이트 전체 비주얼 통일** — Claude Design으로 만든 표지 시안(딥네이비+골드+모노 HUD)을 실제 지킬 사이트에 반영. 표지는 정적 이미지 대신 `jekyll/assets/js/hologram.js`로 **실제로 회전하는** 와이어프레임 구체 홀로그램(캔버스, 노드/링크/궤도밴드/코어 글로우)으로 구현 — 마이크를 연결하면 실음성 레벨에 반응하고, 안 하면 idle 호흡 패턴으로 계속 움직임(정적 이미지 아님)
 - `_layouts/cover.html`·`_layouts/doc.html`에 공통 디자인 토큰 적용: Syne(제목)·IBM Plex Mono(HUD·배지·표 헤더)·Pretendard Variable(본문), 골드 `#F5A623` 액센트, 딥네이비 `#080B12` 배경. `doc.html`은 무거운 캔버스 대신 헤더 브랜드 판 뒤 CSS 방사형 글로우만 둬서 본문 많은 페이지도 가볍게 유지
