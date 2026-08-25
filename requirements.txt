@@ -19,3 +19,4 @@ huggingface_hub==1.28.0
 sentencepiece==0.2.2
 accelerate==1.14.0
 pytest==9.1.1
+google-cloud-speech==2.40.0
