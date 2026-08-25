@@ -1,0 +1,83 @@
+---
+layout: doc
+title: 8. 8주 마일스톤
+permalink: /docs/08/
+---
+
+애자일 스크럼 방식으로 운영합니다. **1주 = 1스프린트, 총 8스프린트.**
+
+<style>
+  .kanban{ display:grid; grid-template-columns:repeat(4,1fr); align-items:start; gap:0.9rem; margin:1.25rem 0 0.5rem; }
+  .kanban .col{ background:#f6f7f9; border-radius:8px; padding:0.75rem; }
+  .kanban .col h4{ margin:0 0 0.75rem; font-size:0.8rem; color:#6b7280; font-weight:700; white-space:nowrap; }
+  .kanban .card{ background:#fff; border:1px solid #e5e7eb; border-radius:6px; padding:0.6rem 0.7rem; margin-bottom:0.6rem; font-size:0.85rem; line-height:1.5; }
+  .kanban .card .role{ display:inline-block; font-size:0.7rem; font-weight:700; padding:0.1rem 0.45rem; border-radius:999px; margin-bottom:0.35rem; white-space:nowrap; }
+  .role-infra{ background:#dcfce7; color:#15803d; }
+  .role-ai{ background:#dbeafe; color:#1d4ed8; }
+  .role-app{ background:#ffedd5; color:#c2410c; }
+  @media (max-width:640px){ .kanban{ grid-template-columns:1fr 1fr; } }
+</style>
+
+### 1주차 보드 (2026-08-20 ~ 08-26) — 기반 + 전제 확인
+
+<div class="kanban">
+  <div class="col">
+    <h4>대기</h4>
+    <div class="card"><span class="role role-ai">백엔드·AI · 류준</span><br>지식베이스 문서 수집 + 청킹 + ID 부여</div>
+  </div>
+  <div class="col">
+    <h4>예정</h4>
+    <div class="card"><span class="role role-infra">인프라 · 정성윤</span><br>평가 하네스 CI 연결</div>
+  </div>
+  <div class="col">
+    <h4>진행중</h4>
+    <div class="card"><span class="role role-app">앱·프론트 · 장민석</span><br>골든셋 10개 + 스펙 확정</div>
+  </div>
+  <div class="col">
+    <h4>완료</h4>
+    <div class="card"><span class="role role-ai">백엔드·AI · 류준</span><br>기획서 rev.4 반영 — 사업명 <strong>CallGuard</strong>(StreamRAG : CallGuard) 확정</div>
+    <div class="card"><span class="role role-infra">인프라 · 정성윤</span><br>AI Hub 회원가입 + 휴대폰 인증 + 데이터 신청</div>
+    <div class="card"><span class="role role-ai">백엔드·AI · 류준</span><br>인터페이스 스키마 3종(전사·카드·종결) 확정</div>
+    <div class="card"><span class="role role-app">앱·프론트 · 장민석</span><br>평가 하네스 골격 설계</div>
+  </div>
+</div>
+
+**일자별 진행 내역은 → [Sprint 1 진행 로그](/sprints/01/)**
+
+### 1주차 체크리스트
+
+- [ ] AI Hub 데이터 신청 (**최우선**)
+- [ ] **[5.6절](/docs/05/) V1~V4 확인** (채널 구성 / GPU / STT 숫자 출력 / 부분 결과 지연)
+- [ ] 인터페이스 스키마 확정 (전사·카드·종결 3종)
+- [ ] 지식베이스 문서 수집 + 청킹 + **ID 부여**
+- [ ] 골든셋 **10개** + 스펙 확정(발화 종료 시각, 개인정보 패턴 포함)
+- [ ] 평가 하네스 골격(류준 설계) + CI 연결(정성윤)
+
+### 8주 로드맵
+
+| 주차 | 목표 |
+|---|---|
+| **[1주차](/sprints/01/)** | 기반 + 전제 확인 (AI Hub 신청, V1~V4, 스키마 확정, 골든셋 10개) |
+| 2주차 | 베이스라인 — 가장 단순한 RAG(고정 청킹, BM25만), 골든셋 50개 → 잠정 베이스라인, STT 배치 연동 |
+| 3주차 | 실시간화 + 마스킹 — 스트리밍 STT+WebSocket, 화자 분리, 트리거 v1, React 자막, **C-5 마스킹**, 골든셋 150개 → 공식 기준선 |
+| 4주차 | 검색 품질 — nori 인덱스, dense_vector, RRF 병합, 청킹 전략 3종 비교 |
+| 5주차 | **오류 내성 실험 (핵심 주차)** — STT 오류 주입, 0~20% 구간별 성능 곡선, C-5 마스킹 재현율 곡선 |
+| 6주차 | 생성 + 컴플라이언스 — HF Transformers 카드 생성, "관련 문서 없음" 처리, 컴플라이언스 분류기, **코어 기준선 통과 확인** |
+| 7주차 | 운영 관점 + **F-2 체크포인트** — 레이턴시 측정, LRU 캐싱, 토큰 비용, 통화 후 요약, Docker |
+| 8주차 | 마감 — F-2 마무리/설계 문서, (여유 시) G-2 또는 H·I 택1, 후반 3일 발표·문서 전용 |
+
+> **7주차 중반 체크포인트**: 코어 기준선 통과 + 태스크 궤도 정상 → **F-2 구현 진행**. 둘 중 하나라도 미달 → **F-2를 설계 문서로 전환** (시퀀스 다이어그램 + 요건 스키마 산출).
+
+### 성공 조건 — 재설정
+
+> **STT 오류 내성 실험([4.2절](/docs/04/)) + 검색 품질 개선 수치.** 이 두 가지가 나오면 프로젝트는 성공이다. **F-2는 달성 시 추가 성과로 본다.**
+
+이전 리비전은 성공 조건을 F-2에 걸었으나, F-2는 조건부 항목이므로 부적절하다. 폴백으로 가더라도 프로젝트가 실패로 읽히지 않도록 기준을 재설정한다.
+
+**범위 관리 규칙**: 6주차 종료 시점에 코어 기준선을 통과하지 못했다면 F·G·H·I를 착수하지 않는다. **C-5만 예외로 코어에 포함되므로 3주차에 반드시 들어간다.**
+
+**진행 방식:** 매 스프린트 시작일 스프린트 플래닝 → 스프린트 종료일 리뷰·회고 → 결과는 [진행상황](/progress/) 페이지에 기록.
+
+---
+
+[← 개발목차로 돌아가기](/toc/)
