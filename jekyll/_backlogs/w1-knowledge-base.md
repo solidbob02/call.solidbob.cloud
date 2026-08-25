@@ -1,5 +1,5 @@
 ---
-title: "지식베이스 문서 초안"
+title: "지식베이스 문서 초안 + 팀 리뷰"
 assignee: "류준"
 role: "ai"
 status: "in-progress"
