@@ -10,6 +10,7 @@
 | 경로 | 내용 |
 |---|---|
 | `CLAUDE.md` | 프로젝트 헌법 + 기록 규칙. 작업 시작 전 필독 |
+| `docs/` | 기술 문서 — 아키텍처, ERD(`erd/schema.mmd` 정본 + `schema.png`). 사이트에 게시되지 않음 |
 | `jekyll/` | **지킬 사이트 루트.** 지킬 명령은 전부 이 안에서 실행 |
 | `jekyll/index.html` · `jekyll/toc.md` | 제안서 표지 · 목차 |
 | `jekyll/_docs/1~5-*.md` | 제안서 본문 5개 절. `architecture` 등은 세부 문서 |
