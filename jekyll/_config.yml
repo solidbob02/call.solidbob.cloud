@@ -1,47 +1,61 @@
-# ── 사이트 기본 정보 ────────────────────────────────────────────────
-title: 실시간 상담원 어시스트 RAG
-description: >-
-  통화를 실시간으로 들으면서, 고객이 방금 물은 내용에 필요한 사내 문서를
-  상담원 화면에 자동으로 띄워주는 시스템. 8주간의 설계·실험·측정 기록.
-baseurl: ""
-url: "https://call.solidbob.cloud"
-github_username: solidbob02
-timezone: Asia/Seoul
+# Welcome to Jekyll!
+#
+# This config file is meant for settings that affect your whole blog, values
+# which you are expected to set up once and rarely edit after that. If you find
+# yourself editing this file very often, consider using Jekyll's data files
+# feature for the data you need to update frequently.
+#
+# For technical reasons, this file is *NOT* reloaded automatically when you use
+# 'bundle exec jekyll serve'. If you change this file, please restart the server process.
+#
+# If you need help with YAML syntax, here are some quick references for you:
+# https://learn-the-web.algonquindesign.ca/topics/markdown-yaml-cheat-sheet/#yaml
+# https://learnxinyminutes.com/docs/yaml/
+#
+# Site settings
+# These are used to personalize your new site. If you look in the HTML files,
+# you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
+# You can create any custom variable you would like, and they will be accessible
+# in the templates via {{ site.myvariable }}.
 
-# ── 빌드 설정 ──────────────────────────────────────────────────────
+title: CallGuard
+email: fbwns1234@gmail.com
+description: >- # this means to ignore newlines until "baseurl:"
+  StreamRAG : CallGuard — 통화 음성 스트림을 실시간으로 분석하고, 하이브리드 RAG와
+  가드레일로 지식과 컴플라이언스를 동시에 지원하는 AICC 어시스트.
+baseurl: "" # the subpath of your site, e.g. /blog
+url: "" # the base hostname & protocol for your site, e.g. http://example.com
+github_username:  solidbob02
+
+# Build settings
 theme: minima
-header_pages:
-  - toc.md
-  - log.md
-  - open-items.md
 plugins:
   - jekyll-feed
 
-# ── 컬렉션 ─────────────────────────────────────────────────────────
-# _posts   : 진행 로그 (시간 순서, 수정하지 않음)
-# _docs    : 현재 사실 문서 (아키텍처·스키마·평가 설계, 계속 갱신)
-# _project : 내부 문서. 앞에 _ 가 붙었고 컬렉션으로 선언하지 않았으므로
-#            지킬이 빌드에서 제외한다 → git 에는 남지만 사이트에는 공개되지 않는다.
-collections:
-  docs:
-    output: true
-    permalink: /docs/:name/
+# 상단 네비게이션에 표시할 페이지만 명시 (docs/ 하위 문서는 목차를 통해서만 접근)
+header_pages:
+  - toc.markdown
+  - progress.markdown
 
-defaults:
-  - scope:
-      path: ""
-      type: "docs"
-    values:
-      layout: "page"
-  - scope:
-      path: ""
-      type: "posts"
-    values:
-      layout: "post"
-
+# Exclude from processing.
+# The following items will not be processed, by default.
+# Any item listed under the `exclude:` key here will be automatically added to
+# the internal "default list".
+#
+# Excluded items can be processed by explicitly listing the directories or
+# their entries' file path in the `include:` list.
+#
 exclude:
-  - CLAUDE.md
+  - .sass-cache/
+  - .jekyll-cache/
+  - gemfiles/
   - Gemfile
   - Gemfile.lock
-  - vendor/
   - node_modules/
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+  # 지킬 소스가 이 폴더(jekyll/) 하위로 격리돼 있어서 data/·models/·db/ 등
+  # 저장소 루트의 대용량/바이너리 디렉토리는 애초에 지킬 스캔 범위 밖이다
+  # (예전엔 지킬이 저장소 루트에서 돌아서 이 항목들을 명시적으로 빼야 했다).
