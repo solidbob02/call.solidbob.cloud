@@ -1,7 +1,7 @@
 ---
 title: "V3·V4 실측 — STT 숫자 출력 형태 / 부분 결과 지연"
 assignee: "류준"
-role: "infra"
+role: "ai"
 status: "done"
 sprint: 1
 priority: 4
