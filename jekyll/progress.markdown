@@ -4,6 +4,12 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-25 (9)
+- **모든 브랜치를 `main`으로 통일** — `PM`·`frontend`·`flutter`는 fast-forward, `backend`는 별개 히스토리라 강제 갱신했다. 이제 다섯 브랜치가 전부 통합본을 가리킨다
+- `backend`의 기존 히스토리(`e9a7600` 외 5커밋)는 **`backend-archive-20260825` 브랜치에 보존**했다. 내용물은 이미 `main`에 통합됐지만 되돌릴 수 있게 남겨둔 것
+- ⚠ **로컬에 `backend`를 받아둔 사람은 그냥 `git pull`이 안 된다.** 커밋하지 않은 작업이 있으면 먼저 다른 브랜치로 옮긴 뒤 `git fetch && git reset --hard origin/backend`로 맞춰야 한다
+- 머지 완료된 `integrate-backend`는 삭제
+
 ### 2026-08-25 (8)
 - **두 갈래로 갈려 있던 저장소를 하나로 통합** — `origin/main`(PM 브랜치 계열)과 `origin/backend`는 공통 조상이 없는 별개 히스토리였다. `integrate-backend` 브랜치에서 파일 단위로 비교해 정본을 정하고 합쳤다
 - **지킬 사이트는 backend 쪽을 정본으로 채택** — 사업명(CallGuard)·팀명(SOLIDBOB)·개발기간 등 사실 정보가 정확하고, 기획서 16개 절을 1:1로 문서화했으며 자체 `cover`/`doc` 레이아웃과 빌드 성능 수정까지 반영돼 있다. PM 계열 사이트(표지+5개 절+`_posts`/`_data`)는 히스토리에만 남기고 트리에서 제거
