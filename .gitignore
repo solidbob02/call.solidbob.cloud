@@ -3,6 +3,68 @@ _site
 .jekyll-cache
 .jekyll-metadata
 vendor
+.env
+.env.local
+.env.*.local
+
+# 원본/전처리 데이터 — 용량이 크고 AI Hub 등 재배포 금지 조항이 있어 커밋하지 않는다.
+# data/README.md만 예외로 추적한다.
+/data/raw/
+/data/processed/
+
+# 모델 가중치 — 용량이 크고 HuggingFace에서 다시 받을 수 있어 커밋하지 않는다.
+/models/
+/.venv/
+/logs/
+
+# --- macOS ------------------------------------------------------------------
+# 팀원마다 브랜치가 달라도 폴더를 열 때마다 생기므로, 사람 수만큼 반복해서
+# 커밋에 섞여 들어올 수 있다.
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Icon?
+
+# --- Python (services/core 등) ----------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Node.js / React (services/gateway, apps/dashboard — 예정) ---------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+.next/
+out/
+coverage/
+
+# --- 에디터/IDE — 개인 설정이라 브랜치마다 달라 충돌만 일으킨다 ------------------
+.vscode/
+.idea/
+*.swp
+*~
+
+# --- 자격증명 안전망 — 실수로 레포 안에 떨궈도 커밋되지 않게 ---------------------
+*.pem
+*.key
+*-key.json
+service-account*.json
+credentials.json
+
+# --- 기타 -------------------------------------------------------------------
+*.log
+*.tmp
+docker-compose.override.yml
 
 # Claude Code 개인 설정 — 팀 공유 대상이 아니다 (.claude/settings.json 은 공유)
 .claude/settings.local.json

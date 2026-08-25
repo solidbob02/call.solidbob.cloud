@@ -1,29 +1,34 @@
-# call.solidbob.cloud
+# CallGuard — call.solidbob.cloud
 
-**실시간 상담원 어시스트 RAG** — 통화를 실시간으로 들으면서, 고객이 방금 물은 내용에 필요한
-사내 문서를 상담원 화면에 자동으로 띄워주는 시스템. 8주 프로젝트의 설계·실험·측정 기록.
+**StreamRAG : CallGuard** — 통화를 실시간으로 들으면서 고객이 방금 물은 내용에 필요한 사내 문서를
+상담원 화면에 자동으로 띄우고, 컴플라이언스 위반 표현과 개인정보를 실시간으로 탐지·마스킹하는 시스템.
 
-사이트: https://call.solidbob.cloud
+- 팀: SOLIDBOB — 정성윤(AWS·인프라) · 류준(백엔드·AI) · 장민석(앱·프론트엔드)
+- 개발기간: 2026-08-20 ~ 2026-10-27 (1주 1스프린트, 총 8스프린트)
+- 사이트: https://call.solidbob.cloud
 
-## 이 저장소의 구조
+## 저장소 구조
 
 | 경로 | 내용 |
 |---|---|
-| `CLAUDE.md` | 프로젝트 헌법 + 기록 규칙. 작업 시작 전 필독 |
-| `docs/` | 기술 문서 — 아키텍처, ERD(`erd/schema.mmd` 정본 + `schema.png`). 사이트에 게시되지 않음 |
-| `jekyll/` | **지킬 사이트 루트.** 지킬 명령은 전부 이 안에서 실행 |
-| `jekyll/index.html` · `jekyll/toc.md` | 제안서 표지 · 목차 |
-| `jekyll/_docs/1~5-*.md` | 제안서 본문 5개 절. `architecture` 등은 세부 문서 |
-| `jekyll/_posts/` | 개발 로그 (과거, 수정하지 않음) |
-| `jekyll/_data/` | `milestones.yml` 진행률 · `metrics.yml` 수치 단일 출처 · `open_items.yml` 미결 항목 |
-| `_project/` | 비공개 — 기획서 원본, `STATE.md`, 결정 기록. 사이트에 게시되지 않음 |
+| `CLAUDE.md` | 프로젝트 규칙. 작업 시작 전 필독 |
+| `jekyll/` | **지킬 사이트 루트.** 표지 · 목차 · `docs/NN` 본문 · `sprints/` · 진행 기록 |
+| `db/` | `schema.sql`(DDL) · ERD(`ERD.md` · `erd.dot` · `ERD.png`) · 생성 스크립트 |
+| `services/` | 서비스 코드. 현재 `core/eval`(평가 하네스) + `core/tests` |
+| `knowledge-base/` | 요금제약관 · 응대매뉴얼 · 내부처리규정 (가상 사업자 기준) |
+| `golden-set/` | 골든셋 시나리오 |
+| `scripts/`, `data/` | 유틸리티 / 데이터 (원본은 커밋하지 않는다) |
+| `_project/` | 비공개 — 기획서 원본·보완지시서, 결정 기록, 세션 인수인계 상태 |
+| `.github/workflows/` | GitHub Pages 배포 |
 
-## 로컬 미리보기
+## 로컬 실행
 
 ```bash
-cd jekyll                                              # 저장소 루트가 아니라 jekyll/ 안에서
-bundle exec jekyll serve --host 0.0.0.0 --port 4001
-bundle exec jekyll build                               # 기록 커밋 전 검증
+cd jekyll
+bundle exec jekyll serve --host 0.0.0.0 --port 4000
 ```
 
-Ruby 3.3.12 (rbenv) / Jekyll 4.4.1.
+```bash
+pytest                      # 평가 하네스 테스트
+python db/generate_schema_docs.py   # ERD 재생성
+```

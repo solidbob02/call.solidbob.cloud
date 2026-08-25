@@ -1,0 +1,132 @@
+# 📋 CallGuard 실행 하네스 (RFP 요구사항 표준 기반)
+
+> **프로젝트명**: CallGuard (StreamRAG : CallGuard) — 실시간 상담원 어시스트 RAG 시스템
+> **팀명**: SOLIDBOB (3인)
+> **프로젝트 성격**: 팀 프로젝트. 발주기관은 없으며, 공공 SW사업 RFP의 "요구사항 ID 체계·추적성·검수 기준" 표준을 자체 개발 문서화 방식으로 채용한다.
+> **개발기간**: 2026-08-20 ~ 2026-10-27 (69일, 애자일 스크럼 — 1주 1스프린트, 총 8스프린트 — [8주 마일스톤](/docs/08/))
+
+이 문서는 앞으로 Claude Code가 CallGuard 실제 코드베이스(현재는 기획서 Jekyll 사이트만 존재)를 스캐폴딩·구현할 때 따라야 할 규칙이다. 기획서 본문([개발목차](/toc/))에 이미 정의된 내용과 모순되면 본문이 우선한다 — 이 문서는 그 내용을 "코드 생성 규칙"으로 번역한 것이다. 이 기획서 자체가 A~G 기능 ID 체계를 갖고 있으므로, 별도 접두어(SFR 등)를 새로 만들지 않고 **기획서의 기능 ID를 그대로 요구사항 ID로 쓴다.**
+
+---
+
+## 1. Claude Code 필수 준수 규칙 (Rule Set)
+
+1. **[명확성]** 모호한 표현 금지. "정확도를 높인다" → "[6.1절 지표](/docs/06/) 기준 Recall@5 ≥ 0.70(오류 없음) / ≥ 0.60(오류 10%)을 수치로 제시".
+2. **[원자성]** 파이프라인 모듈 하나 = 기능 ID 하나. 트리거 판정·하이브리드 검색·리랭킹·생성·컴플라이언스·마스킹·F-2 게이트는 각각 독립적으로 단위 테스트 가능하게 작성한다.
+3. **[추적성]** 생성하는 모든 코드/테스트/설정 파일 상단에 관련 기능 ID를 주석으로 명시한다. 예: `# Requirement: C-5`, `# Requirement: F-2`.
+4. **[검증성]** [평가 설계](/docs/06/)의 검수 기준에 맞는 테스트(PyTest/Jest)를 코드와 함께 생성한다. "측정·기록"으로만 표기된 항목(E2E 지연, 과잉 마스킹률 등)은 목표 수치를 지어내지 말고 측정 후 리포트만 출력한다.
+5. **[금지 표현]** [부록 A — 민감 기능 공통 설계 원칙](/docs/12/)의 금지 표현·데이터 취급 원칙("안전합니다"/"위험도 78%입니다"/"불변 감사 로그" 등 사용 금지, 판정은 규칙·설명은 LLM)을 코드·응답 템플릿 어디에도 위반해서 생성하지 않는다.
+
+---
+
+## 2. 시스템 아키텍처 및 3인 R&R
+
+```
+[상담원 브라우저]                          [Node.js 게이트웨이]        [FastAPI 코어]
+apps/dashboard (React)      --WebSocket-->  services/gateway            services/core
+├── 실시간 자막 · 추천 카드 · 경고           ├── 오디오 청크 중계        ├── C-5 마스킹
+└── F-2 종결 모달                           ├── Google STT 연동         ├── 트리거 판정
+                                            └── 화자 분리                ├── 검색(ES 하이브리드)
+                                                                        ├── 생성(HF Transformers)
+infra/ (Docker, AWS, MySQL, Elasticsearch)                             ├── 컴플라이언스 분류기
+                                                                        └── F-2 게이트
+
+[MySQL] call · transcript · recommendation · closure · eval_result
+[Elasticsearch] nori(BM25) + dense_vector + RRF
+```
+
+| 담당자 | 역할 | 소유 디렉토리 | 근거 |
+|---|---|---|---|
+| **정성윤** | AWS·인프라 | `services/gateway/`, `infra/`, `services/core/masking/`(C-5, 예외적으로 코어 내 배치) | [팀 분업](/docs/07/) |
+| **류준** | 백엔드·AI | `services/core/`(검색·리랭킹·트리거·생성·컴플라이언스·F-2 게이트·평가 하네스 설계) | [팀 분업](/docs/07/), [7.2절 부하 경고](/docs/07/) |
+| **장민석** | 앱·프론트엔드 | `apps/dashboard/`(React 대시보드), 결과 시각화(matplotlib) | [팀 분업](/docs/07/) |
+
+> **부하 경고**: 류준이 백엔드와 AI를 동시에 맡아 구조적으로 과부하다. C-5는 정성윤에게, 평가 하네스 **운영**(CI)도 정성윤에게 이관한다. 류준은 1주차에 하네스 **설계**만 담당한다 ([7.2절](/docs/07/)).
+
+---
+
+## 3. 상세 요구사항 명세표 (Requirement Traceability)
+
+### 3.1 기능 영역 (기획서 A~G ID 그대로 사용)
+
+| 요구 ID | 정의 | 코드 위치 | 검수 기준 | 근거 문서 |
+|---|---|---|---|---|
+| **A-1·A-2** | 스트리밍 STT + 화자 분리 | `services/gateway/stt/`, `services/gateway/diarization/` | 부분 전사 결과 스트리밍, [V1](/docs/05/) 결과에 따라 채널분리/diarization 분기 | [기능 명세](/docs/02/), [데이터 확보 계획](/docs/05/) |
+| **B-1~B-3** | 트리거 판정 + 하이브리드 검색(nori+dense_vector+RRF) + 리랭킹 | `services/core/retrieval/` | Recall@5 ≥0.70(오류 없음)/≥0.60(오류 10%), 트리거 적절 발동률(0~800ms) ≥0.85, 내부 처리 p95 ≤1,000ms | [핵심 기술 난제](/docs/04/), [평가 설계](/docs/06/) |
+| **B-4~B-6** | 근거 기반 요약 카드 생성 + 출처 표시 | `services/core/generation/` | 출처 표시율 100%, 환각 150문항 중 5건 이하, 근거 부족 시 "관련 문서 없음" 반환 | [기능 명세 2.3](/docs/02/) |
+| **C-1~C-4** | 컴플라이언스 탐지 + 대체 표현 제시 | `services/core/compliance/` | 재현율 ≥0.90, 정밀도 ≥0.60 (재현율 우선) | [평가 설계](/docs/06/) |
+| **C-5** | 개인정보 실시간 마스킹 | `services/core/masking/` (담당: 정성윤) | **P1~P7 패턴 마스킹 누락 0건 — 절대 규칙.** 화면·DB 저장 양쪽 앞단 적용, 원본 미보관 | [기능 명세 2.4](/docs/02/), [평가 설계](/docs/06/) |
+| **D-4** | 지식베이스 공백 리포트 | `services/core/postcall/` | B(검색 실패)/C(놓친 위반)/F(사후 문제) 케이스를 같은 루프로 누적 | [기능 명세 2.5](/docs/02/) |
+| **E-1~E-4** | 평가 하네스 | `services/core/eval/` | 규칙 기반 채점(LLM 채점 배제), 여러 회 실행 최저치 고정, 기준선 미달 시 CI 실패 | [평가 설계](/docs/06/) |
+| **F-2** | 종결 요건 검증 게이트 *(조건부, 7주차 체크포인트)* | `services/core/closure_gate/` | 필수 근거 미기재 시 종결 **100% 차단 — 절대 규칙**. 판정은 규칙, 설명만 LLM | [기능 명세 2.7](/docs/02/), [부록 A-2](/docs/12/) |
+| **G-2** | 지역 자원 연계 검색 *(여유 시)* | `services/core/resources/` | 자원 매칭 정확도 ≥0.95, 폐지·이전 기관 반환 0건 | [기능 명세 2.8](/docs/02/) |
+
+### 3.2 품질·검증 영역
+
+| 요구 ID | 정의 | 코드 위치 | 검수 기준 | 근거 문서 |
+|---|---|---|---|---|
+| **SEC-1** | 개인정보 원본 미보관 | `services/core/masking/`, MySQL `transcript` 스키마 | 마스킹 전 원문이 DB·로그 어디에도 남지 않음 (스키마 리뷰로 검증) | [기능 명세 C-5](/docs/02/), [부록 A](/docs/12/) |
+| **SEC-2** | 자격증명 분리 | `.env.example`, `infra/secrets/` | Google STT 키·MySQL 비밀번호가 코드/레포에 커밋되지 않음. `.env.example`엔 키 이름만 | `.env.example` |
+| **QUA-1** | 요구 ID별 PyTest/Jest 자동화 테스트 | `services/*/tests/`, `apps/dashboard/test/` | 핵심 모듈(트리거·검색·마스킹·F-2 게이트) 단위 테스트 존재, CI에서 실행 | [평가 설계 6.2](/docs/06/) |
+| **QUA-2** | 골든셋 회귀 평가 자동화 | `services/core/eval/harness.py` | 골든셋(1주차 10개→2주차 50개→3주차 150개) 기준 eval 하네스가 스프린트마다 실행되고 [진행상황](/progress/)에 기록됨 | [데이터 확보 계획 5.3](/docs/05/) |
+| **COST-1** | Google STT 사용량을 무료 크레딧/무료 한도 내로 이중 캡 | `services/gateway/stt/budget_guard.js`, GCP 콘솔 쿼터 | ① GCP 쿼터로 하드 리밋(1차) ② `STT_MAX_SECONDS_PER_DAY`/`_MONTH`(`.env.example`) 초과 시 새 스트림 오픈 거부(2차, 애플리케이션 가드) | [리스크 및 대응](/docs/11/) |
+
+---
+
+## 4. 클로드 코드 태스크 프롬프트 (Execution Directives)
+
+아직 실제 애플리케이션 코드는 없다 (현재 레포는 기획서 Jekyll 사이트만 존재). 1주차 인터페이스 스키마 확정 이후 아래 순서로 스캐폴딩한다.
+
+### [Task 1] 모노레포 뼈대 구축
+
+```
+claude "rfp-harness.md의 요구사항을 반영해 CallGuard 모노레포 뼈대를 구축해줘.
+1. Root에 services/gateway, services/core, apps/dashboard, infra/ 디렉토리 생성
+2. services/gateway: Node.js WebSocket 게이트웨이 골격 + Google STT 스트리밍 연동 지점 +
+   COST-1 사용량 가드(STT_MAX_SECONDS_PER_DAY/_MONTH 초과 시 스트림 오픈 거부)
+3. services/core: FastAPI 앱 골격 + MySQL 연결 설정 (SEC-2 반영, .env.example의 키 이름만 사용)
+4. apps/dashboard: React 프로젝트 초기화 (2.1절 3분할 화면 레이아웃만 — 자막/카드/경고)
+5. 모든 주요 생성 파일 상단에 관련 [요구 ID] 주석 명시할 것"
+```
+
+### [Task 2] B-2 (하이브리드 검색) 구현
+
+```
+claude "B-2 요구사항에 따라 services/core/retrieval/hybrid.py에 Elasticsearch nori(BM25) +
+dense_vector 임베딩 검색을 RRF로 병합하는 HybridRetriever 클래스를 구현해줘.
+- services/core/tests/test_retrieval.py에 골든셋 일부로 Recall@5/MRR을 측정하는 PyTest도 함께 생성
+  (평가 설계 6.1절 검수기준 참고)
+- 목표 수치를 코드에 하드코딩하지 말고 eval 하네스 결과로 리포트만 출력할 것"
+```
+
+### [Task 3] C-5 (개인정보 마스킹) 구현
+
+```
+claude "C-5 요구사항에 따라 services/core/masking/에 STT 전사 결과를 마스킹하는 파이프라인을 구현해줘.
+- 단계: ① 구분자·공백 제거 후 연속 숫자열 판정 ② 한글 수사→숫자 변환(보조) ③ 정규식(P1~P4) +
+  NER(P6·P7) 매칭 ④ 마스킹 (기능 명세 2.4절 탐지 파이프라인 순서 그대로)
+- services/core/tests/test_masking.py에 P1~P7 패턴 목록에 대한 누락 0건 검증 테스트 생성
+- 화면 표시 전 / MySQL 저장 전 양쪽 모두에 적용되는지 확인하는 테스트 포함"
+```
+
+### [Task 4] 2.1절 (검수 워크스페이스 화면) 구현
+
+```
+claude "2.1절 화면 구성을 위한 React 컴포넌트를 만들어줘.
+- 3분할 레이아웃: 실시간 자막 / 추천 카드(출처·유사도 포함) / 경고
+- F-2 게이트 결과는 이 화면 위 모달로 표시 (2.7절)
+- 위험도 점수나 '안전합니다' 류 표현이 UI 어디에도 없어야 함 (부록 A-1 연동)"
+```
+
+---
+
+## 5. RFP 기반 추적성 검증 체크리스트
+
+개발 완료 후 Claude Code가 스스로 수행할 검증 루틴:
+
+- [ ] **[추적성 검사]** 구현된 모든 소스 파일 상단에 `# Requirement: <ID>` 주석이 있는가?
+- [ ] **[모의 검수]** `pytest services/core` 실행 시 Recall@5/MRR, 마스킹 누락 건수가 출력되는가? (QUA-1)
+- [ ] **[보안]** MySQL 스키마에 마스킹 전 원문 컬럼이 없는가? (SEC-1)
+- [ ] **[비밀정보]** `.env.example`에 실제 값 대신 키 이름만 정의되어 있는가? (SEC-2)
+- [ ] **[절대 규칙]** C-5 마스킹 누락, F-2 오판정이 평균값이 아니라 1건 단위로 실패 처리되는가? ([평가 설계 6.2](/docs/06/))
+- [ ] **[문서 동기화]** 요구사항이 바뀌면 이 파일과 `jekyll/docs/` 하위 해당 기획서 페이지를 함께 갱신했는가?

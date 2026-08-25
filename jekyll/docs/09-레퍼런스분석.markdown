@@ -1,0 +1,65 @@
+---
+layout: doc
+title: 9. 레퍼런스 분석
+permalink: /docs/09/
+---
+
+## 9.1 결론 요약
+
+이 프로젝트가 다루는 것은 **Agent Assist**라는 확립된 제품 범주다. 글로벌·국내 모두 상용 제품이 있으며, 이는 위험이 아니라 **기회**다. 엔터프라이즈 B2B 시장이라 개인이 서비스로 경쟁할 대상이 아니고, "실무에서 실제로 팔리는 문제를 풀었다"는 근거가 된다.
+
+## 9.2 글로벌 상용 제품
+
+| 제품 | URL | 참고 포인트 |
+|---|---|---|
+| **Amazon Q in Connect** | https://docs.aws.amazon.com/connect/latest/adminguide/amazon-q-connect.html | 통화·채팅 중 의도 자동 감지 → 실시간 생성 응답·추천 액션·문서 링크. 기능 명세 최고 레퍼런스 |
+| **AWS Live Call Analytics with Agent Assist** | https://aws.amazon.com/solutions/guidance/live-call-analytics-with-agent-assist-on-aws/ | **아키텍처 다이어그램·샘플 코드 공개.** 설계 참고 |
+| **Google Agent Assist** | https://cloud.google.com/agent-assist | Proactive generative knowledge assist — 본 프로젝트의 트리거 판정과 동일 문제 |
+| Google CCAI 문서 | https://docs.cloud.google.com/contact-center/ccai-platform/docs/agent-assist | 실시간 전사·감정 분석·지식 어시스트 모듈 구성 |
+| Connect Wisdom 콘텐츠 적재 가이드 | https://aws.amazon.com/blogs/contact-center/ingesting-content-to-power-real-time-recommendations-and-search-with-amazon-connect-wisdom | 지식베이스 적재 전략 |
+
+## 9.3 국내 상용 솔루션
+
+| 솔루션 | URL | 참고 포인트 |
+|---|---|---|
+| **LG CNS FCC RT-Advisor** | https://www.lgcns.com/kr/service/ai/ai-contact-center | "숙련되지 않은 상담사도" 실시간 지식 제공 — 가치 제안 참고 |
+| **KT A'Cen On-Premise** | https://enterprise.kt.com/pd/P_PD_AI_CC_003.do | **불완전판매 방지 솔루션** = F 모듈과 인접. Barge-in, SAD, 단문발화 인식 등 실시간 음성 난점 목록 |
+| 솔트룩스 AICC | https://www.saltlux.com/kor/contents/view.do?mId=35 | 상담원 지원 + KMS + 실시간 모니터링 |
+| 삼성SDS AICC | https://www.samsungsds.com/kr/aicc/aicc.html | 규제 복잡도와 컴플라이언스 니즈 |
+| LG U+ AICC | https://www.lguplus.com/biz/all/telecom/phones-others/aicc/B000000150 | **개인정보 마스킹·암호화** — C-5 실무 근거 |
+| 메타엠 | https://meta-m.co.kr/ | TA 대시보드 — 실시간 키워드 표시 UI |
+| AICC 개념 정리 | https://www.tryvox.co/glossary/aicc | 한국어 통화의 STT 정확도 가정 위험, 민감정보 마스킹 기준 필요성 |
+
+## 9.4 데이터셋
+
+| 출처 | URL |
+|---|---|
+| AI Hub 상담 음성 (3,000시간) | https://aihub.or.kr/aidata/30711 |
+| AI Hub 고객 응대 음성 (3,300시간) | https://aihub.or.kr/aihubdata/data/view.do?dataSetSn=71616 |
+| AI Hub 민원 콜센터 질의-응답 | https://aihub.or.kr/aidata/30716 |
+| AI Hub 메인 | https://www.aihub.or.kr/ |
+| 서울 행정 민원상담 음성 | https://data.seoul.go.kr/dataList/OA-22804/L/1/datasetView.do |
+
+## 9.5 G-2 참고 (여유 시)
+
+| 항목 | URL |
+|---|---|
+| 한국생명존중희망재단 | https://www.kfsp.or.kr/ |
+| 보건복지상담센터 109 안내 | https://www.129.go.kr/109 |
+
+> **정책 근거 (발표 인용 가능)**: 보건복지부는 109 콜센터 증설과 함께 "AI를 활용한 상담일지 작성 및 위기 신호 조기 발굴을 통한 업무 부담 완화"를 추진 과제로 명시했다.
+> https://www.mohw.go.kr/board.es?mid=a10503010100&bid=0027&act=view&list_no=1487674
+
+## 9.6 기술 레퍼런스
+
+| 항목 | 내용 |
+|---|---|
+| **한국어 STT 벤치마크** | https://github.com/rtzr/Awesome-Korean-Speech-Recognition — 상담 음성·저음질 전화망 도메인별 CER 비교. **V3·V4 확인에 활용** |
+| Elasticsearch nori | 사용자 사전으로 업계 용어 등록 필수 |
+| ES dense_vector + kNN | 하이브리드 검색 구성 |
+| RRF | BM25 + 벡터 결과 병합 표준 기법 |
+| KLUE 벤치마크 | 한국어 NLU — 분류기 파인튜닝 참고 |
+
+---
+
+[← 개발목차로 돌아가기](/toc/)
