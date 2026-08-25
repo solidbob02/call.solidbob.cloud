@@ -18,15 +18,16 @@ permalink: /open-items/
 ## 이번 주 할 일 (1주차)
 
 - [ ] AI Hub 회원가입 + 휴대폰 인증 + 데이터 신청 (**최우선**)
-- [ ] Google Cloud STT 키 발급 + **무료 크레딧 이중 캡 설정** — ① IAM 및 관리자 > 쿼터에서 Speech-to-Text 요청량 하드 리밋 ② 예산 알림(백업 통지용). 코드 쪽 가드(`STT_MAX_SECONDS_PER_DAY`/`_MONTH`)는 [services/gateway] 스캐폴딩 시 함께 구현
+- [x] **Google Cloud STT 키 발급 + 쿼터 하드 리밋 완료** (2026-08-25) — 프로젝트 `callguard-506606`, 서비스 계정 `callguard-stt@`. 할당량: `Audio seconds per day` 1,728,000 → **600**, `Concurrent StreamingRecognize (global endpoint)` → **5**. 예산 `callguard`(월 ₩30,000, 50/90/100% 알림)도 설정 완료 — 단 알림일 뿐 차단은 아니며 반영에 24시간 걸린다. 지출 한도 기능은 Cloud Run·Vertex AI 등만 지원해 STT 에는 걸 수 없다. 코드 쪽 가드(`STT_MAX_SECONDS_PER_DAY`/`_MONTH`)는 `.env` 에 값만 넣어둔 상태이며 [services/gateway] 스캐폴딩 전까지 **작동하지 않는다**
 - [x] **[5.6절](/docs/05/) V1 확인** — AI Hub 데이터 전부 모노. diarization 필수, 데모는 물리 2채널 우회 필요
 - [x] **[5.6절](/docs/05/) V2 확인** — GPU: Apple M5 MacBook Air, 24GB 통합메모리, CUDA 없음(MPS 가속)
-- [ ] **[5.6절](/docs/05/) V3·V4 확인** (STT 숫자 출력 형태 / 부분 결과 지연) — Google STT 결제 계정 연결 후 가능, **팀 카드 결정 대기 중**
+- [ ] **[5.6절](/docs/05/) V3·V4 확인** (STT 숫자 출력 형태 / 부분 결과 지연) — **전제 해소됨**(결제 계정 연결·키 발급·연결 확인 200 완료). 이제 측정용 음성 샘플만 있으면 진행 가능 → [티켓](/backlog/w1-v3-v4-stt/)
 - [ ] 인터페이스 스키마 3종 확정 (전사·카드·종결) — 초안은 [7.3절](/docs/07/)에 있음, 팀 컨펌 필요
 - [x] 지식베이스 문서 초안 작성 완료 (`knowledge-base/` — 요금제약관·응대매뉴얼·내부처리규정), 팀 리뷰 대기
 - [x] 골든셋 10개 초안 작성 완료 (`golden-set/v1-10.json`), 팀 리뷰 대기
 - [x] 평가 하네스 골격 설계 완료(류준) — `services/core/eval/`, 단위테스트 24개 통과. CI 연결(정성윤)은 남음
 - [ ] **트리거 허용 창 800ms 유지에 따른 설계 조정** — 값은 800ms로 확정(문서·하네스 일치). 다만 침묵 기반 트리거는 무음 700~1,000ms를 기다린 뒤 발동하므로 3주차 v1으로는 적절 발동률 0.85가 구조적으로 달성 불가능하다(보완지시서 1번). 종결어미 기반으로 가거나 침묵 임계값을 짧게 잡는 등 설계를 정해야 한다. 어느 쪽이든 발동 지연 분포(p50/p95)는 별도 기록 → [티켓](/backlog/w1-trigger-window/)
+- [ ] **프로젝트 종료 후 GCP 정리 (10-27 이후)** — 무료 크레딧 유효기간이 2026-11-24 이라, 종료 뒤 리소스를 켜둔 채 두면 만료 시점부터 카드로 청구된다. 프로젝트 삭제 또는 결제 연결 해제로 마무리한다
 - [ ] **스케줄러를 무엇으로 할지 확정** — 현재는 지킬 칸반([/kanban/](/kanban/), `_backlogs/` 컬렉션). GitHub Projects를 메인 보드로 쓰고 지킬은 산출물 기록만 담당하는 방식도 있다. Projects는 드래그 앤 드롭·이슈 연동이 되지만 저장소 밖에 상태가 생겨 기록이 두 곳으로 갈린다. 한쪽으로 정한다
 - [ ] **GitHub Pages 활성화** — Settings → Pages → Source를 "GitHub Actions"로 변경 (solidbob02 계정 권한). 워크플로는 `.github/workflows/pages.yml`에 있으며 설정 전까지는 배포 단계가 실패한다
 
