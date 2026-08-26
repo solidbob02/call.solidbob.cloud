@@ -21,7 +21,7 @@ from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "fastapi" / "apps"))
+sys.path.insert(0, str(ROOT / "ai" / "apps"))  # 2026-08-26 fastapi/ → server/·ai/ 분리 반영
 
 from retrieval.adapter.outbound.knowledge_base_loader import load_chunks  # noqa: E402
 from retrieval.domain.services.chunking import MAX_CHARS  # noqa: E402

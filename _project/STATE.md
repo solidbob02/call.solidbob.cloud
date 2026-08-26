@@ -24,7 +24,7 @@ ai/       품질을 만들고 재는 쪽   청킹·BM25·리랭크·모델 학�
 > 함께 바꿔야 한다** — 안 바꾸면 없는 검사(`backend`)를 기다리며 PR 이 영원히 머지되지 않는다.
 > 룰셋 변경은 `solidbob02` 계정(admin) 몫이다.
 
-## 2026-08-26 세션 #10 (ai) — 첫 스포크 청킹 + 브랜치 통합 준비
+## 2026-08-26 세션 #10 (ai) — 첫 스포크 청킹 — 첫 스포크 청킹 + 브랜치 통합 준비
 
 **끝낸 것**: `fastapi/apps/retrieval/` 스캐폴딩(chunking domain + KB loader adapter +
 `scripts/index_knowledge_base.py`), `.importlinter` 다섯 목록에 `retrieval` 등록(계약 5종 KEPT),
