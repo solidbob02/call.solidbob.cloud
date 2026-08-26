@@ -12,6 +12,7 @@ from .domain_classification_dto import DomainClassification
 from .myself_dto import MyselfQuery, MyselfResult
 from .recommendation_card_dto import Card, RecommendationCards, Source
 from .retrieved_doc_dto import RetrievedDoc
+from .search_dto import SearchQuery, SearchResult
 from .transcript_dto import MaskedSpan, Speaker, TranscriptEvent
 from .transcript_ingest_dto import TranscriptIngestCommand
 from .trigger_decision_dto import TriggerDecision
@@ -27,6 +28,8 @@ __all__ = [
     "MyselfResult",
     "RecommendationCards",
     "RetrievedDoc",
+    "SearchQuery",
+    "SearchResult",
     "Source",
     "Speaker",
     "TranscriptEvent",

@@ -4,6 +4,14 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-26 (46)
+- **`POST /hub/search` 구현 — 상담원 수동 검색 폴백**(`w2-search-endpoint` done). [§3 프랙탈 단면](https://github.com/solidbob02/call.solidbob.cloud/blob/main/docs/architecture.md) 그대로 스키마→라우터→DTO→입력포트→인터랙터→프로바이더→테스트 8개 파일. `RetrievalPort` 가 이미 있어 `server/` 는 HTTP 경계만 얹었다 — DB 도 필요 없어 백로그 6건 중 유일하게 지금 완결 가능한 티켓이었다
+- **빈 목록으로 통과시키지 않고 501 을 돌려준다.** 빈 결과는 "관련 문서 없음"(B-6)과 구분되지 않아, 200 으로 통과시키면 **검색이 죽은 것인지 정말 없는 것인지 알 수 없게 된다**([절대 원칙 10](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md) — 측정할 수 없는 상태를 만들지 않는다). `masking_provider` 가 같은 이유로 501 인 것과 같은 판단
+- **순위를 허브가 다시 매기지 않는다** — retrieval 스포크가 준 순서를 그대로 유지한다. 허브가 정렬에 손대면 자동 추천과 수동 검색이 서로 다른 순위를 내놓는다. 테스트로 고정
+- 구현 중 확인한 것 — **의존성 해석이 본문 검증보다 먼저다.** 스포크 미등록 상태에서는 입력이 잘못돼도 422 가 아니라 501 이 난다. 구현이 없다는 사실이 먼저 알려지는 쪽이 맞다고 보고 그대로 두되 테스트로 그 순서를 문서화했다
+- 검증: `cd server && pytest` **28개 통과**(11→28) · `lint-imports` 계약 3종 KEPT · 라우트 표에 `POST /hub/search` 확인
+- 남은 것: `ai/apps/retrieval/` 이 `RetrievalPort` 를 구현하면 `dependency_overrides` 에 꽂는다. 다음은 `w2-mysql-persistence`(영속성 — 나머지 4건의 전제)
+
 ### 2026-08-26 (45)
 - **`server/` 파이프라인 백로그 6건 생성.** 콜센터 대시보드에 넣을 기능을 레퍼런스(Genesys Agent Copilot · Amazon Connect · Cresta)와 대조해 뽑고, **프론트가 아니라 그것을 떠받치는 파이프라인 관점**으로 환산했다. 화면은 조서희 님 담당이라 손대지 않는다
 - **가장 큰 공백은 영속성이었다** — `db/schema.sql` 에 테이블 16개가 있는데 **저장하는 코드가 0개**다. 아웃바운드 어댑터가 `log_*` 둘뿐이라 `transcript_ingest_interactor` 가 마스킹까지 제대로 하고도 결과가 어디에도 남지 않는다. `w2-mysql-persistence` 가 나머지 4건의 전제
