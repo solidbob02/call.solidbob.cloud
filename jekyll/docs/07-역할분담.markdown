@@ -61,9 +61,9 @@ permalink: /docs/07/
   "trigger_at_ms": 3150,
   "cards": [
     {
-      "title": "프로모션 할인 적용 시점 안내",
-      "summary": "신규 가입 할인은 가입 다음 달 청구서부터 반영됩니다.",
-      "source": {"doc_id": "TERM-3.2", "title": "요금제약관 제3조 2항"},
+      "title": "부정사용 보상 기준 안내",
+      "summary": "분실 신고 접수 이전의 부정사용액은 고의·중과실이 없는 한 보상됩니다.",
+      "source": {"doc_id": "FIN-TERM-2.2", "title": "이용약관 2장 2항"},
       "similarity_score": 0.87
     }
   ],
@@ -71,17 +71,25 @@ permalink: /docs/07/
   "e2e_latency_ms": 1240
 }
 
-// 종결 판정 (F-2) — closure_type별로 evidence의 키가 다르다 (아래 표 참고)
+// 종결 판정 (F-2) — 도메인·closure_type별로 evidence의 키가 다르다 (아래 표 참고)
 {
   "call_id": "c_001",
-  "closure_type": "해지",
+  "closure_type": "상품해지",
   "reason": "고지 완료",
-  "evidence": {"위약금_안내": true, "잔여할부_안내": false, "고객확인_기록": false},
+  "evidence": {"중도해지수수료_안내": true, "약정혜택소멸_안내": false, "고객확인_기록": false},
   "verdict": "blocked",
-  "missing": ["잔여할부_안내", "고객확인_기록"],
-  "source": {"doc_id": "POLICY-CANCEL-1", "title": "응대매뉴얼 7장"}
+  "missing": ["약정혜택소멸_안내", "고객확인_기록"],
+  "source": {"doc_id": "FIN-POLICY-CLOSE-1", "title": "내부 처리 규정 — 상품 해지 처리"}
 }
 ```
+
+> **2026-08-26 도메인 4종 정리 반영**: 위 예시는 v2 확정 당시(2026-08-25) 통신 도메인
+> 값(`TERM-3.2`, `closure_type: "해지"`)을 썼으나, 그 문서 ID·처리유형은 지금
+> `knowledge-base/`에 존재하지 않는다. **구조(필드명·타입)는 v2 그대로**이고 예시
+> **값**만 실제 스키마에 맞춰 금융보험 도메인 예시로 교체했다 — `db/schema.sql`도
+> 같은 날 `closure_type`·evidence 컬럼을 이 값들로 갱신했다(`_project/decisions/006`).
+> 메시지에 `domain` 필드를 명시적으로 포함할지(현재는 `call_id`로 서버가 `call.domain`을
+> 조회하는 방식을 가정)는 [3.2절 도메인 라우팅](/docs/03/)과 함께 아직 미결이다.
 
 **v1 → v2 수정 사항** (DB `db/schema.sql`·골든셋과 대조해 발견, 정성윤 확인)
 
@@ -89,24 +97,23 @@ permalink: /docs/07/
 |---|---|---|---|
 | `verdict` | (예시에 `blocked`만 노출) | **`"approved" \| "blocked"`로 명시** | DB `closure.verdict ENUM('approved','blocked')`, 골든셋 `expected_verdict`, `golden_set.py` 전부 이미 `approved` 기준으로 통일돼 있었다. `allowed`가 아니다 |
 | `source` | `{"doc": "요금제약관", "clause": "3.2"}` (사람이 읽는 이름) | `{"doc_id": "TERM-3.2", "title": "..."}` (문서 ID + 표시용 제목) | `recommendation_card.source_doc_id`가 `document(document_id)`를 참조하고, 골든셋 정답도 `expected_doc_ids: ["TERM-3.2"]` 형식이라 ID 기준이어야 Recall@5 채점 때 변환 없이 바로 비교된다 |
-| `evidence` | 7개 컬럼을 전부 채우는 것처럼 보임 | **`closure_type`별 부분집합** — 해지(위약금_안내·잔여할부_안내·고객확인_기록) / 명의변경(본인확인_수단·요청경위_확인) / 보상(사유_근거·승인권한_확인). 나머지는 응답에 아예 포함하지 않는다(NULL) | `closure` 테이블 7개 boolean 컬럼이 유형별 전용이다. `missing`은 `evidence` 중 **`false`인 키만** 추출한다 — 해당 없는(NULL) 항목을 넣으면 다른 유형 항목이 오탐으로 잡힌다 |
+| `evidence` | 전체 컬럼을 전부 채우는 것처럼 보임 | **`closure_type`별 부분집합** — 원칙은 v2 그대로 유지. 2026-08-26 도메인 4종 정리 후 실제 값은 상품해지(중도해지수수료_안내·약정혜택소멸_안내·고객확인_기록) / 보상(사고경위_확인·귀책여부_확인, 이상 금융보험) / 반품(환불금액_안내·환불기간_안내·상품상태_확인) / 교환(교환가능_확인·재고_확인, 이상 쇼핑). 나머지는 응답에 아예 포함하지 않는다(NULL) | `closure` 테이블 10개 boolean 컬럼이 유형별 전용이다. `missing`은 `evidence` 중 **`false`인 키만** 추출한다 — 해당 없는(NULL) 항목을 넣으면 다른 유형 항목이 오탐으로 잡힌다 |
 | 전사 이벤트 | `segment_id` 없음 | **`segment_id` 추가** | 20초 발화에 interim이 199건(V4 실측) 오는데, `call_id`만으로는 프론트가 "어느 발화의 갱신인지" 구분할 수 없다. `transcript_segment.segment_id`와 1:1 |
 | `score` | `score` | **`similarity_score`** | `recommendation_card.similarity_score`와 이름을 맞춰 직렬화 매핑 코드를 없앤다 |
 | `rank` | 없음 | **배열 순서 = rank** (서버가 채움, 별도 필드 없음) | `recommendation_card.rank`는 있지만 배열 순서로 이미 표현되므로 필드를 중복시키지 않는다 |
 | `span` | 정의 없음 | **문자(코드포인트) 오프셋으로 확정** | `masking_event.span_start/end`는 INT. 한글은 UTF-8에서 3바이트라 byte 기준이면 프론트·백이 어긋난다 |
 | latency 정의 | 정의 없음 | `internal_latency_ms` = 트리거 발동 → 카드 응답 완료 / `e2e_latency_ms` = `utterance_end_ms` → 화면 표시 | 오늘 V4 실측(최종 결과 = 발화 종료 +346ms)이 `e2e_latency_ms`에 이미 포함되는 값이라는 걸 명확히 해둔다 |
 
-**그대로 유지**: `masked[].type`(P1~P7, `masking_event.pattern`과 일치) · `is_final`/`utterance_end_ms`(`transcript_segment`와 1:1) · `closure_type` 값 `"해지"/"명의변경"/"보상"`(DB ENUM과 일치, "보상·환불"이 아니다).
+**그대로 유지**: `masked[].type`(P1~P7, `masking_event.pattern`과 일치) · `is_final`/`utterance_end_ms`(`transcript_segment`와 1:1) · `closure_type`이 DB ENUM과 정확히 일치해야 한다는 원칙(값 자체는 2026-08-26 `"상품해지"/"보상"/"반품"/"교환"`으로 갱신, [16절 ERD](/docs/16/)).
 
 **자막 렌더링 (장민석 프론트, 정성윤 제안)**: interim은 누적하지 않고 최신 것만 `segment_id` 기준으로 교체, 갱신은 `requestAnimationFrame` 또는 100ms 디바운스로 묶는다. DB에는 `is_final: true`만 저장 — interim까지 저장하면 통화 1건에 수천 행이 쌓인다.
 
-> **⚠ 미반영 — 후속 티켓 (2026-08-25 도메인 4종 확정)**: 위 예시는 여전히 한별텔레콤 시절
-> 값(`TERM-3.2`, `closure_type: "해지"`)을 쓰고 있다. 실제로는 [4개 도메인](/docs/01/)을
-> 지원하므로 v3에서는 ① `domain` 필드 추가, ② `source.doc_id`가 도메인 접두어를 포함(예:
-> `FIN-TERM-3.2`), ③ `closure_type` 값 집합이 도메인별로 달라짐(금융보험: `상품해지`/
-> `보상`, 쇼핑: `반품`/`교환`, 다산콜센터·질병관리본부: F-2 미적용이라 이 필드 자체가
-> 없음)을 반영해야 한다. `db/schema.sql`·`_project/decisions/002·003`도 함께 갱신해야
-> 하는 스키마 변경이라 이번 세션에서는 반영하지 않았다 — `_project/decisions/004` 참고.
+> **✅ 반영 완료 (2026-08-26)**: 위 두 항목(`evidence`·`closure_type`)에서 예고했던
+> v3 변경 — 도메인 접두어 문서 ID(`FIN-TERM-3.2`), 도메인별 `closure_type` 값 집합
+> (금융보험: `상품해지`/`보상`, 쇼핑: `반품`/`교환`) — 을 위 JSON 예시와 `db/schema.sql`에
+> 함께 반영했다(`_project/decisions/006`). 메시지에 별도 `domain` 필드를 넣을지는
+> [3.2절](/docs/03/)과 함께 아직 미결 — `call_id`로 서버가 `call.domain`을 조회하는
+> 방식을 임시로 가정한다.
 
 ---
 

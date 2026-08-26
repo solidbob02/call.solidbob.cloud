@@ -1,26 +1,12 @@
 -- CallGuard MySQL 스키마 — db/generate_schema_docs.py에서 자동 생성.
 -- 이 파일을 직접 고치지 말고 generate_schema_docs.py의 TABLES를 고친 뒤 다시 생성할 것.
 
--- 요금제 — 3NF: plan_name·월정액을 subscriber에 중복 저장하지 않고 여기서 참조
-CREATE TABLE plan (
-    plan_code VARCHAR(20) NOT NULL,
-    plan_name VARCHAR(50) NOT NULL,
-    monthly_fee INT NOT NULL COMMENT '원',
-    data_allowance_gb INT NULL,
-    created_at DATETIME NOT NULL,
-    PRIMARY KEY (plan_code)
-);
-
--- 가입자 — F-2(명의변경 제한 사유)·F-3(반복 문의 연결)가 참조하는 안정적 식별자
-CREATE TABLE subscriber (
-    subscriber_id VARCHAR(40) NOT NULL COMMENT '해시/난수 — 실명 저장 안 함',
-    plan_code VARCHAR(20) NULL,
-    joined_at DATETIME NOT NULL,
-    arrears_flag BOOLEAN NOT NULL COMMENT '요금 체납 중 — TERM-5.3',
-    lost_report_flag BOOLEAN NOT NULL COMMENT '분실·도난 신고 중 — TERM-5.3',
+-- 고객 — F-3(반복 문의 연결)이 참조하는 안정적 식별자. 2026-08-26 도메인 4종 확정 이전엔 통신 전용 `subscriber`(+`plan`/체납·분실신고 플래그)였으나, 그 필드들은 폐기된 명의변경 처리유형(TERM-5.3, 지금은 존재하지 않는 문서 ID)에만 쓰였고 4개 도메인(금융보험·다산콜센터·쇼핑·질병관리본부) 중 어디에도 대응하는 개념이 없어 제거했다 (`_project/decisions/006-db-스키마-도메인-정리.md`)
+CREATE TABLE customer (
+    customer_id VARCHAR(40) NOT NULL COMMENT '해시/난수 — 실명 저장 안 함, 도메인 공통',
+    first_seen_at DATETIME NOT NULL,
     status VARCHAR(20) NOT NULL,
-    PRIMARY KEY (subscriber_id),
-    FOREIGN KEY (plan_code) REFERENCES plan(plan_code)
+    PRIMARY KEY (customer_id)
 );
 
 -- 상담원 마스터 — 부록B H-4/H-5 리스크(감시 도구화)는 UI·집계 노출 문제이지 call.agent_id 존재 자체의 문제가 아니므로 최소 식별자만 둔다
@@ -34,7 +20,8 @@ CREATE TABLE agent (
 -- 통화 — D-1·D-2 결과(summary_text·inquiry_type)를 1:1이라 병합(역정규화)
 CREATE TABLE call (
     call_id VARCHAR(40) NOT NULL,
-    subscriber_id VARCHAR(40) NULL,
+    domain ENUM('finance','dasan','shopping','health') NOT NULL COMMENT '4개 데모 도메인 — 검색·F-2 라우팅 기준([1.4절](/docs/01/))',
+    customer_id VARCHAR(40) NULL,
     agent_id VARCHAR(20) NULL,
     started_at DATETIME NOT NULL,
     ended_at DATETIME NULL,
@@ -44,7 +31,7 @@ CREATE TABLE call (
     summary_text TEXT NULL COMMENT 'D-1, 통화 후 생성',
     inquiry_type VARCHAR(30) NULL COMMENT 'D-2, 통화 후 생성',
     PRIMARY KEY (call_id),
-    FOREIGN KEY (subscriber_id) REFERENCES subscriber(subscriber_id),
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id),
     FOREIGN KEY (agent_id) REFERENCES agent(agent_id)
 );
 
@@ -78,7 +65,7 @@ CREATE TABLE compliance_rule (
     rule_code VARCHAR(4) NOT NULL COMMENT 'C-1~C-4',
     label VARCHAR(50) NOT NULL,
     default_severity ENUM('high','medium','low') NOT NULL,
-    suggestion VARCHAR(200) NULL COMMENT 'MANUAL-1.4 권장 대체 표현',
+    suggestion VARCHAR(200) NULL COMMENT '도메인별 MANUAL 문서의 1.4절(권장 대체 표현), 예: FIN-MANUAL-1.4',
     PRIMARY KEY (rule_code)
 );
 
@@ -97,7 +84,7 @@ CREATE TABLE compliance_flag (
 
 -- 지식베이스 문서 조항 — 실제 본문은 Elasticsearch, 여기는 참조 무결성·관리용 메타데이터. recommendation_card·closure가 참조하므로 그 앞에 정의해야 FK 생성 순서가 맞는다
 CREATE TABLE document (
-    document_id VARCHAR(30) NOT NULL COMMENT '예: TERM-3.2',
+    document_id VARCHAR(30) NOT NULL COMMENT '도메인 접두어 포함, 예: FIN-TERM-3.2',
     doc_type ENUM('TERM','MANUAL','POLICY') NOT NULL,
     chapter VARCHAR(20) NULL,
     clause VARCHAR(20) NULL,
@@ -133,19 +120,22 @@ CREATE TABLE recommendation_card (
     FOREIGN KEY (source_doc_id) REFERENCES document(document_id)
 );
 
--- F-2 종결 판정 — evidence 필드를 역정규화(POLICY 문서 참고)해 하나의 넓은 표로 관리
+-- F-2 종결 판정 — evidence 필드를 역정규화(POLICY 문서 참고)해 하나의 넓은 표로 관리. F-2는 종결형 처리가 있는 금융보험·쇼핑에만 적용된다([1.4절](/docs/01/)) — 다산콜센터·질병관리본부는 안내형 업무라 이 테이블에 행이 생기지 않는다
 CREATE TABLE closure (
     closure_id BIGINT NOT NULL COMMENT 'append-only: UPDATE 없이 INSERT만 (F-4)',
     call_id VARCHAR(40) NOT NULL,
-    closure_type ENUM('해지','명의변경','보상') NOT NULL,
+    closure_type ENUM('상품해지','보상','반품','교환') NOT NULL COMMENT '상품해지·보상=금융보험, 반품·교환=쇼핑',
     reason VARCHAR(100) NULL,
-    위약금_안내 BOOLEAN NULL COMMENT '해지 전용 — POLICY-CANCEL-1',
-    잔여할부_안내 BOOLEAN NULL COMMENT '해지 전용 — POLICY-CANCEL-1',
-    고객확인_기록 BOOLEAN NULL COMMENT '해지 전용 — POLICY-CANCEL-1',
-    본인확인_수단 BOOLEAN NULL COMMENT '명의변경 전용 — POLICY-CHANGE-1',
-    요청경위_확인 BOOLEAN NULL COMMENT '명의변경 전용 — POLICY-CHANGE-1',
-    사유_근거 BOOLEAN NULL COMMENT '보상 전용 — POLICY-REFUND-1',
-    승인권한_확인 BOOLEAN NULL COMMENT '보상 전용 — POLICY-REFUND-1',
+    중도해지수수료_안내 BOOLEAN NULL COMMENT '상품해지 전용(금융보험) — FIN-POLICY-CLOSE-1',
+    약정혜택소멸_안내 BOOLEAN NULL COMMENT '상품해지 전용(금융보험) — FIN-POLICY-CLOSE-1',
+    고객확인_기록 BOOLEAN NULL COMMENT '상품해지 전용(금융보험) — FIN-POLICY-CLOSE-1',
+    사고경위_확인 BOOLEAN NULL COMMENT '보상 전용(금융보험) — FIN-POLICY-COMPENSATE-1',
+    귀책여부_확인 BOOLEAN NULL COMMENT '보상 전용(금융보험) — FIN-POLICY-COMPENSATE-1',
+    환불금액_안내 BOOLEAN NULL COMMENT '반품 전용(쇼핑) — SHOP-POLICY-RETURN-1',
+    환불기간_안내 BOOLEAN NULL COMMENT '반품 전용(쇼핑) — SHOP-POLICY-RETURN-1',
+    상품상태_확인 BOOLEAN NULL COMMENT '반품 전용(쇼핑) — SHOP-POLICY-RETURN-1',
+    교환가능_확인 BOOLEAN NULL COMMENT '교환 전용(쇼핑) — SHOP-POLICY-EXCHANGE-1',
+    재고_확인 BOOLEAN NULL COMMENT '교환 전용(쇼핑) — SHOP-POLICY-EXCHANGE-1',
     verdict ENUM('approved','blocked') NOT NULL,
     source_doc_id VARCHAR(30) NULL,
     decided_at DATETIME NOT NULL,

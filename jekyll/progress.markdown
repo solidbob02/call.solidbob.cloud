@@ -4,6 +4,25 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-26 (8)
+- **`backend`·`main`(`ai` 브랜치 경유) 통합** — GitHub에서 `backend`→`main` PR에 충돌이 뜬 걸 확인. 원인: `ai` 브랜치(정성윤·장민석)가 내 이전 푸시 지점(`a0f95d3`, 도메인 4종 전환 직후)에서 갈라져 `fastapi/` 헥사고날 아키텍처를 독립적으로 구축했고, 그 이후의 내 작업(골든셋 재작성·DB 스키마 정리·B-0 도메인 라우팅)을 모른 채였다. 구조(`fastapi/`)는 저쪽이 더 진전됐고 내용(골든셋·DB 스키마·B-0)은 이쪽이 최신이라, **`fastapi/` 구조를 정본으로 채택하고 구 `services/core/eval/`의 작업물을 그 위로 포팅**했다: `domain_routing.py` 메트릭 이식, `hub/app/dtos/domain_classification_dto.py`+`hub/app/ports/output/domain_routing_port.py` 신규(기존 6개 포트와 같은 ABC 패턴), `harness.py`에 `DomainRoutingPort` 배선, 테스트 이식(`test_domain_routing_metrics.py` import 경로 수정, `test_harness.py`에 async 가짜 포트 배선 테스트 추가). golden-set·db/schema.sql은 main이 아직 구 버전이라 자동 병합됨(내 쪽 그대로 유지). `services/core/` 디렉토리 삭제. `.claude/rules/rfp-harness.md`·`jekyll/_backlogs/w1-db-schema.md`·`w1-dashboard-scaffold.md`·`knowledge-base/README.md`의 병렬 편집도 수동 병합
+- 남은 것: `cd fastapi && pytest`·`lint-imports` 재확인 후 커밋·푸시
+
+### 2026-08-26 (7)
+- **지식베이스 팀 리뷰 완료** — 정성윤·장민석·조서희 팀 회의로 4개 도메인 지식베이스(`knowledge-base/`) 리뷰 마무리. `w1-knowledge-base.md` done 처리
+- **도메인 라우팅 방식 확정 — 자동 분류** (수동 선택 안 함). 근거·설계: `_project/decisions/007-도메인-라우팅-자동분류-확정.md`. 상담원이 매번 도메인을 고르지 않고, 초반 발화를 KcELECTRA 계열 분류기(B-0)로 4클래스 분류하고 신뢰도가 낮으면 4개 인덱스 하이브리드 검색 폴백으로 판정하는 설계로 잡았다 — 새 도구 도입 없음
+- **평가 하네스에 B-0 배선** — `services/core/eval/metrics/domain_routing.py`(정확도 + 오분류 행렬, 규칙 기반) 신규, `harness.py`에 `DomainPredictor` Protocol 추가(미구현 시 "측정 불가"로 정직 보고), 골든셋 `domain` 필드를 정답 라벨로 재사용. [6.1절](/docs/06/)에 목표(정확도 ≥0.95) 반영, [3.2절](/docs/03/)·[2.3절 B-0](/docs/02/) 문서화. 테스트 6건 추가 — `pytest services/core` 33개 전부 통과. 신규 티켓 `w1-domain-routing.md`(류준·장민석 공동). *(2026-08-26 (8)에서 `fastapi/evaluation/`으로 이식됨)*
+- 남은 것: 실제 분류기 구현·학습은 미착수(골든셋 표본 부족, 2주차 확대 후 착수), 폴백에 필요한 B-2 하이브리드 검색도 아직 없음
+
+### 2026-08-26 (6)
+- **DB 스키마를 4개 도메인에 맞게 정리** — 통신 도메인 잔재였던 `plan`(요금제) 테이블 제거, `subscriber`를 `customer`로 정리(체납·분실신고 플래그 삭제 — 지금은 존재하지 않는 TERM-5.3(명의변경 제한)에만 쓰였던 필드), `call`에 `domain` ENUM('finance','dasan','shopping','health') 컬럼 신설(도메인 라우팅 정보가 스키마에 아예 없었던 공백을 메움), `closure.closure_type`/evidence 컬럼을 실제 F-2 적용 도메인(금융보험 상품해지·보상, 쇼핑 반품·교환) 기준으로 교체. `db/generate_schema_docs.py` 수정 후 재실행해 `schema.sql`·`erd.dot`·`ERD.png` 재생성 — 17개→16개 테이블. `db/docs/ERD.md`·[16절 ERD](/docs/16/)·[7.3절 인터페이스 계약](/docs/07/) 예시 전면 갱신, `test_closure_gate_metrics.py` 필드명 동기화 — `pytest services/core` 27개 계속 통과. 결정 기록: `_project/decisions/006-db-스키마-도메인-정리.md`
+- 남은 것: `call.domain`을 실제로 언제·어떻게 채울지(도메인 라우팅 로직)는 여전히 미결([3.2절](/docs/03/)). `closure` evidence를 넓은 표로 둘지 EAV로 둘지도 기존 미결 그대로. 실제 MySQL 마이그레이션 적용은 미착수
+
+### 2026-08-26 (5)
+- **골든셋 10건 재작성** — 한별텔레콤 시나리오였던 기존 10건을 4개 도메인(금융보험·다산콜센터·쇼핑·질병관리본부) 기준으로 전면 재작성. 분포: 금융보험 4(B·C-1·F-2×2)·다산콜센터 2(B·C-5)·쇼핑 3(B·C-5·F-2)·질병관리본부 1(C-2). F-2 케이스는 F-2 적용 도메인(금융보험·쇼핑)에서만 작성. `services/core/eval/golden_set.py`에 `domain` 필드 파싱 추가, `test_golden_set.py`에 도메인 커버리지·F-2 도메인 제약 테스트 2건 추가 — `pytest services/core` 27개 전부 통과. `golden-set/README.md` 갱신
+- `w1-dashboard-scaffold.md` 담당자를 장민석 → 조서희로 변경 (팀 개편 반영 — [7.1절](/docs/07/))
+- 남은 것: 팀 리뷰(F-2 케이스는 규정 작성자 아닌 사람이 검수), 도메인별 Recall@5 집계를 `harness.py`에 배선
+
 ### 2026-08-26 (4)
 - **백엔드 루트를 `fastapi/`로 확정하고 [Task 1] FastAPI 골격 스캐폴딩 — `ai` 브랜치** (`backend`에서 작업하던 것을 `ai`로 옮김). `services/core/eval`→`fastapi/evaluation`(내장 `eval` 가림 해소), `requirements.txt`·`pytest.ini`도 `fastapi/`로(Python 3.13). 신규: `main.py`(합성 루트, `/health` — 설정 *여부*만/SEC-2), `core/config.py`(`.env.example` 키 1:1, `os.environ` 읽는 유일한 곳), `hub/`(7.3절 v2 계약 DTO 3종 + 스포크 포트 6개 + `transcript_ingest`·`myself` 슬라이스를 schema→router→dto→input port→interactor→record port→log adapter→provider→test **프랙탈 단면**대로), `fastapi/.importlinter`(계약 5종 — 클린 계층·스포크 독립·프레임워크 격리·도메인 순수성·허브 격리). `POST /hub/transcripts`는 masking 스포크 미등록 시 **501** — 마스킹 없는 임시 통과 경로는 만들지 않음(SEC-1)
 - **`docs/` 구조 하네스 문서 4종** — `harness.md`(요구사항/평가/구조 하네스 경계 + 검증 명령 + 문서 온톨로지), `architecture.md`(허브-스포크, 헥사고날, 수직 슬라이스 1:1, SOLID 대응, 4인 담당), `domain.md`(**도메인 4종 기준으로 재작성** — 스포크는 기능 축·도메인은 데이터 축, 도메인별 F-2 근거 필드 표, 골든셋 무효·라우팅 미설계 등 한계 명시), `plan-rev4.1.md`(사본). redoceanmap 프로젝트의 슬라이스 1:1·프랙탈 규칙을 크로스체크해 위반 4건(허브 슬라이스 누락·빈 포트·레이아웃·DTO 내 판정 로직) 정정, 평가 하네스는 hub 포트를 직접 소비(`Ports`)해 스포크당 계약 1개

@@ -32,7 +32,7 @@ class Column:
     note: str = ""
     # 식별 관계(True) — 자식이 부모 없이는 존재 의미가 없는 약한 개체(transcript_segment,
     # masking_event 등). 비식별 관계(False, 기본값) — 부모는 참조/분류 대상일 뿐 자식은
-    # 독립적 정체성을 가짐(subscriber→plan, recommendation_card→document 등).
+    # 독립적 정체성을 가짐(call→customer, recommendation_card→document 등).
     # 모든 테이블이 서로게이트 PK를 쓰므로 물리적으로 부모 PK가 자식 PK에 포함되는
     # "진짜" 식별 관계는 없다 — 여기서는 개념적 강한 종속(약한 개체) 여부를 표시한다.
     identifying: bool = False
@@ -48,32 +48,22 @@ class Table:
 
 TABLES: list[Table] = [
     Table(
-        "plan", "요금제 — 3NF: plan_name·월정액을 subscriber에 중복 저장하지 않고 여기서 참조",
-        cluster="가입자",
+        "customer", "고객 — F-3(반복 문의 연결)이 참조하는 안정적 식별자. "
+        "2026-08-26 도메인 4종 확정 이전엔 통신 전용 `subscriber`(+`plan`/체납·분실신고 플래그)였으나, "
+        "그 필드들은 폐기된 명의변경 처리유형(TERM-5.3, 지금은 존재하지 않는 문서 ID)에만 쓰였고 "
+        "4개 도메인(금융보험·다산콜센터·쇼핑·질병관리본부) 중 어디에도 대응하는 개념이 없어 제거했다 "
+        "(`_project/decisions/006-db-스키마-도메인-정리.md`)",
+        cluster="고객",
         columns=[
-            Column("plan_code", "VARCHAR(20)", "PK", nullable=False),
-            Column("plan_name", "VARCHAR(50)", nullable=False),
-            Column("monthly_fee", "INT", nullable=False, note="원"),
-            Column("data_allowance_gb", "INT"),
-            Column("created_at", "DATETIME", nullable=False),
-        ],
-    ),
-    Table(
-        "subscriber", "가입자 — F-2(명의변경 제한 사유)·F-3(반복 문의 연결)가 참조하는 안정적 식별자",
-        cluster="가입자",
-        columns=[
-            Column("subscriber_id", "VARCHAR(40)", "PK", nullable=False, note="해시/난수 — 실명 저장 안 함"),
-            Column("plan_code", "VARCHAR(20)", "FK", "plan.plan_code"),
-            Column("joined_at", "DATETIME", nullable=False),
-            Column("arrears_flag", "BOOLEAN", nullable=False, note="요금 체납 중 — TERM-5.3"),
-            Column("lost_report_flag", "BOOLEAN", nullable=False, note="분실·도난 신고 중 — TERM-5.3"),
+            Column("customer_id", "VARCHAR(40)", "PK", nullable=False, note="해시/난수 — 실명 저장 안 함, 도메인 공통"),
+            Column("first_seen_at", "DATETIME", nullable=False),
             Column("status", "VARCHAR(20)", nullable=False),
         ],
     ),
     Table(
         "agent", "상담원 마스터 — 부록B H-4/H-5 리스크(감시 도구화)는 UI·집계 노출 문제이지 "
         "call.agent_id 존재 자체의 문제가 아니므로 최소 식별자만 둔다",
-        cluster="가입자",
+        cluster="고객",
         columns=[
             Column("agent_id", "VARCHAR(20)", "PK", nullable=False),
             Column("display_name", "VARCHAR(30)", nullable=False),
@@ -85,7 +75,9 @@ TABLES: list[Table] = [
         cluster="통화",
         columns=[
             Column("call_id", "VARCHAR(40)", "PK", nullable=False),
-            Column("subscriber_id", "VARCHAR(40)", "FK", "subscriber.subscriber_id"),
+            Column("domain", "ENUM('finance','dasan','shopping','health')", nullable=False,
+                   note="4개 데모 도메인 — 검색·F-2 라우팅 기준([1.4절](/docs/01/))"),
+            Column("customer_id", "VARCHAR(40)", "FK", "customer.customer_id"),
             Column("agent_id", "VARCHAR(20)", "FK", "agent.agent_id"),
             Column("started_at", "DATETIME", nullable=False),
             Column("ended_at", "DATETIME"),
@@ -129,7 +121,7 @@ TABLES: list[Table] = [
             Column("rule_code", "VARCHAR(4)", "PK", nullable=False, note="C-1~C-4"),
             Column("label", "VARCHAR(50)", nullable=False),
             Column("default_severity", "ENUM('high','medium','low')", nullable=False),
-            Column("suggestion", "VARCHAR(200)", note="MANUAL-1.4 권장 대체 표현"),
+            Column("suggestion", "VARCHAR(200)", note="도메인별 MANUAL 문서의 1.4절(권장 대체 표현), 예: FIN-MANUAL-1.4"),
         ],
     ),
     Table(
@@ -149,7 +141,7 @@ TABLES: list[Table] = [
         "recommendation_card·closure가 참조하므로 그 앞에 정의해야 FK 생성 순서가 맞는다",
         cluster="문서",
         columns=[
-            Column("document_id", "VARCHAR(30)", "PK", nullable=False, note="예: TERM-3.2"),
+            Column("document_id", "VARCHAR(30)", "PK", nullable=False, note="도메인 접두어 포함, 예: FIN-TERM-3.2"),
             Column("doc_type", "ENUM('TERM','MANUAL','POLICY')", nullable=False),
             Column("chapter", "VARCHAR(20)"),
             Column("clause", "VARCHAR(20)"),
@@ -184,20 +176,26 @@ TABLES: list[Table] = [
         ],
     ),
     Table(
-        "closure", "F-2 종결 판정 — evidence 필드를 역정규화(POLICY 문서 참고)해 하나의 넓은 표로 관리",
+        "closure", "F-2 종결 판정 — evidence 필드를 역정규화(POLICY 문서 참고)해 하나의 넓은 표로 관리. "
+        "F-2는 종결형 처리가 있는 금융보험·쇼핑에만 적용된다([1.4절](/docs/01/)) — "
+        "다산콜센터·질병관리본부는 안내형 업무라 이 테이블에 행이 생기지 않는다",
         cluster="종결",
         columns=[
             Column("closure_id", "BIGINT", "PK", nullable=False, note="append-only: UPDATE 없이 INSERT만 (F-4)"),
             Column("call_id", "VARCHAR(40)", "FK", "call.call_id", nullable=False, identifying=True),
-            Column("closure_type", "ENUM('해지','명의변경','보상')", nullable=False),
+            Column("closure_type", "ENUM('상품해지','보상','반품','교환')", nullable=False,
+                   note="상품해지·보상=금융보험, 반품·교환=쇼핑"),
             Column("reason", "VARCHAR(100)"),
-            Column("위약금_안내", "BOOLEAN", note="해지 전용 — POLICY-CANCEL-1"),
-            Column("잔여할부_안내", "BOOLEAN", note="해지 전용 — POLICY-CANCEL-1"),
-            Column("고객확인_기록", "BOOLEAN", note="해지 전용 — POLICY-CANCEL-1"),
-            Column("본인확인_수단", "BOOLEAN", note="명의변경 전용 — POLICY-CHANGE-1"),
-            Column("요청경위_확인", "BOOLEAN", note="명의변경 전용 — POLICY-CHANGE-1"),
-            Column("사유_근거", "BOOLEAN", note="보상 전용 — POLICY-REFUND-1"),
-            Column("승인권한_확인", "BOOLEAN", note="보상 전용 — POLICY-REFUND-1"),
+            Column("중도해지수수료_안내", "BOOLEAN", note="상품해지 전용(금융보험) — FIN-POLICY-CLOSE-1"),
+            Column("약정혜택소멸_안내", "BOOLEAN", note="상품해지 전용(금융보험) — FIN-POLICY-CLOSE-1"),
+            Column("고객확인_기록", "BOOLEAN", note="상품해지 전용(금융보험) — FIN-POLICY-CLOSE-1"),
+            Column("사고경위_확인", "BOOLEAN", note="보상 전용(금융보험) — FIN-POLICY-COMPENSATE-1"),
+            Column("귀책여부_확인", "BOOLEAN", note="보상 전용(금융보험) — FIN-POLICY-COMPENSATE-1"),
+            Column("환불금액_안내", "BOOLEAN", note="반품 전용(쇼핑) — SHOP-POLICY-RETURN-1"),
+            Column("환불기간_안내", "BOOLEAN", note="반품 전용(쇼핑) — SHOP-POLICY-RETURN-1"),
+            Column("상품상태_확인", "BOOLEAN", note="반품 전용(쇼핑) — SHOP-POLICY-RETURN-1"),
+            Column("교환가능_확인", "BOOLEAN", note="교환 전용(쇼핑) — SHOP-POLICY-EXCHANGE-1"),
+            Column("재고_확인", "BOOLEAN", note="교환 전용(쇼핑) — SHOP-POLICY-EXCHANGE-1"),
             Column("verdict", "ENUM('approved','blocked')", nullable=False),
             Column("source_doc_id", "VARCHAR(30)", "FK", "document.document_id"),
             Column("decided_at", "DATETIME", nullable=False),
@@ -365,7 +363,7 @@ def to_dot(tables: list[Table]) -> str:
         '(transcript_segment, masking_event, recommendation_card 등)</TD></TR>',
         '<TR><TD ALIGN="LEFT">┄┄┄┄┄┄</TD>'
         '<TD ALIGN="LEFT">비식별 관계 — 참조·분류 대상. 자식이 독립적 정체성을 가짐<BR/>'
-        '(subscriber→plan, recommendation_card→document 등)</TD></TR>',
+        '(call→customer, recommendation_card→document 등)</TD></TR>',
         '<TR><TD ALIGN="LEFT">──▷</TD><TD ALIGN="LEFT">까마귀발 = N쪽(자식 여러 행)</TD></TR>',
         '<TR><TD ALIGN="LEFT">──┤</TD><TD ALIGN="LEFT">막대 = 1쪽(부모 1행)</TD></TR>',
     ]

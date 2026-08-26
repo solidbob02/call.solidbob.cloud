@@ -6,8 +6,9 @@
 #   (2) 앱 '사이'  — 스타 토폴로지: hub(허브) 중심, 스포크끼리 직접 참조 금지
 #
 # 실행:
-#   cd fastapi && PYTHONPATH=. lint-imports --config .importlinter
+#   cd fastapi && PYTHONPATH=apps lint-imports --config .importlinter
 #
+# (apps/ 를 경로에 올려야 hub·evaluation 등이 최상위 패키지로 보인다. main.py 의 sys.path.insert 와 동일한 맥락.)
 # 스포크를 새로 만들면 아래 다섯 목록 전부에 이름을 추가한다 (docs/architecture.md §1 의 표 순서).
 # 아직 없는 패키지를 적으면 lint-imports 가 "모듈 없음"으로 실패하므로, 실제로 만든 것만 적는다.
 # 예정: retrieval · generation · compliance · masking · closure_gate · postcall
