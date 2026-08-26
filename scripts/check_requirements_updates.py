@@ -14,7 +14,7 @@ from datetime import datetime
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-REQUIREMENTS = REPO_ROOT / "requirements.txt"
+REQUIREMENTS = REPO_ROOT / "fastapi" / "requirements.txt"
 VENV_PIP = REPO_ROOT / ".venv" / "bin" / "pip"
 LOG_DIR = REPO_ROOT / "logs"
 LOG_FILE = LOG_DIR / "requirements_check.log"

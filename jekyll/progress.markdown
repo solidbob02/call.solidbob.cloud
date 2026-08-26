@@ -4,6 +4,11 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-26 (4)
+- **백엔드 루트를 `fastapi/`로 확정하고 [Task 1] FastAPI 골격 스캐폴딩 — `ai` 브랜치** (`backend`에서 작업하던 것을 `ai`로 옮김). `services/core/eval`→`fastapi/evaluation`(내장 `eval` 가림 해소), `requirements.txt`·`pytest.ini`도 `fastapi/`로(Python 3.13). 신규: `main.py`(합성 루트, `/health` — 설정 *여부*만/SEC-2), `core/config.py`(`.env.example` 키 1:1, `os.environ` 읽는 유일한 곳), `hub/`(7.3절 v2 계약 DTO 3종 + 스포크 포트 6개 + `transcript_ingest`·`myself` 슬라이스를 schema→router→dto→input port→interactor→record port→log adapter→provider→test **프랙탈 단면**대로), `fastapi/.importlinter`(계약 5종 — 클린 계층·스포크 독립·프레임워크 격리·도메인 순수성·허브 격리). `POST /hub/transcripts`는 masking 스포크 미등록 시 **501** — 마스킹 없는 임시 통과 경로는 만들지 않음(SEC-1)
+- **`docs/` 구조 하네스 문서 4종** — `harness.md`(요구사항/평가/구조 하네스 경계 + 검증 명령 + 문서 온톨로지), `architecture.md`(허브-스포크, 헥사고날, 수직 슬라이스 1:1, SOLID 대응, 4인 담당), `domain.md`(**도메인 4종 기준으로 재작성** — 스포크는 기능 축·도메인은 데이터 축, 도메인별 F-2 근거 필드 표, 골든셋 무효·라우팅 미설계 등 한계 명시), `plan-rev4.1.md`(사본). redoceanmap 프로젝트의 슬라이스 1:1·프랙탈 규칙을 크로스체크해 위반 4건(허브 슬라이스 누락·빈 포트·레이아웃·DTO 내 판정 로직) 정정, 평가 하네스는 hub 포트를 직접 소비(`Ports`)해 스포크당 계약 1개
+- CI `test.yml`을 `fastapi/` 기준으로 갱신(Python 3.13, pytest + import-linter step, `ai` 브랜치 트리거). 검증: `cd fastapi && pytest` **37개 통과**, `lint-imports` 5종 통과. 남은 것: 7.3절 계약 `domain` 필드(v3), 도메인 라우팅 설계, 골든셋 재작성 후 `golden_set.py` 로더 갱신
+
 ### 2026-08-26 (3)
 - **백엔드·AI(류준·장민석) 내부 분담 방식 확정** — 기능별로 쪼개 전담을 나누지 않고 **둘이 함께(공동 작업)** 하기로 확정. `jekyll/docs/07`·`open-items.markdown`·`.claude/rules/rfp-harness.md`·`14-이번주할일.markdown` 반영, `_project/decisions/005` 갱신
 

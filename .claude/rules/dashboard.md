@@ -43,7 +43,7 @@ interface RecommendationCard {
 
 ## 3. API·WebSocket 통신
 
-- `services/gateway`(WebSocket)와 `services/core`(REST) 호출은 각각 단일 클라이언트
+- `services/gateway`(WebSocket)와 `fastapi`(REST) 호출은 각각 단일 클라이언트
   모듈(`lib/ws/gatewayClient.ts`, `lib/api/coreClient.ts`)로 모으고, 컴포넌트에서 직접
   소켓/HTTP 호출을 흩뿌리지 않는다.
 - 에러 메시지는 한국어로, 사용자에게 서버 내부 정보(스택트레이스 등)를 노출하지 않는다.

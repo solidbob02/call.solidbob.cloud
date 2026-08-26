@@ -1,16 +1,17 @@
-name: CI — 하네스 테스트 · 사이트 빌드
+name: CI — 하네스 테스트 · 구조 계약 · 사이트 빌드
 
 # 회귀 방지용이다. "완성됐는가"가 아니라 "어제 되던 게 오늘도 되는가"를 본다.
-# 3인이 4개 브랜치에서 병합하는 구조라, 누군가의 머지가 하네스를 깨도
+# 4인이 여러 브랜치에서 병합하는 구조라, 누군가의 머지가 하네스를 깨도
 # 자동으로 돌지 않으면 다음에 손으로 돌린 사람이 우연히 발견하게 된다.
 #
 # 범위를 좁게 유지한다:
-#  - pytest 만 설치한다. requirements.txt 의 torch·transformers 는 테스트가 쓰지 않는다
-#    (services/core/tests 는 표준 라이브러리와 프로젝트 모듈만 import 한다)
+#  - fastapi/requirements.txt 전체를 설치하지 않는다. torch·transformers 는 테스트가 쓰지 않는다.
+#    테스트가 실제로 import 하는 것만 설치한다 (pytest · fastapi · httpx(TestClient) · import-linter).
 #  - 기준선 미달 시 실패(기획서 6.2절)는 아직 넣지 않는다. 측정값이 없어서
 #    무조건 실패하거나 가짜 기준선을 넣게 된다 — 절대 원칙 2번 위반.
 #    2주차 잠정 베이스라인이 나온 뒤 별도로 붙인다.
-#  - 실제 DB·ES·외부 API 가 필요한 테스트는 pytest.ini 의 `-m "not integration"` 로 빠진다
+#  - 실제 DB·ES·외부 API 가 필요한 테스트는 fastapi/pytest.ini 의 `-m "not integration"` 로 빠진다
+#  - 구조 계약(import-linter 5종, docs/harness.md §1)은 테스트와 별개 step — 계층 위반은 테스트가 못 잡는다
 
 on:
   push:
@@ -27,8 +28,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  pytest:
+  backend:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fastapi
     steps:
       - name: 체크아웃
         uses: actions/checkout@v4
@@ -36,15 +40,17 @@ jobs:
       - name: 파이썬 설치
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.13'
 
-      - name: pytest 설치
-        # requirements.txt 전체를 설치하지 않는다. 테스트에 필요한 건 pytest 뿐이고,
-        # 모델 의존성까지 받으면 매 실행이 몇 분씩 걸린다.
-        run: pip install pytest==9.1.1
+      - name: 테스트 의존성 설치
+        # 버전은 fastapi/requirements.txt 의 고정값과 같게 유지한다.
+        run: pip install pytest==9.1.1 fastapi==0.141.1 httpx==0.28.1 import-linter==2.13
 
       - name: 테스트 실행
         run: pytest
+
+      - name: 구조 계약 검사 (import-linter)
+        run: PYTHONPATH=. lint-imports --config .importlinter
 
   jekyll:
     # 사이트가 곧 산출물이다. main 에 머지되는 순간 배포되므로, 깨진 채로 들어가면
