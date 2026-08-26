@@ -4,6 +4,16 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-26 (15)
+- **브랜치 통합 준비 — `ai` 쪽 정리**. PR #22 머지로 `ai` 브랜치에 고유 커밋이 0건이 됐다(청킹·골든셋 50건·문서 정합성 전부 `main` 반영 확인). **지금 `ai` 를 정리해도 잃는 것이 없다**
+- **합친 뒤에 고쳐야 할 곳 2군데를 찾아 기록** — `.github/workflows/test.yml:19`(`branches: [main, PM, backend, ai, frontend]`)와 [7절 브랜치 규칙](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md). **먼저 고치면 안 된다** — `ai` 가 살아 있는 동안 트리거에서 빼면 그 브랜치 푸시에 CI 가 돌지 않는다
+- **`main` 에 브랜치 보호 설정이 없음을 확인**(API 404). `pages.yml` 은 `main` push 시 즉시 공개 배포이므로, 브랜치를 없애고 직접 커밋으로 가려면 **보호 설정을 먼저 켜는 것이 전제**다. 지금은 PR·CI 가 유일한 게이트다
+- 네 브랜치가 실제로 만진 파일 영역을 세어보니 `jekyll/_backlogs`·`fastapi/apps/hub/app/*` 로 **전부 겹친다** — 브랜치가 격리를 제공하지 못하는 상태라는 것이 통합 논의의 근거가 된다
+- 미결 2건 등록([미결 항목](/open-items/)) — **ES 인덱스 분할 여부**(2주차 진행을 막고 있음)와 **브랜치 구조 통합 여부**
+- `w1-domain-routing` 에 `w2-domain-routing` 과의 관계 명시(결정 vs 구현) — 세션 종료 검사가 슬러그 중복으로 경고하지만 다른 작업이라 합치지 않았다. 전제였던 골든셋 50건은 확보됐고 남은 전제는 B-2 검색
+- `_project/STATE.md` 를 세션 #10 기준으로 갱신
+- 남은 것: 브랜치 통합 방식은 **팀 결정 사항** (`_project/decisions/` 대상). ES 인덱스 결정 후 `w2-naive-rag` 착수
+
 ### 2026-08-26 (14)
 - **첫 스포크 `fastapi/apps/retrieval/` 착수 — 지식베이스 청킹**(`w2-kb-index`). `domain/services/chunking.py`(조항 마커 파싱 + 상한 초과 시 문단 경계 분할)·`domain/value_objects/chunk.py`·`adapter/outbound/knowledge_base_loader.py`·`scripts/index_knowledge_base.py`. **청크 102개**(finance 34·shopping 27·health 21·dasan 20), 두 번 돌려 바이트 단위로 동일함을 확인. `.importlinter` 다섯 목록에 `retrieval` 등록 — 계약 5종 KEPT, `pytest` **64개 통과**(45→64)
 - **청킹 방식을 티켓의 "고정 길이"에서 "1 조항 = 1 청크"로 변경** — 조항 102개 길이를 실측하니 중앙값 101자·최대 332자로 **400자 초과가 0건**이라, 고정 길이(500자 등)로 자르면 조항이 쪼개지는 게 아니라 여러 조항이 한 청크로 뭉친다. 그러면 골든셋 `expected_doc_ids`(조항 ID 기준)로 Recall@5 를 채점할 수 없다. 상한 400자는 문서가 길어질 때를 위한 안전장치로만 남겼다
