@@ -52,7 +52,10 @@
 
 - **사업명**: CallGuard (StreamRAG : CallGuard) — 실시간 상담원 어시스트 RAG 시스템
 - **팀명**: SOLIDBOB
-- **팀 (2026-08-26 개편)**: 정성윤(AWS·인프라) · 류준·장민석(백엔드·AI, 공동) · 조서희(프론트엔드, 신규 합류)
+- **팀 (2026-08-26 개편)**: 정성윤(AWS·인프라) · 류준(백엔드·AI 중 `ai/`) · 장민석(백엔드·AI 중 `server/`) · 조서희(프론트엔드, 신규 합류)
+  — 백엔드·AI 는 원래 "둘이 함께"였으나, `fastapi/` 가 `server/`·`ai/` 로 갈리면서
+  **디렉터리 경계를 담당 경계로** 삼았다(`_project/decisions/012`). ⚠ 브랜치 이름과
+  엇갈린다 — 류준은 브랜치 `backend`에서 `ai/`를, 장민석은 브랜치 `ai`에서 `server/`를 고친다
   — 원래 3인 체제(정성윤·류준·장민석)에서 플러터 앱 개발을 접고, 장민석이 프론트엔드에서
   류준과 함께 백엔드·AI로 옮기고, 조서희가 새로 합류해 프론트엔드를 전담한다. 근거:
   `_project/decisions/005-팀-개편-4인-체제.md`
@@ -136,7 +139,7 @@ ai/                      품질을 만들고 재는 쪽 (Python 3.13). 청킹·B
                          · requirements.txt · pytest.ini · CLAUDE.md(영역 규칙). 배포: ai.solidbob.cloud
                          검증: cd ai && pytest && PYTHONPATH=apps:../server/apps lint-imports --config .importlinter
                          의존 방향은 ai → server 한쪽뿐이다 (evaluation 이 hub 계약을 import). 역방향은 계약이 막는다
-apps/                    dashboard(상담원). 고객 화면은 `_project/decisions/009` 로 철회(008 철회)
+apps/                    dashboard(상담원). 고객 화면은 `_project/decisions/014` 로 철회(013 철회)
 scripts/ data/           유틸리티 / 데이터 (원본은 .gitignore)
 .github/workflows/       Pages 배포(pages.yml) · CI(test.yml — server · ai · jekyll job) · branch-protection.json
 jekyll/                  지킬 사이트 루트 — 지킬 명령은 전부 이 안에서 실행
@@ -269,7 +272,7 @@ code(eval): 마스킹 재현율 계산 추가
 `flutter` 는 앱 개발 중단(2026-08-26)으로 `ai` 에 대체됐다.
 
 **`ai` 와 `backend` 를 합치지 않는다** (2026-08-26 결정). 류준·장민석이 백엔드·AI 를 공동으로
-맡지만 브랜치는 따로 둔다. 근거·되돌리는 법: `_project/decisions/009-브랜치-정책과-main-보호.md`.
+맡지만 브랜치는 따로 둔다. 근거·되돌리는 법: `_project/decisions/011-브랜치-정책과-main-보호.md`.
 
 > 브랜치를 합쳐도 충돌은 줄지 않는다. 이번 주 충돌 3건(`w2-domain-routing`·`w2-db-schema-domain`·
 > `progress.markdown`)의 원인은 브랜치 수가 아니라 **같은 티켓을 두 사람이 동시에 고친 것**이었다.
