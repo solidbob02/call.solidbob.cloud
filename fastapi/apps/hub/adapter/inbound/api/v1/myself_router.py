@@ -12,8 +12,8 @@ myself_router = APIRouter(prefix="/hub", tags=["hub"])
 
 
 @myself_router.get("/myself", response_model=MyselfResponseSchema)
-def introduce_myself(use_case: MyselfUseCase = Depends(get_myself_use_case)) -> MyselfResponseSchema:
-    result = use_case.introduce_myself(MyselfQuery(name="허브 (hub)"))
+async def introduce_myself(use_case: MyselfUseCase = Depends(get_myself_use_case)) -> MyselfResponseSchema:
+    result = await use_case.introduce_myself(MyselfQuery(name="허브 (hub)"))
     return MyselfResponseSchema(
         name=result.name,
         introduction=result.introduction,

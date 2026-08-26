@@ -24,8 +24,8 @@ class MyselfInteractor(MyselfUseCase):
     def __init__(self, record: MyselfRecordPort) -> None:
         self._record = record
 
-    def introduce_myself(self, query: MyselfQuery) -> MyselfResult:
-        self._record.record(query)
+    async def introduce_myself(self, query: MyselfQuery) -> MyselfResult:
+        await self._record.record(query)
         return MyselfResult(
             name=query.name,
             introduction=(

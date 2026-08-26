@@ -153,7 +153,7 @@ policy, 도메인 접두어 ID), `CLAUDE.md`·`rev4-보완지시서.md`(9번 항
    미룸([16절 ERD](/docs/16/)의 경고 박스 참고)
 3. `jekyll/docs/03-아키텍처.markdown`은 이번 세션에서 확인/수정하지 못했다 — 도메인
    라우팅 로직이 들어갈 자리인지 다음 세션에서 점검할 것
-4. `fastapi/evaluation/`의 골든셋 로더·지표 계산이 `domain` 필드를 다루도록 돼 있는지
+4. `fastapi/apps/evaluation/`의 골든셋 로더·지표 계산이 `domain` 필드를 다루도록 돼 있는지
    미확인 — 코드베이스 자체는 아직 확인 전
 
 ---
@@ -196,7 +196,7 @@ policy, 도메인 접두어 ID), `CLAUDE.md`·`rev4-보완지시서.md`(9번 항
 4. **인터페이스 스키마 3종 확정** — 초안은 기획서 7.3절. 팀 컨펌 대기.
 5. **평가 하네스 CI 연결** — 하네스 골격은 류준이 완료(테스트 24개 통과). CI는 정성윤 담당. `.github/workflows/test.yml`은 2026-08-26에 `fastapi/` 기준(working-directory, Python 3.13, import-linter step, `ai` 브랜치 추가)으로 갱신됨.
 6. **백엔드 루트 `fastapi/` + 허브-스포크 (2026-08-26, `ai` 브랜치)** — `services/core/eval`→`fastapi/evaluation`, `hub/`에 `transcript_ingest`·`myself` 슬라이스(프랙탈 단면), 계약 5종 `fastapi/.importlinter` 통과, 테스트 37개. `backend` 브랜치의 stash는 `ai`에 복원 후 삭제. 스포크 0개 — `POST /hub/transcripts`는 masking 스포크가 꽂히기 전까지 501.
-7. **첫 스포크 착수 순서** — `masking`(정성윤, P1~P5) → `retrieval`(류준·장민석, B-1 트리거 is_final 기반 + B-2 + **도메인 라우팅**). 각 스포크는 `docs/architecture.md §3` 단면대로, `hub/app/ports/output/<이름>_port.py` 구현, `main.py` `dependency_overrides`와 `evaluation.harness.Ports(...)` 양쪽에 꽂고 `.importlinter` 다섯 목록에 이름 추가.
+7. **첫 스포크 착수 순서** — `masking`(정성윤, P1~P5) → `retrieval`(류준·장민석, B-1 트리거 is_final 기반 + B-2 + **도메인 라우팅**). 각 스포크는 `docs/architecture.md §3` 단면대로, `apps/hub/app/ports/output/<이름>_port.py` 구현, `main.py` `dependency_overrides`와 `evaluation.harness.Ports(...)` 양쪽에 꽂고 `.importlinter` 다섯 목록에 이름 추가.
 8. **도메인 4종이 백엔드에 미친 것** — `ClosureType`은 `str`(도메인별 처리유형), `docs/domain.md` 재작성 완료. 아직 안 된 것: 7.3절 계약에 `domain` 필드(v3), `golden_set.py` 로더 `domain` 필드, 도메인 라우팅 설계, `closure` DDL. F-2 규칙(verdict/missing ↔ evidence)은 `closure_gate/domain/services` 몫.
 
 ---
@@ -205,5 +205,5 @@ policy, 도메인 접두어 ID), `CLAUDE.md`·`rev4-보완지시서.md`(9번 항
 
 - 이 저장소는 두 사람이 서로 모르고 같은 작업을 한 이력이 있다(사이트·ERD·골든셋 양식). **작업 전에 `jekyll/progress.markdown`을 먼저 읽는다.**
 - backend의 `Gemfile.lock`은 macOS 기준이라 이 WSL에서는 `bundle install`을 한 번 돌려야 빌드된다(sass-embedded 버전 차이).
-- 로컬 4000 포트는 다른 지킬 사이트가 점유 중이라 이 머신에서는 4001을 쓴다.
+- 로컬 지킬 포트 (2026-08-26 정리): **이 저장소 = 4000**, `com.minseok.callguard/jekyll`(같은 프로젝트의 다른 클론) = 4200, `com.redoceanmap/blog` = 4100. 셋 다 `--detach`로 떠 있음 — `lsof -nP -iTCP:4000 -sTCP:LISTEN`으로 확인.
 - 원격 인증: `gh` = SeongYuna (협업자, push 가능 / admin 아님). 저장소 설정 변경은 solidbob02만.

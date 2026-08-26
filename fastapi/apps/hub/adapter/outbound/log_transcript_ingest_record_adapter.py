@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class LogTranscriptIngestRecordAdapter(TranscriptIngestRecordPort):
-    def record(self, event: TranscriptEvent) -> None:
+    async def record(self, event: TranscriptEvent) -> None:
         logger.info(
             "transcript ingested call_id=%s segment_id=%s speaker=%s is_final=%s masked=%d",
             event.call_id, event.segment_id, event.speaker, event.is_final, len(event.masked),

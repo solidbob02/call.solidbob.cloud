@@ -134,7 +134,7 @@ ES는 도메인별 별도 인덱스 또는 같은 인덱스의 `domain` 필드 �
 
 ## 5. 골든셋 스키마 ↔ 코드 (재작성 대기)
 
-`evaluation/golden_set.py`가 현재 골든셋(구 스키마)을 파싱한다. 재작성된 골든셋은 항목마다 `domain`이 붙어야 하고, `expected_doc_ids`·`source`는 새 ID(`FIN-TERM-3.2` 등)를 가리켜야 한다. 로더에 `domain` 필드 추가는 그때 한다.
+`apps/evaluation/golden_set.py`가 현재 골든셋(구 스키마)을 파싱한다. 재작성된 골든셋은 항목마다 `domain`이 붙어야 하고, `expected_doc_ids`·`source`는 새 ID(`FIN-TERM-3.2` 등)를 가리켜야 한다. 로더에 `domain` 필드 추가는 그때 한다.
 
 | 골든셋 필드 | `golden_set.py` | 도메인 배치 예정 |
 |---|---|---|

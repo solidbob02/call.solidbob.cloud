@@ -1,5 +1,7 @@
 # Requirement: 부록 A-1, QUA-1
 
+import asyncio
+
 from hub.app.dtos import MyselfQuery
 from hub.app.ports.output import MyselfRecordPort
 from hub.app.use_cases.myself_interactor import MyselfInteractor
@@ -11,13 +13,13 @@ class _SpyRecord(MyselfRecordPort):
     def __init__(self):
         self.queries = []
 
-    def record(self, query: MyselfQuery) -> None:
+    async def record(self, query: MyselfQuery) -> None:
         self.queries.append(query)
 
 
 def test_myself_states_real_endpoints_and_limits_without_forbidden_phrases():
     record = _SpyRecord()
-    result = MyselfInteractor(record).introduce_myself(MyselfQuery(name="허브 (hub)"))
+    result = asyncio.run(MyselfInteractor(record).introduce_myself(MyselfQuery(name="허브 (hub)")))
     assert record.queries == [MyselfQuery(name="허브 (hub)")]
     assert any("/hub/transcripts" in e for e in result.endpoints)
     assert result.does_not  # 하지 않는 것을 반드시 말한다

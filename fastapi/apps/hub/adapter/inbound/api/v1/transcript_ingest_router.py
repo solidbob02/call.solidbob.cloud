@@ -18,11 +18,11 @@ transcript_ingest_router = APIRouter(prefix="/hub", tags=["hub"])
 
 
 @transcript_ingest_router.post("/transcripts", response_model=TranscriptEventSchema)
-def ingest_transcript(
+async def ingest_transcript(
     body: TranscriptIngestRequest,
     use_case: TranscriptIngestUseCase = Depends(get_transcript_ingest_use_case),
 ) -> TranscriptEventSchema:
-    event = use_case.ingest(
+    event = await use_case.ingest(
         TranscriptIngestCommand(
             call_id=body.call_id,
             segment_id=body.segment_id,

@@ -54,6 +54,6 @@
 - [x] `db/schema.sql`·ERD의 통신 특화 테이블(`subscriber`/`plan`)을 도메인 중립적으로
       재검토 완료(2026-08-26) — `_project/decisions/006-db-스키마-도메인-정리.md`
 - [x] 평가 하네스에 도메인 라우팅(B-0) 배선 완료(2026-08-26, 자동 분류로 확정) —
-      `_project/decisions/007-도메인-라우팅-자동분류-확정.md`. **`fastapi/retrieval/`
+      `_project/decisions/007-도메인-라우팅-자동분류-확정.md`. **`fastapi/apps/retrieval/`
       스포크의 실제 구현(분류기)은 아직 없음** — 통화가 어느 도메인인지 실시간으로
       판정하는 로직 자체는 여전히 설계 전
