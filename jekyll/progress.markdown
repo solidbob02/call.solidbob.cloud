@@ -4,6 +4,14 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-26 (45)
+- **브랜치 개편에 CI·문서를 맞췄다 — `backend` 삭제, `ai`(류준)·`server`(장민석) 확정.** 담당 디렉터리 분리(`decisions/012`)에 맞춰 브랜치 이름을 정리한 결과, **브랜치 이름 = 디렉터리 이름 = CI job 이름**이 됐다. 그런데 `test.yml` 트리거 목록이 `[main, PM, backend, server, frontend]` 로 남아 있었다 — **없어진 `backend` 를 가리키고 실제 쓰는 `ai` 가 빠져 있어, 류준이 `ai` 브랜치에 푸시해도 테스트가 돌지 않는 상태**였다. `[main, PM, ai, server, frontend]` 로 교체
+- **오늘 같은 함정에 세 번째로 걸렸다** — ① 오전 `flutter`→`ai` 개명 때 트리거 목록 누락 ② `fastapi/` 분리로 job 이름이 `backend`→`server`+`ai` 로 갈렸을 때 룰셋의 필수 통과 검사 누락(PR 이 없는 검사를 기다리며 머지 불가) ③ 이번 브랜치 개편 때 트리거 목록 누락. 매번 **이름을 한 곳만 바꾸고 나머지가 조용히 어긋났다.** `CLAUDE.md` §7 에 "이름을 바꿀 때는 세 곳을 함께 고친다 — `test.yml` 트리거(브랜치) · `test.yml` job 이름 · main 룰셋의 필수 통과 검사"를 실제 사례와 함께 못박았다
+- **`CLAUDE.md` 3곳 정정** — ① 팀 소개의 "류준만 아직 엇갈린다 — 브랜치 `backend` 에서 `ai/` 를 고친다"는 `backend` 삭제로 **해소됐다**(이제 브랜치·디렉터리가 일치) ② §7 브랜치 절을 `PM`/`ai`/`server`/`frontend` 기준으로 재작성 ③ main 보호 설정 표가 실제와 달랐다 — 승인 "1건 이상"→**0건**(혼자 관리), 필수 검사 `backend`→**`server`·`ai`·`jekyll`**
+- **룰셋은 이미 정리돼 있었다** — 확인해 보니 `['jekyll','ai','server']` 로 `backend` 가 빠진 상태였다. 내 계정은 `admin` 이 없어 API 로는 못 고치므로(404) 정성윤이 직접 처리한 것으로 보인다
+- **네 곳 정합성 확인** — 브랜치 `PM·ai·server·frontend` / CI 트리거 `main, PM, ai, server, frontend` / CI job `server, ai, jekyll` / 룰셋 필수검사 `server, ai, jekyll`. 전부 맞물린다
+- 남은 것: `ai`·`server` 브랜치는 현재 main 과 동기화된 상태(ahead 0)라 새 작업이 올라오면 CI 가 정상 작동하는지 첫 푸시에서 확인 필요
+
 ### 2026-08-26 (44)
 - **브랜치 `ai` → `server` 로 개명.** 담당 디렉터리 분리(`_project/decisions/012` — 류준 `ai/` · 장민석 `server/`) 직후 [7절](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md)이 "⚠ 브랜치 이름과 엇갈린다 — 장민석은 브랜치 `ai`에서 `server/`를 고친다"고 적어야 했던 상태를 해소한 것이다. 이제 장민석은 브랜치 `server` 에서 `server/` 를 고친다
 - 함께 고친 곳 — `.github/workflows/test.yml` 트리거 목록(`ai` → `server`), `CLAUDE.md` 팀 절·브랜치 절
