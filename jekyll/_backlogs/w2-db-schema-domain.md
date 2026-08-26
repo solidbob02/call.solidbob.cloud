@@ -2,7 +2,7 @@
 title: "DB 스키마 도메인 재검토 — 통신 특화 테이블 정리"
 assignee: "류준·장민석"
 role: "ai"
-status: "todo"
+status: "done"
 sprint: 2
 priority: 8
 date: 2026-08-26
@@ -27,3 +27,5 @@ F-2 는 금융보험·쇼핑에만 적용되고 다산콜센터·질병관리본
 ## 완료 조건
 
 `db/schema.sql` · ERD 갱신 + 계약 반영 여부 확인 + 팀 승인([w1-db-schema](/backlog/w1-db-schema/)와 함께).
+
+**2026-08-26 — 1주차에 완료됨.** 이 티켓을 만들 때는 미착수로 봤으나, 실제 작업은 같은 날 [w1-db-schema](/backlog/w1-db-schema/)에서 끝났다(`decisions/006`). 별도로 진행한 작업은 없다.

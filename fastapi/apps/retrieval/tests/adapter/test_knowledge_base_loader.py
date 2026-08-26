@@ -1,0 +1,47 @@
+# Requirement: B-2
+from pathlib import Path
+
+import pytest
+
+from retrieval.adapter.outbound.knowledge_base_loader import load_chunks
+from retrieval.domain.value_objects.chunk import DOMAINS
+
+KB_ROOT = Path(__file__).resolve().parents[4].parent / "knowledge-base"
+
+
+@pytest.fixture(scope="module")
+def chunks():
+    return load_chunks(KB_ROOT)
+
+
+def test_네_도메인이_모두_실린다(chunks):
+    assert {c.domain for c in chunks} == set(DOMAINS)
+
+
+def test_조항_ID가_중복되지_않는다(chunks):
+    ids = [c.chunk_id for c in chunks]
+    assert len(ids) == len(set(ids))
+
+
+def test_빈_청크가_없다(chunks):
+    assert all(c.text.strip() and c.title.strip() for c in chunks)
+
+
+def test_같은_입력이면_같은_순서로_나온다(chunks):
+    assert [c.chunk_id for c in load_chunks(KB_ROOT)] == [c.chunk_id for c in chunks]
+
+
+def test_골든셋이_참조하는_문서_ID가_전부_실린다(chunks):
+    """골든셋 채점(Recall@5)의 전제 — 정답 문서가 색인에 없으면 영원히 못 맞힌다."""
+    import json
+
+    golden = json.loads((KB_ROOT.parent / "golden-set" / "v1-10.json").read_text(encoding="utf-8"))
+    items = golden["items"] if isinstance(golden, dict) else golden
+    expected = {d for it in items for d in (it.get("expected_doc_ids") or [])}
+    assert expected, "골든셋에 정답 문서 ID가 없다"
+    assert expected <= {c.doc_id for c in chunks}
+
+
+def test_경로가_없으면_실패한다(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        load_chunks(tmp_path / "없는경로")

@@ -11,6 +11,7 @@ name: CI — 하네스 테스트 · 구조 계약 · 사이트 빌드
 #    무조건 실패하거나 가짜 기준선을 넣게 된다 — 절대 원칙 2번 위반.
 #    2주차 잠정 베이스라인이 나온 뒤 별도로 붙인다.
 #  - 실제 DB·ES·외부 API 가 필요한 테스트는 fastapi/pytest.ini 의 `-m "not integration"` 로 빠진다
+#  - 진행 기록 확인은 경고만 낸다(exit 0). 기록 누락으로 코드 머지를 막지 않는다
 #  - 구조 계약(import-linter 5종, docs/harness.md §1)은 테스트와 별개 step — 계층 위반은 테스트가 못 잡는다
 
 on:
@@ -27,6 +28,9 @@ concurrency:
   group: test-${{ github.ref }}
   cancel-in-progress: true
 
+# ⚠ job 이름 `backend` · `jekyll` 은 main 브랜치 보호의 **필수 통과 검사 이름**이다.
+#   이름을 바꾸면 보호 설정이 존재하지 않는 검사를 기다리게 되어 조용히 무력화된다.
+#   바꿔야 한다면 저장소 설정(Branches → main → Require status checks)도 함께 고친다.
 jobs:
   backend:
     runs-on: ubuntu-latest
@@ -59,6 +63,9 @@ jobs:
     steps:
       - name: 체크아웃
         uses: actions/checkout@v4
+        with:
+          # 진행 기록 검사가 git log 로 커밋 날짜를 읽는다. 얕은 클론이면 1건만 보인다.
+          fetch-depth: 0
 
       - name: 루비 설치
         uses: ruby/setup-ruby@v1
@@ -75,3 +82,10 @@ jobs:
         # 파일 이름이나 소제목을 바꾸면 링크가 조용히 깨진다. 빌드는 통과하므로
         # 사람이 클릭해 보기 전까지 아무도 모른다. 로컬에서도 같은 명령으로 확인할 수 있다.
         run: python3 scripts/check_site_links.py jekyll/_site
+
+      - name: 진행 기록 확인 (경고만)
+        # 커밋이 있는 날짜에 progress.markdown 항목이 있는지 본다.
+        # 실패시키지 않는다 — 로그 누락은 코드 결함이 아니고, 이걸로 머지를 막으면
+        # 급할 때 아무 줄이나 적고 통과시키는 회피가 생겨 기록의 질이 오히려 나빠진다.
+        # 로컬에서 강하게 보려면: python3 scripts/check_progress_log.py --strict
+        run: python3 scripts/check_progress_log.py --days 7
