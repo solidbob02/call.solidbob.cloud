@@ -6,6 +6,9 @@ status: "in-progress"
 sprint: 1
 priority: 10
 date: 2026-08-25
+paths:
+  - ".github/workflows/*"
+  - "scripts/check_*.py"
 ---
 
 하네스 설계는 류준이 끝냈다. 운영·유지는 인프라 담당이 이관받는다([7.2절](/docs/07/) 부하 완화).

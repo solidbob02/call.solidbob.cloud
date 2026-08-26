@@ -74,6 +74,8 @@ status: "in-progress"     # todo | in-progress | done
 sprint: 1
 priority: 5               # 같은 칸 안에서의 정렬 순서
 date: 2026-08-25
+paths:                    # (선택) 이 티켓 소관 파일 — 붙여두면 상태 갱신을 잊었을 때 경고해 줍니다
+  - "apps/dashboard/*"
 ---
 
 무엇을 / 왜 / 완료 조건을 적습니다.
@@ -81,6 +83,9 @@ date: 2026-08-25
 
 파일명은 `w{주차}-{영문-슬러그}.md` 로 짓습니다(예: `w1-eval-ci.md`). 한글 파일명은 URL이 깨집니다.
 상태를 바꿀 때는 **자기 티켓의 `status` 한 줄만** 고칩니다.
+
+세션을 끝낼 때 `python3 scripts/check_session_end.py` 를 돌리면 상태가 실제와 어긋난 티켓과
+중복 티켓을 알려줍니다. 진행 기록을 빠뜨리면 `Stop` 훅이 세션을 끝내지 못하게 막습니다.
 
 ---
 
