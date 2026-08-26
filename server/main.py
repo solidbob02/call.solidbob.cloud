@@ -1,7 +1,7 @@
 # Requirement: [Task 1] FastAPI 앱 골격, SEC-2
 """CallGuard FastAPI 코어 — 엔트리포인트 = 합성 루트.
 
-실행 (fastapi/ 에서):
+실행 (server/ 에서):
     uvicorn main:app --reload --env-file ../.env
 
 이 파일은 앱을 조립만 한다. 라우터는 각 앱의 adapter/inbound/api/v1/ 에, 파이프라인 배선은 hub 에 둔다

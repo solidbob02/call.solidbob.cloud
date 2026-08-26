@@ -29,12 +29,20 @@ permalink: /docs/08/
 
 ### 1주차 체크리스트
 
-- [ ] AI Hub 데이터 신청 (**최우선**)
-- [ ] **[5.6절](/docs/05/) V1~V4 확인** (채널 구성 / GPU / STT 숫자 출력 / 부분 결과 지연)
-- [ ] 인터페이스 스키마 확정 (전사·카드·종결 3종)
-- [ ] 지식베이스 문서 수집 + 청킹 + **ID 부여**
-- [ ] 골든셋 **10개** + 스펙 확정(발화 종료 시각, 개인정보 패턴 포함)
-- [ ] 평가 하네스 골격(류준 설계) + CI 연결(정성윤)
+- [x] AI Hub 데이터 신청 (**최우선**) — 승인·다운로드 완료. 「민원(콜센터) 질의-응답」 데이터셋([w1-aihub-apply](/backlog/w1-aihub-apply/))
+- [x] **[5.6절](/docs/05/) V1~V4 확인** (채널 구성 / GPU / STT 숫자 출력 / 부분 결과 지연) — 4건 모두 실측([V1](/backlog/w1-v1-channel/) · [V2](/backlog/w1-v2-gpu/) · [V3·V4](/backlog/w1-v3-v4-stt/))
+- [x] 인터페이스 스키마 확정 (전사·카드·종결 3종) — **v2** 로 확정, `segment_id` 추가([w1-interface-contract](/backlog/w1-interface-contract/), `_project/decisions/003`)
+- [x] 지식베이스 문서 수집 + 청킹 + **ID 부여** — 도메인 4종 × terms/manual/policy, 접두어 ID(`FIN-`/`DASAN-`/`SHOP-`/`HLT-`)([w1-knowledge-base](/backlog/w1-knowledge-base/))
+- [x] 골든셋 **10개** + 스펙 확정(발화 종료 시각, 개인정보 패턴 포함) — 도메인 4종 기준으로 전면 재작성([w1-golden-set-10](/backlog/w1-golden-set-10/))
+- [x] 평가 하네스 골격(류준 설계) + CI 연결(정성윤) — 하네스 + CI 3종(테스트·구조 계약·사이트 빌드) 통과([w1-eval-harness](/backlog/w1-eval-harness/) · [w1-eval-ci](/backlog/w1-eval-ci/))
+
+**1주차 목표 6개 전부 달성.** 다만 아래 두 가지는 다음 주로 넘어간다.
+
+- **기준선 게이트는 아직 없다** — CI 는 테스트·구조 계약·링크만 본다. 기준선 미달 실패([6.2절](/docs/06/))는
+  측정값이 없는 상태에서 넣으면 무조건 실패하거나 가짜 기준선을 적게 되므로(절대 원칙 2) 2주차 베이스라인 이후로 미뤘다
+  → [w2-baseline-gate](/backlog/w2-baseline-gate/)
+- **도메인 라우팅은 방식만 정해졌다** — 자동 분류(B-0)로 결정(`_project/decisions/007`)했고 분류기 구현·학습은 미착수
+  → [w1-domain-routing](/backlog/w1-domain-routing/)
 
 ### 8주 로드맵
 
@@ -55,7 +63,7 @@ permalink: /docs/08/
 
 건건이 완료될 때마다 개별 검수를 기다리지 않는다 — 아직 검수할 실물(실행되는 서비스,
 실측 지표)이 부족한 단계이고, 4인 전원이 각자 담당(정성윤: 인프라·CI, 장민석·류준:
-`fastapi/apps/`, 조서희: 대시보드)을 동시에 진행하느라 즉시 응답이 어렵다. 대신 각자
+`server/apps/`, 조서희: 대시보드)을 동시에 진행하느라 즉시 응답이 어렵다. 대신 각자
 계속 진행하고, **4주차 말(5주차 오류 내성 실험 착수 직전)에 팀 전체가 모여 그때까지
 쌓인 것을 한 번에 검증**한다. 근거·범위: `_project/decisions/008-검증-체크포인트-방식-전환.md`.
 

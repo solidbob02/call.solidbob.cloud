@@ -161,13 +161,23 @@ def stale_status(changed: list[str]) -> list[tuple[str, str, list[str]]]:
 
 def duplicate_tickets() -> list[tuple[str, str]]:
     """슬러그(주차 접두어 제거)가 같거나 한쪽이 다른 쪽을 포함하는 쌍.
-    둘 다 done 이면 이미 정리된 것으로 보고 넘어간다."""
-    items = [(slug, SLUG_PREFIX.sub("", slug), str(fm.get("status", "")))
-             for slug, fm in tickets()]
+
+    걸러내는 경우
+      - 둘 다 done: 이미 정리된 것으로 본다
+      - 한쪽이 다른 쪽을 `depends_on:` 으로 선언: 일부러 나눈 단계다
+        (예: w2-baseline 측정 → w2-baseline-gate CI 게이트)
+    오탐이 잦으면 경고 자체를 무시하게 되므로, 의도적으로 나눈 티켓은 빠져나갈 길을 둔다.
+    """
+    data = tickets()
+    items = [(slug, SLUG_PREFIX.sub("", slug), str(fm.get("status", "")),
+              fm.get("depends_on") if isinstance(fm.get("depends_on"), list) else [])
+             for slug, fm in data]
     pairs = []
-    for i, (sa, na, ta) in enumerate(items):
-        for sb, nb, tb in items[i + 1:]:
+    for i, (sa, na, ta, da) in enumerate(items):
+        for sb, nb, tb, db in items[i + 1:]:
             if ta == "done" and tb == "done":
+                continue
+            if sb in da or sa in db:
                 continue
             if na == nb or na.startswith(nb) or nb.startswith(na):
                 pairs.append((sa, sb))

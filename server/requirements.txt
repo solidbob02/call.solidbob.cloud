@@ -1,0 +1,27 @@
+# CallGuard server/ — 런타임 파이프라인 의존성.
+# 2026-08-26 fastapi/ 를 server/ · ai/ 로 나누면서 분리했다.
+#
+# 여기에는 **요청을 처리하는 데 필요한 것만** 둔다. 모델 학습·검색 실험 의존성
+# (torch·transformers·langchain 등)은 ai/requirements.txt 에 있다.
+# 섞으면 서버 컨테이너가 수 GB 커지고, CI 가 쓰지도 않는 것을 설치한다.
+#
+# Python 3.13 (pyenv). 설치 (저장소 루트에서 — .venv 는 루트에 둔다,
+# scripts/check_requirements_updates.py 가 그 경로를 본다):
+#   python3.13 -m venv .venv && source .venv/bin/activate
+#   pip install -r server/requirements.txt
+#
+# 버전은 매주 월요일 09:00에 로컬 launchd(com.callguard.requirements-check)가 PyPI
+# 최신 버전을 확인해 이 파일과 .venv를 자동 갱신한다 (scripts/check_requirements_updates.py).
+
+# --- 런타임 ---
+fastapi==0.141.1
+uvicorn==0.52.4
+pydantic==2.13.4
+
+# --- STT (A-1) — 게이트웨이가 보낸 오디오를 처리하는 경로 ---
+google-cloud-speech==2.40.0
+
+# --- 검증 ---
+pytest==9.1.1
+httpx==0.28.1
+import-linter==2.13
