@@ -4,6 +4,15 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-26 (9)
+- **첫 스포크 `fastapi/apps/retrieval/` 착수 — 지식베이스 청킹**(`w2-kb-index`). `domain/services/chunking.py`(조항 마커 파싱 + 상한 초과 시 문단 경계 분할)·`domain/value_objects/chunk.py`·`adapter/outbound/knowledge_base_loader.py`·`scripts/index_knowledge_base.py`. **청크 102개**(finance 34·shopping 27·health 21·dasan 20), 두 번 돌려 바이트 단위로 동일함을 확인. `.importlinter` 다섯 목록에 `retrieval` 등록 — 계약 5종 KEPT, `pytest` **64개 통과**(45→64)
+- **청킹 방식을 티켓의 "고정 길이"에서 "1 조항 = 1 청크"로 변경** — 조항 102개 길이를 실측하니 중앙값 101자·최대 332자로 **400자 초과가 0건**이라, 고정 길이(500자 등)로 자르면 조항이 쪼개지는 게 아니라 여러 조항이 한 청크로 뭉친다. 그러면 골든셋 `expected_doc_ids`(조항 ID 기준)로 Recall@5 를 채점할 수 없다. 상한 400자는 문서가 길어질 때를 위한 안전장치로만 남겼다
+- **골든셋 재작성(오늘 11:20, 류준) 검증** — 도메인 분포(finance 4·shopping 3·dasan 2·health 1)와 참조 문서 ID 3건이 `knowledge-base/` 92개 안에 전부 실재함을 확인. 깨진 참조 0건
+- **낡은 문서 정리** — `docs/domain.md`가 오늘 끝난 작업 3건(골든셋 재작성·DB 스키마 정리·도메인 라우팅 확정)을 여전히 "대기/미설계"로 적고 있어 갱신. `jekyll/docs/05`(⚠ 미반영)·`docs/14`(⚠ 재작성 필요)도 함께. 해소된 「한계」 항목은 지우지 않고 취소선 + 해소 근거를 붙였다. 아직 사실인 미결 2건(계약 `domain` 필드 v3, ES 인덱스 분할)은 그대로 뒀다
+- 티켓 정합성 정정 — `w2-naive-rag`가 `services/core/`·`RetrievalPredictor` Protocol(구 구조)을 가리키고 있어 `fastapi/apps/retrieval/`·`RetrievalPort` ABC(async)로 갱신. `w2-db-schema-domain`·`w2-domain-routing`은 이미 끝난 작업을 `todo` 로 두고 있어 `in-progress` 로 정정
+- 로컬 개발 환경 구축 — `.venv`(Python 3.13.13) + `fastapi/requirements.txt`
+- 남은 것: ES 적재(인덱스 분할 여부 미결로 막힘), `w2-naive-rag` BM25 검색 경로
+
 ### 2026-08-26 (8)
 - **`backend`·`main`(`ai` 브랜치 경유) 통합** — GitHub에서 `backend`→`main` PR에 충돌이 뜬 걸 확인. 원인: `ai` 브랜치(정성윤·장민석)가 내 이전 푸시 지점(`a0f95d3`, 도메인 4종 전환 직후)에서 갈라져 `fastapi/` 헥사고날 아키텍처를 독립적으로 구축했고, 그 이후의 내 작업(골든셋 재작성·DB 스키마 정리·B-0 도메인 라우팅)을 모른 채였다. 구조(`fastapi/`)는 저쪽이 더 진전됐고 내용(골든셋·DB 스키마·B-0)은 이쪽이 최신이라, **`fastapi/` 구조를 정본으로 채택하고 구 `services/core/eval/`의 작업물을 그 위로 포팅**했다: `domain_routing.py` 메트릭 이식, `hub/app/dtos/domain_classification_dto.py`+`hub/app/ports/output/domain_routing_port.py` 신규(기존 6개 포트와 같은 ABC 패턴), `harness.py`에 `DomainRoutingPort` 배선, 테스트 이식(`test_domain_routing_metrics.py` import 경로 수정, `test_harness.py`에 async 가짜 포트 배선 테스트 추가). golden-set·db/schema.sql은 main이 아직 구 버전이라 자동 병합됨(내 쪽 그대로 유지). `services/core/` 디렉토리 삭제. `.claude/rules/rfp-harness.md`·`jekyll/_backlogs/w1-db-schema.md`·`w1-dashboard-scaffold.md`·`knowledge-base/README.md`의 병렬 편집도 수동 병합
 - 남은 것: `cd fastapi && pytest`·`lint-imports` 재확인 후 커밋·푸시
