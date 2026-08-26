@@ -26,8 +26,55 @@ code-reviewer.md`(스택 목록에서 Flutter 제거), `jekyll/docs/07-역할분
 히스토리 보존 목적으로 남겨둠), `jekyll/sprints/01-sprint1.markdown` 등 과거 진행 로그
 (그 시점 사실 그대로 유지).
 
-**다음 세션이 확인할 것**: 류준·장민석 사이 백엔드·AI 세부 분담(검색/생성/컴플라이언스/
-F-2 등을 어떻게 나눌지) — 아직 팀 합의 전, `open-items.markdown`에 등록.
+**다음 세션이 확인할 것**: 류준·장민석 사이 백엔드·AI 세부 분담 — 2026-08-26 같은 날
+사용자가 "기능별로 나누지 않고 둘이 함께 한다"고 확정해 해소됨(아래 참고).
+
+## 2026-08-26 세션 (이어서 2) — 골든셋 재작성 + 대시보드 티켓 정정
+
+사용자가 "백엔드·AI는 둘이 같이 한다"고 확정(세부 분담 논의 불필요) → `open-items.markdown`
+반영. 이어서 "오늘 할 일" 질문에 답하며 파악한 두 가지를 실행: `w1-dashboard-scaffold.md`
+담당자를 장민석 → 조서희로 정정(팀 개편 반영), `golden-set/v1-10.json`을 4개 도메인
+기준으로 전면 재작성(`services/core/eval/golden_set.py`에 `domain` 필드 파싱 추가, 테스트
+2건 추가, `pytest services/core` 27개 통과). 커밋 `d6e2061` → 푸시 중 정성윤의 CI 워크플로
+커밋(`w1-eval-ci.md` 완료 반영)과 충돌해 병합(`0935d1b`) 후 재푸시.
+
+## 2026-08-26 세션 (이어서 3) — DB 스키마 도메인 정리
+
+사용자 요청: "DB 스키마가 4개 도메인에 맞게 잘 됐는지 확인하고, 남은 다른 도메인
+내용은 정리해달라." 실제로 확인해보니 `plan`(요금제)·`subscriber`의 체납·분실신고
+플래그·`closure`의 evidence 7컬럼이 전부 통신 도메인 가정(TERM-5.3 등 지금은 없는
+문서 ID 참조)이었다.
+
+**끝낸 것**: `db/generate_schema_docs.py`(TABLES 정의 — `plan` 제거, `subscriber`→
+`customer`로 정리, `call`에 `domain` ENUM 컬럼 추가, `closure.closure_type`/evidence
+컬럼을 금융보험(상품해지·보상)·쇼핑(반품·교환) 기준으로 교체) 수정 후 재실행해
+`schema.sql`·`erd.dot`·`ERD.png` 재생성(17→16개 테이블). `db/docs/ERD.md`·`jekyll/docs/16`
+프로즈 전면 갱신, `jekyll/docs/07` 인터페이스 계약 JSON 예시도 새 스키마 값으로 교체,
+`services/core/tests/test_closure_gate_metrics.py` 필드명 동기화 — `pytest services/core`
+27개 계속 통과. 결정 기록 `_project/decisions/006-db-스키마-도메인-정리.md`.
+
+**의도적으로 남겨둔 것**: `call.domain`을 실제로 언제·어떻게 채울지(도메인 라우팅
+로직)는 여전히 미결 — [3.2절](/docs/03/), `open-items.markdown`. `closure` evidence를
+넓은 표로 둘지 EAV로 둘지도 기존부터 있던 미결 항목으로 이번에 해소되지 않음. 실제
+MySQL 마이그레이션 적용은 아직 착수 전(설계 문서 단계).
+
+**다음 세션이 확인할 것**: 커밋·푸시 여부(사용자가 아직 명시적으로 요청하지 않았다면
+대기).
+
+## 2026-08-26 세션 (이어서 4) — 지식베이스 팀 리뷰 완료 + 도메인 라우팅 자동 분류 확정
+
+사용자 통보: "지식베이스 팀 회의로 리뷰 마무리, 도메인 라우팅은 자동 분류로 간다,
+진행해줘." `w1-knowledge-base.md` done 처리. 도메인 라우팅은 설계(KcELECTRA 분류기 +
+하이브리드 검색 폴백, 새 도구 없음)를 확정하고 **평가 하네스에 실제로 배선**했다 —
+`services/core/eval/metrics/domain_routing.py`(정확도+오분류행렬), `harness.py`에
+`DomainPredictor` Protocol(B-0) 추가, 골든셋 `domain` 필드를 그대로 재사용. 테스트
+6건 추가, `pytest services/core` 33개 통과. `jekyll/docs/01,02,03,06`·`open-items.markdown`
+반영, 결정 기록 `_project/decisions/007`, 신규 티켓 `w1-domain-routing.md`.
+
+**의도적으로 안 한 것**: 실제 분류기 학습(데이터 부족), B-2 하이브리드 검색 자체(아직
+없음 — 폴백의 전제 조건).
+
+**다음 세션이 확인할 것**: 커밋·푸시 여부.
 
 ## 2026-08-26 세션 — 데모 도메인 4종 전환
 

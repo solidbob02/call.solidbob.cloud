@@ -2,7 +2,7 @@
 """평가 하네스 골격 — [팀 분업 7.2절] 1주차엔 류준이 설계만 하고 이후 운영은 정성윤이
 맡는다. 이 파일이 그 "설계"에 해당한다.
 
-지금은 services/core의 실제 검색·트리거·컴플라이언스·마스킹·F-2 모듈이 없다
+지금은 services/core의 실제 도메인 라우팅·검색·트리거·컴플라이언스·마스킹·F-2 모듈이 없다
 ([Task 1] 스캐폴딩 전). 그래서 각 모듈을 `Predictor` 프로토콜로 추상화해두고,
 실제 구현이 붙기 전까지는 `None`으로 둬 "측정 불가 — 미구현"으로 정직하게
 보고한다(목표 수치를 지어내지 않는다 — testing.md, 6.2절 원칙 5).
@@ -21,10 +21,18 @@ from typing import Protocol
 from .golden_set import GoldenItem, load_golden_set
 from .metrics import closure_gate as closure_gate_metrics
 from .metrics import compliance as compliance_metrics
+from .metrics import domain_routing as domain_routing_metrics
 from .metrics import latency as latency_metrics
 from .metrics import masking as masking_metrics
 from .metrics import retrieval as retrieval_metrics
 from .metrics import trigger as trigger_metrics
+
+
+class DomainPredictor(Protocol):
+    """B-0. 통화 초반 발화를 받아 도메인(finance/dasan/shopping/health)을 반환한다.
+    자동 분류로 라우팅하기로 한 결정: _project/decisions/007-도메인-라우팅-자동분류-확정.md"""
+
+    def classify(self, utterance: str) -> str: ...
 
 
 class RetrievalPredictor(Protocol):
@@ -61,6 +69,7 @@ class ClosureGatePredictor(Protocol):
 class Predictors:
     """구현되지 않은 모듈은 None으로 둔다 — 해당 지표는 리포트에서 "미구현"으로 표시된다."""
 
+    domain: DomainPredictor | None = None
     retrieval: RetrievalPredictor | None = None
     trigger: TriggerPredictor | None = None
     compliance: CompliancePredictor | None = None
@@ -73,6 +82,22 @@ NOT_IMPLEMENTED = "측정 불가 — 모듈 미구현"
 
 def run_eval(items: list[GoldenItem], predictors: Predictors) -> dict:
     report: dict = {}
+
+    # B-0: 도메인 라우팅 (자동 분류) — 정답 도메인이 있는 항목 전부가 채점 대상
+    domain_items = [
+        it for it in items if it.domain is not None and (it.customer_utterance or it.agent_utterance)
+    ]
+    if predictors.domain is None:
+        report["domain_routing"] = NOT_IMPLEMENTED
+    else:
+        expected_domains = [it.domain for it in domain_items]
+        predicted_domains = [
+            predictors.domain.classify(it.customer_utterance or it.agent_utterance or "")
+            for it in domain_items
+        ]
+        report["domain_routing"] = domain_routing_metrics.score_domain_routing(
+            expected_domains, predicted_domains
+        )
 
     # B: 검색 (Recall@5, MRR)
     b_items = [it for it in items if it.module == "B"]

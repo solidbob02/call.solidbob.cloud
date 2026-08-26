@@ -11,8 +11,31 @@ from services.core.eval.harness import Predictors, run_eval
 def test_all_predictors_none_reports_not_implemented():
     items = load_golden_set()
     report = run_eval(items, Predictors())
-    for section in ("retrieval", "trigger", "compliance", "masking", "closure_gate"):
+    for section in ("domain_routing", "retrieval", "trigger", "compliance", "masking", "closure_gate"):
         assert report[section] == "측정 불가 — 모듈 미구현"
+
+
+class _EchoDomainPredictor:
+    """발화 안에 domain 이름이 그대로 있으면 정답을 맞히는 가짜 predictor — 배선만 검증한다."""
+
+    def classify(self, utterance: str) -> str:
+        for domain in ("finance", "dasan", "shopping", "health"):
+            if domain in utterance:
+                return domain
+        return "finance"  # 못 찾으면 임의 기본값
+
+
+def test_domain_routing_wiring_with_fake_predictor():
+    items = load_golden_set()
+    report = run_eval(items, Predictors(domain=_EchoDomainPredictor()))
+    result = report["domain_routing"]
+    # 골든셋 10건 전부 domain 필드는 있지만, F-2 케이스(GS-008~010)는 발화 텍스트가
+    # 없고 closure_intent만 있어 분류 대상에서 빠진다 — 실제로 분류할 텍스트가 있는
+    # 7건만 채점된다.
+    assert result["n"] == 7
+    # 가짜 predictor는 발화에 도메인 이름이 안 박혀 있으니 대부분 못 맞힌다 —
+    # 여기서 검증하는 건 정확도 수치가 아니라 배선(크래시 없이 흘러가는지)이다.
+    assert 0.0 <= result["accuracy"] <= 1.0
 
 
 class _PerfectClosureGate:

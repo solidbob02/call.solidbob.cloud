@@ -57,7 +57,8 @@ infra/ (Docker, AWS, MySQL, Elasticsearch)                             ├──
 | 요구 ID | 정의 | 코드 위치 | 검수 기준 | 근거 문서 |
 |---|---|---|---|---|
 | **A-1·A-2** | 스트리밍 STT + 화자 분리 | `services/gateway/stt/`, `services/gateway/diarization/` | 부분 전사 결과 스트리밍, [V1](/docs/05/) 결과에 따라 채널분리/diarization 분기 | [기능 명세](/docs/02/), [데이터 확보 계획](/docs/05/) |
-| **B-1~B-3** | 트리거 판정 + 하이브리드 검색(nori+dense_vector+RRF) + 리랭킹 | `services/core/retrieval/` | Recall@5 ≥0.70(오류 없음)/≥0.60(오류 10%), 트리거 적절 발동률(0~800ms) ≥0.85, 내부 처리 p95 ≤1,000ms | [핵심 기술 난제](/docs/04/), [평가 설계](/docs/06/) |
+| **B-0** | 도메인 라우팅 — [4개 도메인](/docs/01/) 자동 분류(2026-08-26 확정) | `services/core/retrieval/` | 도메인 분류 정확도 ≥0.95 | [아키텍처 3.2](/docs/03/), `_project/decisions/007` |
+| **B-1~B-3** | 트리거 판정 + 하이브리드 검색(nori+dense_vector+RRF) + 리랭킹 | `services/core/retrieval/` | Recall@5 ≥0.70(오류 없음)/≥0.60(오류 10%), 트리거 적절 발동률(0~1,500ms) ≥0.85, 내부 처리 p95 ≤1,000ms | [핵심 기술 난제](/docs/04/), [평가 설계](/docs/06/) |
 | **B-4~B-6** | 근거 기반 요약 카드 생성 + 출처 표시 | `services/core/generation/` | 출처 표시율 100%, 환각 150문항 중 5건 이하, 근거 부족 시 "관련 문서 없음" 반환 | [기능 명세 2.3](/docs/02/) |
 | **C-1~C-4** | 컴플라이언스 탐지 + 대체 표현 제시 | `services/core/compliance/` | 재현율 ≥0.90, 정밀도 ≥0.60 (재현율 우선) | [평가 설계](/docs/06/) |
 | **C-5** | 개인정보 실시간 마스킹 | `services/core/masking/` (담당: 정성윤) | **P1~P7 패턴 마스킹 누락 0건 — 절대 규칙.** 화면·DB 저장 양쪽 앞단 적용, 원본 미보관 | [기능 명세 2.4](/docs/02/), [평가 설계](/docs/06/) |

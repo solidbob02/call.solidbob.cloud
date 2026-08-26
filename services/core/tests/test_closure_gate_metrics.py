@@ -7,8 +7,8 @@ def test_exact_match_passes():
         item_id="GS-009",
         expected_verdict="blocked",
         predicted_verdict="blocked",
-        expected_missing=["잔여할부_안내", "고객확인_기록"],
-        predicted_missing=["고객확인_기록", "잔여할부_안내"],  # 순서 달라도 통과
+        expected_missing=["약정혜택소멸_안내", "고객확인_기록"],
+        predicted_missing=["고객확인_기록", "약정혜택소멸_안내"],  # 순서 달라도 통과
     )
     result = score_closure_gate([pred])
     assert result["accuracy"] == 1.0
@@ -20,7 +20,7 @@ def test_wrong_verdict_fails_absolute_rule():
         item_id="GS-009",
         expected_verdict="blocked",
         predicted_verdict="approved",
-        expected_missing=["잔여할부_안내"],
+        expected_missing=["약정혜택소멸_안내"],
         predicted_missing=[],
     )
     result = score_closure_gate([pred])
@@ -35,8 +35,8 @@ def test_correct_verdict_but_wrong_missing_fields_still_fails():
         item_id="GS-009",
         expected_verdict="blocked",
         predicted_verdict="blocked",
-        expected_missing=["잔여할부_안내", "고객확인_기록"],
-        predicted_missing=["잔여할부_안내"],
+        expected_missing=["약정혜택소멸_안내", "고객확인_기록"],
+        predicted_missing=["약정혜택소멸_안내"],
     )
     result = score_closure_gate([pred])
     assert result["absolute_rule_passed"] is False

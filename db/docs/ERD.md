@@ -4,20 +4,25 @@
 > 생성 스크립트: [`../generate_schema_docs.py`](../generate_schema_docs.py) — 스키마를 고칠 땐 이 파일의
 > `TABLES`만 고치고 재실행하면 SQL과 ERD가 항상 같은 정의를 가리킨다.
 
-## 왜 5개가 아니라 17개인가
+## 왜 5개가 아니라 16개인가
 
 기획서 [3장 시스템 아키텍처](/docs/03/)는 `call`·`transcript`·`recommendation`·`closure`·
 `eval_result` 5개만 이름을 언급한다. 이건 "필요한 테이블 전부"가 아니라 **아키텍처
 다이어그램에 들어간 5개 큰 덩어리**다. 실제 기능 명세([2장](/docs/02/))·데이터 확보
 계획([5장](/docs/05/))·평가 설계([6장](/docs/06/))를 하나씩 대조해보면, 그 5개 덩어리
 안에 **1:N 관계로 반드시 쪼개야 하는 하위 데이터**가 있고, 원래 계획엔 아예 없던
-개체(가입자, 문서, 후속조치, 공백 리포트)도 필요하다는 게 드러난다. 아래 표가 그 대조
+개체(고객, 문서, 후속조치, 공백 리포트)도 필요하다는 게 드러난다. 아래 표가 그 대조
 결과다.
+
+> **2026-08-26 갱신**: 처음엔 17개였다. 데모 도메인을 통신 단일에서 4종(금융보험·
+> 다산콜센터·쇼핑·질병관리본부)으로 바꾸면서, 통신 전용이던 `plan`(요금제) 테이블을
+> 제거하고 `subscriber`를 도메인 중립적인 `customer`로 정리해 16개가 됐다. 상세는
+> [아래 "2026-08-26 도메인 4종 정리"](#2026-08-26-도메인-4종-정리) 참고.
 
 | 원래 계획 | 실제로 필요해진 이유 | 여기서 생긴 테이블 |
 |---|---|---|
-| `call` | D-1(상담 요약)·D-2(문의 유형)는 통화 1건당 값이 하나뿐이라 1:1 — 그대로 `call`에 병합 | `call` (요약·유형 컬럼 포함) |
-| (없음) | F-3(반복 문의 연결)이 "동일 고객"을 판별하려면 안정적 식별자가 필요. TERM-5.3(명의변경 제한)도 가입자 상태(체납·분실신고)를 봐야 함 | `subscriber`, `plan` |
+| `call` | D-1(상담 요약)·D-2(문의 유형)는 통화 1건당 값이 하나뿐이라 1:1 — 그대로 `call`에 병합 | `call` (요약·유형·**도메인** 컬럼 포함) |
+| (없음) | F-3(반복 문의 연결)이 "동일 고객"을 판별하려면 안정적 식별자가 필요 | `customer` |
 | `transcript` | 통화 하나에 발화가 여러 건(1:N) → 한 칸에 몰아넣으면 1NF 위반 | `transcript_segment` |
 | (없음) | 발화 하나에 마스킹 스팬이 여러 개(1:N, C-5), 위반 탐지도 여러 개(1:N, C-1~C-4) | `masking_event`, `compliance_flag` |
 | `recommendation` | 트리거 1건이 카드 여러 개를 냄(1:N, [2.1절](/docs/02/) 화면 예시도 배열) | `recommendation`(헤더) + `recommendation_card` |
@@ -55,7 +60,7 @@ FK 참조 테이블이 항상 먼저 나오는지 자동으로 검증하는 절�
 
 | 항목 | 팀원 설계의 공백 |
 |---|---|
-| `subscriber` / `plan` | 고객 식별자가 아예 없어서 [F-3](/docs/02/)(반복 문의 자동 연결), [TERM-5.3](/docs/02/)(체납·분실신고 시 명의변경 제한)을 구현할 방법이 없다 |
+| `subscriber`(현재 `customer`) | 고객 식별자가 아예 없어서 [F-3](/docs/02/)(반복 문의 자동 연결)을 구현할 방법이 없다 |
 | `follow_up_action` / `knowledge_gap` | D-3(후속조치)·D-4(공백 리포트)가 스키마에 전혀 없다 — 통화 후 처리의 절반이 빠져있다 |
 | `eval_result.passed_absolute_rule` | C-5·F-2 절대 규칙 위반 여부가 `metric_value`에 묻혀 있어, 조회할 때마다 임계값을 다시 계산해야 한다 |
 
@@ -80,9 +85,8 @@ ERD.png 왼쪽 위에 범례가 있다.
   `recommendation_card`→`recommendation`, `closure`→`call`, `follow_up_action`→`call`,
   `eval_result`→`eval_run`)
 - **점선 = 비식별 관계** — 부모는 **참조·분류 대상**일 뿐, 자식은 그것과 무관하게 독립적
-  정체성을 가진다. `subscriber`는 `plan`이 뭐든 그 자체로 의미 있는 개체이고, `call`도
-  `subscriber`·`agent`가 누구든 통화 자체로 독립적 개체다. (`subscriber`→`plan`,
-  `call`→`subscriber`, `call`→`agent`, `compliance_flag`→`compliance_rule`,
+  정체성을 가진다. `call`은 `customer`·`agent`가 누구든 통화 자체로 독립적 개체다.
+  (`call`→`customer`, `call`→`agent`, `compliance_flag`→`compliance_rule`,
   `recommendation_card`→`document`, `closure`→`document`, `knowledge_gap`의 세 FK)
 
 > **주의**: 이 스키마는 [3NF 원칙](#정규화-원칙-1nf--2nf--3nf)에 따라 **모든 테이블이
@@ -100,20 +104,21 @@ ERD.png 왼쪽 위에 범례가 있다.
 - **2NF (부분 함수 종속 제거)**: 모든 테이블이 단일 컬럼 서로게이트 PK(`*_id`)를 쓴다.
   복합 PK가 없으므로 2NF 위반(키의 일부에만 종속되는 컬럼) 자체가 구조적으로 생기지
   않는다.
-- **3NF (이행적 종속 제거)**: `subscriber`에 `plan_name`·`monthly_fee`를 직접 넣지 않고
-  `plan_code`로 `plan` 테이블을 참조한다 (요금제명은 plan_code에 종속이지 subscriber_id에
-  직접 종속이 아니다). `recommendation_card`에 문서 제목·조항 번호를 복사하지 않고
-  `document_id`로 `document`를 참조한다.
+- **3NF (이행적 종속 제거)**: `recommendation_card`에 문서 제목·조항 번호를 복사하지
+  않고 `document_id`로 `document`를 참조한다. (통신 도메인 시절엔 `subscriber`가
+  `plan_code`로 `plan`을 참조하는 예시였으나, `plan` 테이블은 2026-08-26 도메인 4종
+  정리로 제거됐다 — [아래](#2026-08-26-도메인-4종-정리))
 
 ## 의도적으로 역정규화한 것 (컬럼이 너무 적은 테이블)
 
 정규화 원칙만 기계적으로 따르면 아래 두 개는 "그럴듯하지만 너무 좁은" 테이블이 됐을
 것이다. 실익이 없어서 부모 테이블에 병합했다.
 
-1. **`closure_evidence`를 만들지 않고 `closure`에 컬럼 7개를 직접 뒀다.**
-   해지(3개)·명의변경(2개)·보상(2개) 처리 유형마다 확인 항목이 다르므로, 교과서적으로는
+1. **`closure_evidence`를 만들지 않고 `closure`에 컬럼 10개를 직접 뒀다.**
+   금융보험 상품해지(3개)·금융보험 보상(2개)·쇼핑 반품(3개)·쇼핑 교환(2개), 처리
+   유형(도메인×종결형)마다 확인 항목이 다르므로, 교과서적으로는
    `(closure_id, field_name, is_satisfied)` 3컬럼짜리 EAV 자식 테이블로 빼는 게 "더
-   정규화된" 형태다. 하지만 필드 종류가 7개로 고정돼 있고 앞으로도 거의 안 늘어나며,
+   정규화된" 형태다. 하지만 필드 종류가 10개로 고정돼 있고 앞으로도 거의 안 늘어나며,
    `POLICY.md`([2.7절](/docs/02/))의 판정 로직이 "이 세 필드가 전부 true인가"를 한 행에서
    바로 확인해야 한다 — EAV로 쪼개면 매번 GROUP BY로 재조립해야 해서 F-2 게이트 코드가
    불필요하게 복잡해진다. **넓은 표 + NULL 허용**이 이 규모에서는 더 실용적이라고
@@ -128,12 +133,12 @@ ERD.png 왼쪽 위에 범례가 있다.
 
 ## 관계 한눈에 보기 (브리핑용 설명 순서)
 
-ERD.png를 왼쪽 위 "가입자"부터 시계방향으로 따라가면서 설명하면 된다.
+ERD.png를 왼쪽 위 "고객"부터 시계방향으로 따라가면서 설명하면 된다.
 
-1. **가입자 → 통화**: `subscriber`(가입자) 1명이 `call`(통화)을 여러 번 한다. `subscriber`는
-   `plan`(요금제)을 참조만 하고 요금제 정보를 복사하지 않는다. `call`은 `agent`(상담원)도
-   FK로 참조한다 — 어느 상담원이 응대했는지 추적하되, 상담원별 누적 통계를 UI에 노출하지
-   않는 건 애플리케이션 레벨의 책임이다([부록 B H-4·H-5 리스크](/docs/13/)).
+1. **고객 → 통화**: `customer`(고객) 1명이 `call`(통화)을 여러 번 한다. `call`은
+   **`domain`**(4개 데모 도메인 중 하나)을 갖고, `agent`(상담원)도 FK로 참조한다 —
+   어느 상담원이 응대했는지 추적하되, 상담원별 누적 통계를 UI에 노출하지 않는 건
+   애플리케이션 레벨의 책임이다([부록 B H-4·H-5 리스크](/docs/13/)).
 2. **통화 → 전사/마스킹/위반**: `call` 1건에 `transcript_segment`(발화)가 여러 건 붙고,
    발화 1건에 `masking_event`(마스킹, C-5)와 `compliance_flag`(위반 탐지, C-1~C-4)가 각각
    여러 건 붙을 수 있다. `compliance_flag`는 `compliance_rule`(위반 유형 카탈로그 — 심각도,
@@ -144,6 +149,8 @@ ERD.png를 왼쪽 위 "가입자"부터 시계방향으로 따라가면서 설�
 4. **통화 → 종결**: `call` 1건에 `closure`(종결 판정 시도)가 여러 번 있을 수 있다
    (거절되면 다시 시도하니까) — **UPDATE 없이 INSERT만 하는 append-only 테이블**이다
    ([F-4](/docs/02/) "추가 전용 이력"). `closure`도 `document`를 근거로 인용한다.
+   **F-2가 적용되는 도메인(금융보험·쇼핑)의 `call`에만 행이 생긴다** — 다산콜센터·
+   질병관리본부는 안내형 업무라 종결 개념 자체가 없다.
 5. **통화 → 후속처리**: `call` 종료 후 `follow_up_action`(후속조치)이 여러 건 생기고,
    B/C/F 세 모듈 중 아무 데서나 실패가 나오면 `knowledge_gap`(공백 리포트)에 쌓인다 —
    그래서 `knowledge_gap`은 `call`·`transcript_segment`·`closure` 세 곳을 전부 (nullable)
@@ -154,13 +161,33 @@ ERD.png를 왼쪽 위 "가입자"부터 시계방향으로 따라가면서 설�
 7. **`resource_center`는 고립 노드**: G-2가 조건부라서 지금은 다른 테이블과 FK 관계가
    없다. G-2 착수가 확정되면 그때 연결한다.
 
+## 2026-08-26 도메인 4종 정리
+
+데모 도메인을 가상 통신사 "한별텔레콤" 단일 시나리오에서 실제 확보 데이터 4종(금융보험·
+다산콜센터·쇼핑·질병관리본부)으로 한정하면서([`_project/decisions/004`](https://github.com/solidbob02/call.solidbob.cloud)),
+스키마에 남아 있던 통신 전용 내용을 정리했다. 근거·상세:
+`_project/decisions/006-db-스키마-도메인-정리.md`.
+
+| 변경 전 | 변경 후 | 이유 |
+|---|---|---|
+| `plan`(요금제) 테이블 | **제거** | 4개 도메인 중 "월정액 요금제" 개념이 있는 곳이 없다 |
+| `subscriber`(가입자) — `plan_code` FK, `arrears_flag`(체납), `lost_report_flag`(분실신고) | **`customer`(고객)** — `customer_id`, `first_seen_at`, `status`만 남김 | 체납·분실신고 플래그는 통신 도메인의 "명의변경 제한"(TERM-5.3, 지금은 존재하지 않는 문서 ID)에만 쓰였다. 4개 도메인 어디에도 명의변경 F-2 유형이 없다 |
+| `call.subscriber_id` | `call.customer_id` + **`call.domain`**(신규) | 도메인 라우팅 정보가 스키마에 아예 없었다 — [3.2절](/docs/03/)에서 지적된 공백을 이번에 메웠다 |
+| `closure.closure_type`: `해지`/`명의변경`/`보상` | `상품해지`/`보상`/`반품`/`교환` | F-2가 실제로 적용되는 도메인(금융보험·쇼핑)의 처리 유형으로 교체 |
+| `closure`의 evidence 7컬럼(위약금_안내 등) | evidence 10컬럼(중도해지수수료_안내 등, 도메인별 POLICY 문서와 1:1 대응) | 명의변경 관련 2컬럼(본인확인_수단·요청경위_확인) 제거, 반품·교환용 5컬럼 신설 |
+| `document.document_id` 예시 `TERM-3.2` | `FIN-TERM-3.2` | 지식베이스 ID 체계가 도메인 접두어를 쓰도록 바뀜([knowledge-base/README.md](https://github.com/solidbob02/call.solidbob.cloud/blob/main/knowledge-base/README.md)) |
+
+**F-3(반복 문의 연결)는 그대로 유지된다** — "동일 고객" 식별 자체는 도메인과 무관한
+일반 기능이라 `customer` 테이블로 계속 지원한다. 17개 → **16개** 테이블로 줄었다(`plan`
+제거, 순수 추가는 없음).
+
 ## 팀 교차검증 체크리스트
 
-- [ ] `subscriber_id`를 실제로 해시/난수로 만들 것인지, 실명 연동이 필요한지 (정성윤·인프라 결정)
-- [ ] `closure`의 7개 evidence 컬럼 vs 팀원 안(`closure_requirement`+`closure_evidence`
-      EAV, evidence_ref 추적) — F-2 게이트 구현 시 재검토 (류준)
-- [ ] 팀원 ERD에 `subscriber`/`plan`, `follow_up_action`, `knowledge_gap`이 없다는 점
+- [ ] `customer_id`를 실제로 해시/난수로 만들 것인지, 실명 연동이 필요한지 (정성윤·인프라 결정)
+- [ ] `closure`의 evidence 컬럼을 넓은 표로 둘지 vs 팀원 안(`closure_requirement`+`closure_evidence`
+      EAV, evidence_ref 추적) — F-2 게이트 구현 시 재검토 (류준·장민석)
+- [ ] 팀원 ERD에 `customer`, `follow_up_action`, `knowledge_gap`이 없다는 점
       전달하고 병합 여부 논의
 - [ ] `resource_center`는 G-2 착수 확정 전까지 실제 마이그레이션에서 빼도 되는지
-- [ ] `document.document_id` 네이밍(`TERM-3.2` 등)이 `knowledge-base/`의 `<!-- id: -->`
-      주석과 정확히 일치하는지 (전체 조항 확인 필요)
+- [ ] `document.document_id` 네이밍(`FIN-TERM-3.2` 등)이 `knowledge-base/`의
+      `<!-- id: -->` 주석과 정확히 일치하는지 (전체 조항 확인 필요)

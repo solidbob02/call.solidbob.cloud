@@ -4,6 +4,16 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-26 (6)
+- **지식베이스 팀 리뷰 완료** — 정성윤·장민석·조서희 팀 회의로 4개 도메인 지식베이스(`knowledge-base/`) 리뷰 마무리. `w1-knowledge-base.md` done 처리
+- **도메인 라우팅 방식 확정 — 자동 분류** (수동 선택 안 함). 근거·설계: `_project/decisions/007-도메인-라우팅-자동분류-확정.md`. 상담원이 매번 도메인을 고르지 않고, 초반 발화를 KcELECTRA 계열 분류기(B-0)로 4클래스 분류하고 신뢰도가 낮으면 4개 인덱스 하이브리드 검색 폴백으로 판정하는 설계로 잡았다 — 새 도구 도입 없음
+- **평가 하네스에 B-0 배선** — `services/core/eval/metrics/domain_routing.py`(정확도 + 오분류 행렬, 규칙 기반) 신규, `harness.py`에 `DomainPredictor` Protocol 추가(미구현 시 "측정 불가"로 정직 보고), 골든셋 `domain` 필드를 정답 라벨로 재사용. [6.1절](/docs/06/)에 목표(정확도 ≥0.95) 반영, [3.2절](/docs/03/)·[2.3절 B-0](/docs/02/) 문서화. 테스트 6건 추가 — `pytest services/core` 33개 전부 통과. 신규 티켓 `w1-domain-routing.md`(류준·장민석 공동)
+- 남은 것: 실제 분류기 구현·학습은 미착수(골든셋 표본 부족, 2주차 확대 후 착수), 폴백에 필요한 B-2 하이브리드 검색도 아직 없음
+
+### 2026-08-26 (5)
+- **DB 스키마를 4개 도메인에 맞게 정리** — 통신 도메인 잔재였던 `plan`(요금제) 테이블 제거, `subscriber`를 `customer`로 정리(체납·분실신고 플래그 삭제 — 지금은 존재하지 않는 TERM-5.3(명의변경 제한)에만 쓰였던 필드), `call`에 `domain` ENUM('finance','dasan','shopping','health') 컬럼 신설(도메인 라우팅 정보가 스키마에 아예 없었던 공백을 메움), `closure.closure_type`/evidence 컬럼을 실제 F-2 적용 도메인(금융보험 상품해지·보상, 쇼핑 반품·교환) 기준으로 교체. `db/generate_schema_docs.py` 수정 후 재실행해 `schema.sql`·`erd.dot`·`ERD.png` 재생성 — 17개→16개 테이블. `db/docs/ERD.md`·[16절 ERD](/docs/16/)·[7.3절 인터페이스 계약](/docs/07/) 예시 전면 갱신, `test_closure_gate_metrics.py` 필드명 동기화 — `pytest services/core` 27개 계속 통과. 결정 기록: `_project/decisions/006-db-스키마-도메인-정리.md`
+- 남은 것: `call.domain`을 실제로 언제·어떻게 채울지(도메인 라우팅 로직)는 여전히 미결([3.2절](/docs/03/)). `closure` evidence를 넓은 표로 둘지 EAV로 둘지도 기존 미결 그대로. 실제 MySQL 마이그레이션 적용은 미착수
+
 ### 2026-08-26 (4)
 - **골든셋 10건 재작성** — 한별텔레콤 시나리오였던 기존 10건을 4개 도메인(금융보험·다산콜센터·쇼핑·질병관리본부) 기준으로 전면 재작성. 분포: 금융보험 4(B·C-1·F-2×2)·다산콜센터 2(B·C-5)·쇼핑 3(B·C-5·F-2)·질병관리본부 1(C-2). F-2 케이스는 F-2 적용 도메인(금융보험·쇼핑)에서만 작성. `services/core/eval/golden_set.py`에 `domain` 필드 파싱 추가, `test_golden_set.py`에 도메인 커버리지·F-2 도메인 제약 테스트 2건 추가 — `pytest services/core` 27개 전부 통과. `golden-set/README.md` 갱신
 - `w1-dashboard-scaffold.md` 담당자를 장민석 → 조서희로 변경 (팀 개편 반영 — [7.1절](/docs/07/))
