@@ -4,6 +4,9 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-26 (27)
+- **Jekyll CI 깨진 링크 수정** — `w1-dashboard-scaffold-seohee`가 이미 삭제된 `/backlog/w1-dashboard-scaffold/`를 가리켜 내부 링크 검사가 실패했다. 링크를 텍스트로 바꿨다.
+
 ### 2026-08-26 (26)
 - **대시보드 시각 디테일** — 헤더 로고·연결 배지, 우측 카드 그림자·배지·출처 아이콘, 충족요건 진행률 링. 자막 패널은 그대로. `typecheck`·`build` 통과.
 

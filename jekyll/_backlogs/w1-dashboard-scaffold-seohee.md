@@ -9,8 +9,8 @@ date: 2026-08-26
 ---
 
 `apps/dashboard` 를 Vite + React 18 + TypeScript strict 로 스캐폴딩한다.
-**이 티켓은 [w1-dashboard-scaffold](/backlog/w1-dashboard-scaffold/) (장민석, 팀개편 전)를 대체한다.**
-기존 티켓의 `assignee` 는 작성 당시 기록이므로 소급 수정하지 않는다.
+**이 티켓은 `w1-dashboard-scaffold`(장민석, 팀개편 전)를 대체한다.**
+그 티켓은 이후 중복 정리로 보드에서 빠졌다. 기존 `assignee`는 작성 당시 기록이므로 소급 수정하지 않는다.
 
 규칙은 `.claude/rules/dashboard.md` 를 따르되, 그 안의 `RecommendationCard` 예시(`source.doc`/`score`)는 구버전이다.
 정본은 [7.3절 인터페이스 계약 v2](/docs/07/) (`source.doc_id`+`title`, `similarity_score`).
