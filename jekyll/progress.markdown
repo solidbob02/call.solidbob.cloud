@@ -4,6 +4,14 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-26 (45)
+- **`server/` 파이프라인 백로그 6건 생성.** 콜센터 대시보드에 넣을 기능을 레퍼런스(Genesys Agent Copilot · Amazon Connect · Cresta)와 대조해 뽑고, **프론트가 아니라 그것을 떠받치는 파이프라인 관점**으로 환산했다. 화면은 조서희 님 담당이라 손대지 않는다
+- **가장 큰 공백은 영속성이었다** — `db/schema.sql` 에 테이블 16개가 있는데 **저장하는 코드가 0개**다. 아웃바운드 어댑터가 `log_*` 둘뿐이라 `transcript_ingest_interactor` 가 마스킹까지 제대로 하고도 결과가 어디에도 남지 않는다. `w2-mysql-persistence` 가 나머지 4건의 전제
+- 2주차 착수 가능 2건 — `w2-mysql-persistence`(영속성), `w2-search-endpoint`(수동 검색 폴백. `RetrievalPort` 가 이미 있어 **HTTP 표면만** 얹으면 되고 DB 도 필요 없다). 이후 `w3-transcript-query-api`(interim 199건 중복을 서버가 흡수) · `w4-knowledge-gap-intake` · `w7-card-feedback` · `w7-postcall-contract`
+- **레퍼런스에서 의도적으로 뺀 것** — 감정 분석 점수(Genesys sentiment) · Cresta 식 실시간 코칭 점수·상담원 순위. [부록 A-1](/docs/12/) 금지 범위이고 [절대 원칙 9](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md)에 어긋난다. 카드 채택 기록도 **카드 품질을 재는 용도**로만 두고 상담원 단위 집계는 만들지 않기로 티켓에 못박았다
+- **확인된 사실 2건** — ① `recommendation_card` 에 채택 여부 컬럼이 없어 `w7-card-feedback` 은 스키마 변경(팀 승인)이 따라온다 ② `postcall`(D-1~D-3) 계열 포트가 아예 없다. 반대로 `knowledge_gap`·`follow_up_action` 테이블은 이미 있어 **수집 경로만** 만들면 된다
+- 우리 F-2 충족요건 체크리스트가 Genesys 의 "intent-based checklist(최대 7항목)"와 같은 패턴임을 확인 — 독자 설계가 업계 표준과 수렴했다
+
 ### 2026-08-26 (44)
 - **브랜치 `ai` → `server` 로 개명.** 담당 디렉터리 분리(`_project/decisions/012` — 류준 `ai/` · 장민석 `server/`) 직후 [7절](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md)이 "⚠ 브랜치 이름과 엇갈린다 — 장민석은 브랜치 `ai`에서 `server/`를 고친다"고 적어야 했던 상태를 해소한 것이다. 이제 장민석은 브랜치 `server` 에서 `server/` 를 고친다
 - 함께 고친 곳 — `.github/workflows/test.yml` 트리거 목록(`ai` → `server`), `CLAUDE.md` 팀 절·브랜치 절
