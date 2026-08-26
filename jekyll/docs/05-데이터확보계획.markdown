@@ -37,7 +37,7 @@ permalink: /docs/05/
 
 > **이 데이터셋의 QA 원문을 지식베이스 문서에 그대로 옮기지 않는다.** 카테고리·의도
 > 체계만 참고하고, 실제 조항·매뉴얼 문장은 팀이 새로 쓴다([CLAUDE.md 절대 원칙
-> 6](/CLAUDE.md)).
+> 6](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md)).
 
 ## 5.2 평가용 통화 음성 — AI Hub 실제 데이터
 
