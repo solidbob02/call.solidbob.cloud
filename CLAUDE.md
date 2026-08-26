@@ -23,11 +23,18 @@
 
 - **사업명**: CallGuard (StreamRAG : CallGuard) — 실시간 상담원 어시스트 RAG 시스템
 - **팀명**: SOLIDBOB
-- **팀**: 정성윤(AWS·인프라) · 류준(백엔드·AI) · 장민석(앱·프론트엔드)
+- **팀 (2026-08-26 개편)**: 정성윤(AWS·인프라) · 류준·장민석(백엔드·AI, 공동) · 조서희(프론트엔드, 신규 합류)
+  — 원래 3인 체제(정성윤·류준·장민석)에서 플러터 앱 개발을 접고, 장민석이 프론트엔드에서
+  류준과 함께 백엔드·AI로 옮기고, 조서희가 새로 합류해 프론트엔드를 전담한다. 근거:
+  `_project/decisions/005-팀-개편-4인-체제.md`
 - **개발기간**: 2026-08-20 ~ 2026-10-27, 애자일 스크럼 (1주 1스프린트, 총 8스프린트)
 - **한 줄**: 통화를 실시간으로 들으면서, 고객이 방금 물은 내용에 필요한 사내 문서를 상담원 화면에 자동으로 띄우고,
   컴플라이언스 위반 표현과 개인정보를 실시간으로 탐지·마스킹한다.
 - 2026-08-21~24에는 같은 저장소가 AdPass(AI 광고 규제 사전검수) 기획서를 다루었고, 08-25 rev.4 반영으로 CallGuard로 전환됐다.
+- **데모 도메인 (2026-08-26 확정)**: 가상 통신사 "한별텔레콤" 단일 시나리오 대신, 실제로 확보한 AI Hub
+  「민원(콜센터) 질의-응답」데이터셋 기준 4개 도메인 — **금융보험 · 다산콜센터 · 쇼핑 · 질병관리본부** — 를
+  전부 지원한다. 이 4개 밖의 도메인(통신 등)은 예시로도 새로 만들지 않는다. 근거·되돌리는 법:
+  `_project/decisions/004-데모-도메인-4종-확정.md`.
 
 ### 기준 문서
 
@@ -86,7 +93,7 @@ _project/                ⚠ 비공개. 지킬 루트 밖이라 사이트에 올
   STATE.md               세션 인수인계용 현재 상태
   decisions/             결정 기록 (ADR)
 db/                      schema.sql(DDL) · ERD.md · erd.dot · generate_schema_docs.py
-knowledge-base/          terms / manual / policy — 가상 사업자 "한별텔레콤" 기준
+knowledge-base/          도메인별(finance/dasan/shopping/health) terms / manual / policy
 golden-set/              골든셋 (v1-10.json …)
 services/                서비스 코드. 현재 core/eval(평가 하네스) + core/tests
 scripts/ data/           유틸리티 / 데이터 (원본은 .gitignore)
@@ -143,8 +150,8 @@ permalink: /<경로>/
 ```yaml
 ---
 title: "카카오 로그인 API 연동"
-assignee: "류준"          # 정성윤 | 류준 | 장민석
-role: "ai"                # infra | ai | app  (배지)
+assignee: "류준"          # 정성윤 | 류준 | 장민석 | 조서희
+role: "ai"                # infra | ai | app  (배지 — ai: 류준·장민석, app: 조서희)
 status: "in-progress"     # todo | in-progress | done
 sprint: 1
 priority: 5               # 같은 칸 안의 정렬 순서
@@ -201,7 +208,9 @@ code(eval): 마스킹 재현율 계산 추가
 ```
 
 타입: `log` | `docs` | `data` | `code` | `rule` | `chore`
-**커밋과 푸시는 사용자가 명시적으로 요청할 때만 한다.** 브랜치는 역할별로 나눈다 — `PM` / `frontend` / `backend` / `flutter`.
+**커밋과 푸시는 사용자가 명시적으로 요청할 때만 한다.** 브랜치는 역할별로 나눈다 — `PM` / `frontend` / `backend`.
+`flutter` 브랜치는 앱 개발 중단(2026-08-26)으로 더는 쓰지 않는다 — 기존 `origin/flutter`는
+히스토리 보존용으로 남겨두고 삭제는 하지 않는다(삭제하려면 사용자 확인 필요).
 
 ---
 

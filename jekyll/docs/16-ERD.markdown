@@ -14,6 +14,14 @@ permalink: /docs/16/
 > `db/generate_schema_docs.py`(스키마 정의 — 여기만 고치면 SQL·ERD가 같이 갱신됨),
 > `db/docs/ERD.md`(이 페이지의 상세 버전 + 팀 교차검증 체크리스트).
 
+> **⚠ 미반영 — 후속 엔지니어링 티켓 (2026-08-26)**: 데모 도메인을 통신 단일에서 4종
+> (금융보험·다산콜센터·쇼핑·질병관리본부)으로 바꾸면서([`_project/decisions/004`](https://github.com/solidbob02/call.solidbob.cloud)),
+> 아래 `subscriber`/`plan`(TERM-5.3 명의변경 제한 근거)과 `closure`의 evidence 컬럼
+> 설계는 여전히 통신 도메인 가정이 남아 있다. 스키마 자체는 이번 세션에서 고치지 않았다
+> — `document.doc_id`에 도메인 접두어(`FIN-`/`SHOP-` 등)가 들어가는 것은 문자열이라
+> 스키마 변경 없이 수용되지만, `closure_type` 값 집합과 `subscriber`/`plan`의 도메인
+> 적합성은 재검토가 필요하다.
+
 ## ERD
 
 <img src="/assets/erd/ERD.png" alt="CallGuard ERD" style="max-width:100%; border:1px solid #e5e7eb; border-radius:6px;">

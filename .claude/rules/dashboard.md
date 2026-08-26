@@ -6,8 +6,11 @@ paths:
 
 # 프론트엔드 규칙 (apps/dashboard)
 
-CallGuard 상담원 대시보드는 React다 ([팀 분업](/docs/07/): 장민석 담당). `apps/dashboard`는
-아직 스캐폴딩되지 않았으므로, 아래는 [Task 4] 구현 시점부터 지킬 컨벤션이다.
+CallGuard 상담원 대시보드는 React(웹)다 ([팀 분업](/docs/07/): 조서희 담당 — 2026-08-26
+팀 개편 이전에는 장민석 담당이었으나, 장민석이 백엔드·AI로 옮기고 조서희가 신규 합류해
+프론트엔드를 전담한다. `_project/decisions/005`). 앱(Flutter)은 개발하지 않는다.
+`apps/dashboard`는 아직 스캐폴딩되지 않았으므로, 아래는 [Task 4] 구현 시점부터 지킬
+컨벤션이다.
 
 ---
 
