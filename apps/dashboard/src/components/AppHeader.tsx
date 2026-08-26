@@ -52,7 +52,17 @@ export function AppHeader({ onReplay }: AppHeaderProps): ReactElement {
         </span>
         {isCoreApiConfigured() ? <span className="status">REST</span> : null}
         {mode === "mock" ? (
-          <button type="button" className="btn-ghost compact" onClick={onReplay}>
+          <button type="button" className="btn-replay" onClick={onReplay}>
+            <svg
+              className="btn-replay-icon"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M6 4.75v14.5a.75.75 0 0 0 1.13.65l12.5-7.25a.75.75 0 0 0 0-1.3L7.13 4.1A.75.75 0 0 0 6 4.75z" />
+            </svg>
             다시 재생
           </button>
         ) : null}

@@ -75,10 +75,6 @@ function TermCard({
       className="term-card"
       data-category={category}
     >
-      <span
-        className={`card-tab cat-${category.toLowerCase()}`}
-        aria-hidden="true"
-      />
       <div className="term-card-body">
         <p className={`card-category cat-${category.toLowerCase()}`}>{category}</p>
         <h3>{item.card.title}</h3>
