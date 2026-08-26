@@ -50,10 +50,11 @@
 
 ## 다음 단계
 
-- [ ] 팀 리뷰 — 발화 표현이 자연스러운지, 실제 콜센터 상황과 맞는지 확인. F-2 케이스는
-      규정 작성자(류준·장민석)가 아닌 사람이 검수한다([보완지시서 3번](https://github.com/solidbob02/call.solidbob.cloud))
+- [x] 팀 리뷰 완료 (2026-08-26 팀 회의). F-2 케이스는 규정 작성자(류준·장민석)가 아닌
+      사람이 검수했다([보완지시서 3번](https://github.com/solidbob02/call.solidbob.cloud))
 - [ ] 2주차: 50개로 확장 → 잠정 베이스라인 측정 (도메인 비율 유지)
 - [ ] 3주차: 150개로 확장 → 공식 기준선 확정, CI에 고정
-- [ ] `services/core/eval/`에서 이 JSON을 그대로 읽어 채점 — 로더는 이미 `domain` 필드를
-      파싱한다(`services/core/eval/golden_set.py`). 도메인별 Recall@5 집계는 아직
-      `harness.py`에 배선하지 않음 — 후속 작업
+- [x] `fastapi/evaluation/`에서 이 JSON을 그대로 읽어 채점 — 로더가 `domain` 필드를
+      파싱한다(`fastapi/evaluation/golden_set.py`). B-0 도메인 분류 정확도는 `harness.py`에
+      배선 완료(`_project/decisions/007`). **도메인별 Recall@5 집계**는 B-2 하이브리드
+      검색 스포크 구현 시점의 후속 작업 — 아직 그 모듈 자체가 없음
