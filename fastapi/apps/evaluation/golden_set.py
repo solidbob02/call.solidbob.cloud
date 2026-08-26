@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 DEFAULT_GOLDEN_SET_PATH = (
-    Path(__file__).resolve().parents[2] / "golden-set" / "v1-10.json"
+    Path(__file__).resolve().parents[3] / "golden-set" / "v1-10.json"
 )
 
 

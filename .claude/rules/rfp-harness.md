@@ -38,7 +38,7 @@ infra/ (Docker, AWS, MySQL, Elasticsearch)                             ├──
 
 | 담당자 | 역할 | 소유 디렉토리 | 근거 |
 |---|---|---|---|
-| **정성윤** | AWS·인프라 | `services/gateway/`, `infra/`, `fastapi/masking/`(C-5, 예외적으로 코어 내 배치) | [팀 분업](/docs/07/) |
+| **정성윤** | AWS·인프라 | `services/gateway/`, `infra/`, `fastapi/apps/masking/`(C-5, 예외적으로 코어 내 배치) | [팀 분업](/docs/07/) |
 | **류준 · 장민석** | 백엔드·AI (공동, 기능별 분할 없음) | `fastapi/`(검색·리랭킹·트리거·생성·컴플라이언스·F-2 게이트·평가 하네스) — 둘이 함께 작업한다([7.1절](/docs/07/)) | [팀 분업](/docs/07/) |
 | **조서희** | 프론트엔드 | `apps/dashboard/`(React 대시보드), 결과 시각화(matplotlib) | [팀 분업](/docs/07/) |
 
@@ -57,23 +57,23 @@ infra/ (Docker, AWS, MySQL, Elasticsearch)                             ├──
 | 요구 ID | 정의 | 코드 위치 | 검수 기준 | 근거 문서 |
 |---|---|---|---|---|
 | **A-1·A-2** | 스트리밍 STT + 화자 분리 | `services/gateway/stt/`, `services/gateway/diarization/` | 부분 전사 결과 스트리밍, [V1](/docs/05/) 결과에 따라 채널분리/diarization 분기 | [기능 명세](/docs/02/), [데이터 확보 계획](/docs/05/) |
-| **B-1~B-3** | 트리거 판정 + 하이브리드 검색(nori+dense_vector+RRF) + 리랭킹 | `fastapi/retrieval/` | Recall@5 ≥0.70(오류 없음)/≥0.60(오류 10%), 트리거 적절 발동률(0~800ms) ≥0.85, 내부 처리 p95 ≤1,000ms | [핵심 기술 난제](/docs/04/), [평가 설계](/docs/06/) |
-| **B-4~B-6** | 근거 기반 요약 카드 생성 + 출처 표시 | `fastapi/generation/` | 출처 표시율 100%, 환각 150문항 중 5건 이하, 근거 부족 시 "관련 문서 없음" 반환 | [기능 명세 2.3](/docs/02/) |
-| **C-1~C-4** | 컴플라이언스 탐지 + 대체 표현 제시 | `fastapi/compliance/` | 재현율 ≥0.90, 정밀도 ≥0.60 (재현율 우선) | [평가 설계](/docs/06/) |
-| **C-5** | 개인정보 실시간 마스킹 | `fastapi/masking/` (담당: 정성윤) | **P1~P7 패턴 마스킹 누락 0건 — 절대 규칙.** 화면·DB 저장 양쪽 앞단 적용, 원본 미보관 | [기능 명세 2.4](/docs/02/), [평가 설계](/docs/06/) |
-| **D-4** | 지식베이스 공백 리포트 | `fastapi/postcall/` | B(검색 실패)/C(놓친 위반)/F(사후 문제) 케이스를 같은 루프로 누적 | [기능 명세 2.5](/docs/02/) |
-| **E-1~E-4** | 평가 하네스 | `fastapi/evaluation/` | 규칙 기반 채점(LLM 채점 배제), 여러 회 실행 최저치 고정, 기준선 미달 시 CI 실패 | [평가 설계](/docs/06/) |
-| **F-2** | 종결 요건 검증 게이트 *(조건부, 7주차 체크포인트)* | `fastapi/closure_gate/` | 필수 근거 미기재 시 종결 **100% 차단 — 절대 규칙**. 판정은 규칙, 설명만 LLM | [기능 명세 2.7](/docs/02/), [부록 A-2](/docs/12/) |
-| **G-2** | 지역 자원 연계 검색 *(여유 시)* | `fastapi/resources/` | 자원 매칭 정확도 ≥0.95, 폐지·이전 기관 반환 0건 | [기능 명세 2.8](/docs/02/) |
+| **B-1~B-3** | 트리거 판정 + 하이브리드 검색(nori+dense_vector+RRF) + 리랭킹 | `fastapi/apps/retrieval/` | Recall@5 ≥0.70(오류 없음)/≥0.60(오류 10%), 트리거 적절 발동률(0~800ms) ≥0.85, 내부 처리 p95 ≤1,000ms | [핵심 기술 난제](/docs/04/), [평가 설계](/docs/06/) |
+| **B-4~B-6** | 근거 기반 요약 카드 생성 + 출처 표시 | `fastapi/apps/generation/` | 출처 표시율 100%, 환각 150문항 중 5건 이하, 근거 부족 시 "관련 문서 없음" 반환 | [기능 명세 2.3](/docs/02/) |
+| **C-1~C-4** | 컴플라이언스 탐지 + 대체 표현 제시 | `fastapi/apps/compliance/` | 재현율 ≥0.90, 정밀도 ≥0.60 (재현율 우선) | [평가 설계](/docs/06/) |
+| **C-5** | 개인정보 실시간 마스킹 | `fastapi/apps/masking/` (담당: 정성윤) | **P1~P7 패턴 마스킹 누락 0건 — 절대 규칙.** 화면·DB 저장 양쪽 앞단 적용, 원본 미보관 | [기능 명세 2.4](/docs/02/), [평가 설계](/docs/06/) |
+| **D-4** | 지식베이스 공백 리포트 | `fastapi/apps/postcall/` | B(검색 실패)/C(놓친 위반)/F(사후 문제) 케이스를 같은 루프로 누적 | [기능 명세 2.5](/docs/02/) |
+| **E-1~E-4** | 평가 하네스 | `fastapi/apps/evaluation/` | 규칙 기반 채점(LLM 채점 배제), 여러 회 실행 최저치 고정, 기준선 미달 시 CI 실패 | [평가 설계](/docs/06/) |
+| **F-2** | 종결 요건 검증 게이트 *(조건부, 7주차 체크포인트)* | `fastapi/apps/closure_gate/` | 필수 근거 미기재 시 종결 **100% 차단 — 절대 규칙**. 판정은 규칙, 설명만 LLM | [기능 명세 2.7](/docs/02/), [부록 A-2](/docs/12/) |
+| **G-2** | 지역 자원 연계 검색 *(여유 시)* | `fastapi/apps/resources/` | 자원 매칭 정확도 ≥0.95, 폐지·이전 기관 반환 0건 | [기능 명세 2.8](/docs/02/) |
 
 ### 3.2 품질·검증 영역
 
 | 요구 ID | 정의 | 코드 위치 | 검수 기준 | 근거 문서 |
 |---|---|---|---|---|
-| **SEC-1** | 개인정보 원본 미보관 | `fastapi/masking/`, MySQL `transcript` 스키마 | 마스킹 전 원문이 DB·로그 어디에도 남지 않음 (스키마 리뷰로 검증) | [기능 명세 C-5](/docs/02/), [부록 A](/docs/12/) |
+| **SEC-1** | 개인정보 원본 미보관 | `fastapi/apps/masking/`, MySQL `transcript` 스키마 | 마스킹 전 원문이 DB·로그 어디에도 남지 않음 (스키마 리뷰로 검증) | [기능 명세 C-5](/docs/02/), [부록 A](/docs/12/) |
 | **SEC-2** | 자격증명 분리 | `.env.example`, `infra/secrets/` | Google STT 키·MySQL 비밀번호가 코드/레포에 커밋되지 않음. `.env.example`엔 키 이름만 | `.env.example` |
 | **QUA-1** | 요구 ID별 PyTest/Jest 자동화 테스트 | `services/*/tests/`, `apps/dashboard/test/` | 핵심 모듈(트리거·검색·마스킹·F-2 게이트) 단위 테스트 존재, CI에서 실행 | [평가 설계 6.2](/docs/06/) |
-| **QUA-2** | 골든셋 회귀 평가 자동화 | `fastapi/evaluation/harness.py` | 골든셋(1주차 10개→2주차 50개→3주차 150개) 기준 eval 하네스가 스프린트마다 실행되고 [진행상황](/progress/)에 기록됨 | [데이터 확보 계획 5.3](/docs/05/) |
+| **QUA-2** | 골든셋 회귀 평가 자동화 | `fastapi/apps/evaluation/harness.py` | 골든셋(1주차 10개→2주차 50개→3주차 150개) 기준 eval 하네스가 스프린트마다 실행되고 [진행상황](/progress/)에 기록됨 | [데이터 확보 계획 5.3](/docs/05/) |
 | **COST-1** | Google STT 사용량을 무료 크레딧/무료 한도 내로 이중 캡 | `services/gateway/stt/budget_guard.js`, GCP 콘솔 쿼터 | ① GCP 쿼터로 하드 리밋(1차) ② `STT_MAX_SECONDS_PER_DAY`/`_MONTH`(`.env.example`) 초과 시 새 스트림 오픈 거부(2차, 애플리케이션 가드) | [리스크 및 대응](/docs/11/) |
 
 ---
@@ -97,7 +97,7 @@ claude "rfp-harness.md의 요구사항을 반영해 CallGuard 모노레포 뼈�
 ### [Task 2] B-2 (하이브리드 검색) 구현
 
 ```
-claude "B-2 요구사항에 따라 fastapi/retrieval/hybrid.py에 Elasticsearch nori(BM25) +
+claude "B-2 요구사항에 따라 fastapi/apps/retrieval/hybrid.py에 Elasticsearch nori(BM25) +
 dense_vector 임베딩 검색을 RRF로 병합하는 HybridRetriever 클래스를 구현해줘.
 - fastapi/<앱>/tests/test_retrieval.py에 골든셋 일부로 Recall@5/MRR을 측정하는 PyTest도 함께 생성
   (평가 설계 6.1절 검수기준 참고)
@@ -107,7 +107,7 @@ dense_vector 임베딩 검색을 RRF로 병합하는 HybridRetriever 클래스�
 ### [Task 3] C-5 (개인정보 마스킹) 구현
 
 ```
-claude "C-5 요구사항에 따라 fastapi/masking/에 STT 전사 결과를 마스킹하는 파이프라인을 구현해줘.
+claude "C-5 요구사항에 따라 fastapi/apps/masking/에 STT 전사 결과를 마스킹하는 파이프라인을 구현해줘.
 - 단계: ① 구분자·공백 제거 후 연속 숫자열 판정 ② 한글 수사→숫자 변환(보조) ③ 정규식(P1~P4) +
   NER(P6·P7) 매칭 ④ 마스킹 (기능 명세 2.4절 탐지 파이프라인 순서 그대로)
 - fastapi/<앱>/tests/test_masking.py에 P1~P7 패턴 목록에 대한 누락 0건 검증 테스트 생성

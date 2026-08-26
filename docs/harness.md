@@ -9,7 +9,7 @@
 | 하네스 | 답하는 질문 | 위치 | 강제 수단 |
 |---|---|---|---|
 | 요구사항 하네스 | **무엇을** 만들어야 하는가 (기능 ID·검수 기준·추적성) | `.claude/rules/rfp-harness.md` | `# Requirement:` 주석 검사, 요구 ID별 테스트 |
-| 평가 하네스 | 만든 것이 **얼마나** 되는가 (Recall@5, 누락 건수, p95) | `fastapi/evaluation/` | `cd fastapi && pytest`, 기준선 미달 시 CI 실패 |
+| 평가 하네스 | 만든 것이 **얼마나** 되는가 (Recall@5, 누락 건수, p95) | `fastapi/apps/evaluation/` | `cd fastapi && pytest`, 기준선 미달 시 CI 실패 |
 | **구조 하네스 (이 문서)** | **어떻게 짜야** 위 둘이 계속 성립하는가 (계층·의존 방향·슬라이스) | `docs/harness.md` + `docs/architecture.md` | import-linter 계약 5종, 타입 체크 |
 
 구조 규칙의 본문은 [architecture.md](architecture.md), 도메인 용어는 [domain.md](domain.md)에 있다. 이 문서는 **검증 장치**만 다룬다.
@@ -31,7 +31,7 @@
 아직 없는 패키지를 적으면 lint-imports가 "모듈 없음"으로 실패하므로 **만든 것만 적는다**. 파일 안 주석이 확장 절차를 안내한다.
 
 ```bash
-cd fastapi && PYTHONPATH=. lint-imports --config .importlinter
+cd fastapi && PYTHONPATH=apps lint-imports --config .importlinter
 ```
 
 스포크 이름은 `rfp-harness.md §3.1`의 코드 위치를 그대로 쓴다. 이름을 바꾸면 그쪽 표도 같이 바꾼다.
@@ -62,8 +62,8 @@ cd fastapi && PYTHONPATH=. lint-imports --config .importlinter
 
 | 영역 | 명령 | 상태 (2026-08-26) |
 |---|---|---|
-| 평가 하네스·허브 계약·앱 기동 테스트 | `cd fastapi && pytest` (`fastapi/pytest.ini`: `integration` 마커는 기본 제외) | **동작** — 37개 통과 (테스트는 앱 안 `hub/tests/`·`evaluation/tests/`, 루트 `tests/`는 main.py 전용) |
-| 구조 계약 | `cd fastapi && PYTHONPATH=. lint-imports --config .importlinter` | **동작** — 계약 5종 통과 |
+| 평가 하네스·허브 계약·앱 기동 테스트 | `cd fastapi && pytest` (`fastapi/pytest.ini`: `integration` 마커는 기본 제외) | **동작** — 37개 통과 (테스트는 앱 안 `apps/hub/tests/`·`apps/evaluation/tests/`, 루트 `tests/`는 main.py 전용) |
+| 구조 계약 | `cd fastapi && PYTHONPATH=apps lint-imports --config .importlinter` | **동작** — 계약 5종 통과 |
 | FastAPI 코어 실행 | `cd fastapi && uvicorn main:app --reload --env-file ../.env` → `GET /health`·`GET /hub/myself`·`POST /hub/transcripts` | 동작 — 스포크 0개라 `/hub/transcripts`는 501 |
 | Node 게이트웨이 | — | 없음 — 미스캐폴딩 |
 | React 대시보드 타입 체크 | `cd apps/dashboard && pnpm run typecheck` | 없음 — 미스캐폴딩 |
@@ -106,4 +106,4 @@ cd fastapi && PYTHONPATH=. lint-imports --config .importlinter
 | [domain.md](domain.md) | 도메인 모델 — 골든셋·지식베이스·DDL 기준 유비쿼터스 언어 |
 | [plan-rev4.1.md](plan-rev4.1.md) | 기획서 rev.4.1 사본 (rev.4 + 보완지시서 병합) |
 | [.claude/rules/rfp-harness.md](../.claude/rules/rfp-harness.md) | 요구사항 ID·검수 기준·추적성 |
-| [fastapi/evaluation/harness.py](../fastapi/evaluation/harness.py) | 평가 하네스 골격 |
+| [fastapi/apps/evaluation/harness.py](../fastapi/apps/evaluation/harness.py) | 평가 하네스 골격 |
