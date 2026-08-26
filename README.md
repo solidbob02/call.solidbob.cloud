@@ -20,7 +20,8 @@
 | `CLAUDE.md` | 프로젝트 규칙. 작업 시작 전 필독 |
 | `jekyll/` | **지킬 사이트 루트.** 표지 · 목차 · `docs/NN` 본문 · `sprints/` · 진행 기록 |
 | `db/` | `schema.sql`(DDL) · ERD(`ERD.md` · `erd.dot` · `ERD.png`) · 생성 스크립트 |
-| `fastapi/` | **백엔드 코어**(Python 3.13). `apps/hub`(계약 DTO·포트·수직 슬라이스) · `apps/evaluation`(평가 하네스) · `core/config.py` · 구조 계약(`.importlinter`) |
+| `server/` | **요청이 흐르는 길**(Python 3.13). 계약(포트·DTO)·파이프라인 배선·클린 아키텍처. `apps/hub` · `core/config.py` · `.importlinter`. → `server.solidbob.cloud` |
+| `ai/` | **품질을 만들고 재는 쪽**(Python 3.13). 청킹·BM25·리랭크·모델 학습·평가 하네스. `apps/retrieval` · `apps/evaluation`. → `ai.solidbob.cloud` |
 | `knowledge-base/` | 도메인 4종(`finance`·`dasan`·`shopping`·`health`) × terms / manual / policy |
 | `golden-set/` | 골든셋 시나리오 (`v1-10.json` — 도메인 4종 기준) |
 | `scripts/`, `data/` | 유틸리티 / 데이터 (원본은 커밋하지 않는다) |
@@ -35,8 +36,8 @@ bundle exec jekyll serve --host 0.0.0.0 --port 4000
 ```
 
 ```bash
-cd fastapi && pytest                        # 평가 하네스·허브 테스트 (루트에서는 돌지 않는다)
-cd fastapi && PYTHONPATH=. lint-imports     # 구조 계약 5종
+cd server && pytest && PYTHONPATH=apps lint-imports --config .importlinter        # 파이프라인·계약 (4종)
+cd ai     && pytest && PYTHONPATH=apps:../server/apps lint-imports --config .importlinter  # 검색·평가 (3종)
 python3 scripts/check_site_links.py jekyll/_site   # 내부 링크 (빌드 후)
 python3 scripts/check_session_end.py               # 진행 기록·티켓 상태·중복 티켓
 python db/generate_schema_docs.py                  # ERD 재생성
