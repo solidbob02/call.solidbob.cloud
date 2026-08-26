@@ -11,15 +11,6 @@ date: 2026-08-26
 ⚠ **2주차의 다른 작업이 전부 이 결정에 걸려 있다.** 통화가 금융보험·다산콜센터·쇼핑·
 질병관리본부 중 어느 도메인인지 정해지지 않으면 어느 인덱스를 검색할지 모른다.
 
-**2026-08-26 확정 — B안(자동 분류) 채택.** 결정 기록: `_project/decisions/007-도메인-라우팅-자동분류-확정.md`
-(아래 파일명과 다름 — 007번으로 등록됨). 설계: 초반 발화를 KcELECTRA 계열 분류기(B-0)로
-4클래스 분류 + 신뢰도 점수, 신뢰도 낮으면 4개 인덱스 하이브리드 검색 폴백. 평가 하네스에
-**이미 배선 완료** — `fastapi/apps/hub/app/ports/output/domain_routing_port.py`(`DomainRoutingPort`
-ABC) + `fastapi/apps/hub/app/dtos/domain_classification_dto.py` + `fastapi/apps/evaluation/metrics/domain_routing.py`
-(정확도+오분류행렬), `harness.py`의 `Ports.domain_routing`. 목표 정확도 ≥0.95([6.1절](/docs/06/)).
-골든셋(`golden-set/v1-50.json`)에 `domain` 필드 포함 완료. **실제 분류기 구현·학습은 미착수**
-— 2주차 착수 항목([w2-baseline](/backlog/w2-baseline/) 참고).
-
 ## 선택지
 
 | | 방법 | 비용 | 위험 |
@@ -37,9 +28,7 @@ ABC) + `fastapi/apps/hub/app/dtos/domain_classification_dto.py` + `fastapi/apps/
 
 ## 완료 조건
 
-결정 + `_project/decisions/007-도메인-라우팅-자동분류-확정.md` 작성 + 인터페이스 계약에
-도메인 필드 반영 여부 확정([7.3절](/docs/07/)).
+결정 + `_project/decisions/006-도메인-라우팅.md` 작성 + 인터페이스 계약에 도메인 필드
+반영 여부 확정([7.3절](/docs/07/)).
 
-**충족**: 결정·문서화·하네스 배선 완료. 인터페이스 계약(WebSocket/REST 메시지)에 `domain`
-필드를 명시적으로 넣을지는 여전히 미결 — 현재는 서버가 `call_id`로 DB의 `call.domain`을
-조회하는 방식만 가정한다([7.3절](/docs/07/) 참고, [3.2절](/docs/03/)).
+**2026-08-26 — 결정 완료: 자동 분류(B안).** 상담원 수동 선택이 아니라 초반 발화를 4클래스로 분류하고 신뢰도가 낮으면 4개 인덱스 하이브리드 검색으로 폴백한다. 근거: `_project/decisions/007-도메인-라우팅-자동분류-확정.md`. **분류기 구현·학습은 이 티켓이 아니라** [w1-domain-routing](/backlog/w1-domain-routing/)에서 이어진다(미착수).
