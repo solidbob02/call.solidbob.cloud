@@ -4,6 +4,18 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-26 (44)
+- **`main` 동기화** — `ai`(구 `backend`) 브랜치를 `origin/main`(`3c518de`)으로 fast-forward. 조서희 님 대시보드 스캐폴딩 전체(`apps/dashboard/` 컴포넌트·스토어·4도메인 mock 시나리오·계약 타입)와 고객 화면 철회(`decisions/014`)를 받았다. 충돌 0건, 로컬 커밋 유실 0건
+- **브랜치 이름을 담당 디렉터리에 맞췄다 — `backend`→`ai`(류준), `ai`→`server`(장민석).** 브랜치 수는 넷 그대로다(`decisions/011` 유지). 이제 **`ai` 브랜치에서 `ai/` 를, `server` 브랜치에서 `server/` 를** 고친다. 근거·되돌리는 법: `_project/decisions/015`, 티켓 [w2-branch-rename](/backlog/w2-branch-rename/)
+- **`decisions/012` 가 이 개명을 미룬 이유는 틀린 것이었다** — "브랜치명을 바꾸면 main 룰셋의 필수 통과 검사 이름까지 함께 고쳐야 한다"고 적혀 있었으나, 그 검사 이름은 `test.yml` 의 **job 이름**(`server`·`ai`·`jekyll`)이지 브랜치 이름이 아니다(`gh api .../rules/branches/main` 으로 확인). 실제로 브랜치 이름이 걸린 곳은 **push 트리거 목록 한 줄뿐**이었고, 룰셋·`branch-protection.json` 은 손대지 않았다. admin 권한도 필요 없었다
+- **지우기 전에 미머지 커밋을 확인했다** — `origin/backend` 와 구 `origin/ai` 둘 다 `origin/main` 의 조상이었다(`git merge-base --is-ancestor`). 미머지 0건이라 삭제로 잃은 작업이 없다
+- **⚠ `ai` 라는 이름이 사람을 갈아탔다** — 오늘 이전 기록(PR #15·#22·#27, `STATE.md`)의 `ai` 브랜치는 **장민석**이고, 오늘 이후는 **류준**이다. 옛 기록은 그 시점의 사실이라 고치지 않았다(절대 원칙 8). 대신 `CLAUDE.md` §7 과 `decisions/015` 에 "옛 이름 주의" 절을 넣었다
+- **담당 분리를 문서 전체에 반영** — 아직 "류준·장민석 공동"으로 남아 있던 곳을 `decisions/012` 기준으로 고쳤다: `ai/CLAUDE.md` §6(→ 류준)·`server/CLAUDE.md` §5(→ 장민석, C-5 마스킹만 정성윤)·[7.1 담당표](/docs/07/)를 `ai/`·`server/` 두 줄로 분리·[7.2](/docs/07/) "공동 작업" 줄을 "디렉터리로 나눈다"로 교체·`docs/architecture.md` 스포크 표에 **위치** 열 추가
+- **7.1 표 아래에 경계 판정 기준을 넣었다** — "품질을 만들거나 재는 코드인가 → `ai/`" / "요청 하나를 처리하는 데 반드시 실행되는가 → `server/`". C-5·F-2 가 `server/` 인 이유(규칙 기반 판정, 모델 미관여 — 절대 원칙 9)도 함께 적었다
+- **`generation`·`compliance` 의 위치를 `server/apps/` → `ai/apps/` 로 정정** — `.claude/rules/rfp-harness.md §3.1` 이 `fastapi/` 분리 이전 표기를 유지하고 있었다. 두 모듈 다 모델(EXAONE·분류기)을 로드하는데 **`server/.importlinter` 계약 2 가 `server/` 안의 `torch`·`transformers`·`langchain`·`langgraph` import 를 금지**하므로 거기서는 애초에 만들 수 없다. 문서가 아니라 구조 계약이 이미 정답을 갖고 있던 경우다. ⚠ 장민석 님 확인 대상으로 [미결](/open-items/)에 올렸다
+- **`CLAUDE.md` §7 의 필수 통과 검사 이름도 실제와 어긋나 있었다** — `backend`·`jekyll` 로 적혀 있었으나 룰셋은 이미 `server`·`ai`·`jekyll` 이다. 표를 고치고, "검사 이름은 job 이름이지 브랜치 이름이 아니다 / job 이름을 바꿀 때만 룰셋을 함께 고친다"를 §7 에 명시했다
+- 다음: `ai/` 2주차 작업 — B-1~B-3 검색(트리거 판정·하이브리드·리랭킹) 이어서
+
 ### 2026-08-26 (43)
 - **Jekyll CI 깨진 링크 수정** — `w1-dashboard-scaffold-seohee`가 이미 삭제된 `/backlog/w1-dashboard-scaffold/`를 가리켜 내부 링크 검사가 실패했다. 링크를 텍스트로 바꿨다.
 
