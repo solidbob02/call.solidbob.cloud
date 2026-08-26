@@ -28,6 +28,9 @@ concurrency:
   group: test-${{ github.ref }}
   cancel-in-progress: true
 
+# ⚠ job 이름 `backend` · `jekyll` 은 main 브랜치 보호의 **필수 통과 검사 이름**이다.
+#   이름을 바꾸면 보호 설정이 존재하지 않는 검사를 기다리게 되어 조용히 무력화된다.
+#   바꿔야 한다면 저장소 설정(Branches → main → Require status checks)도 함께 고친다.
 jobs:
   backend:
     runs-on: ubuntu-latest
