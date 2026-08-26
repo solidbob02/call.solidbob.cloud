@@ -36,7 +36,7 @@ permalink: /docs/09/
 |---|---|
 | AI Hub 상담 음성 (3,000시간) | https://aihub.or.kr/aidata/30711 |
 | AI Hub 고객 응대 음성 (3,300시간) | https://aihub.or.kr/aihubdata/data/view.do?dataSetSn=71616 |
-| AI Hub 민원 콜센터 질의-응답 | https://aihub.or.kr/aidata/30716 |
+| **AI Hub 민원 콜센터 질의-응답** | https://aihub.or.kr/aidata/30716 — **핵심 데이터.** [1.4절](/docs/01/) 4개 데모 도메인(금융보험·다산콜센터·쇼핑·질병관리본부)의 지식베이스 카테고리·의도 체계 근거 |
 | AI Hub 메인 | https://www.aihub.or.kr/ |
 | 서울 행정 민원상담 음성 | https://data.seoul.go.kr/dataList/OA-22804/L/1/datasetView.do |
 

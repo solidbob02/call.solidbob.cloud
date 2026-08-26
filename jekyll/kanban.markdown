@@ -23,13 +23,13 @@ permalink: /kanban/
   @media (max-width:640px){ .kanban{ grid-template-columns:1fr; } }
 </style>
 
-담당자별 백로그입니다. **티켓 1건 = 파일 1개**(`jekyll/_backlogs/`)이므로 세 사람이 동시에 자기 티켓을 고쳐도 병합 충돌이 나지 않습니다.
+담당자별 백로그입니다. **티켓 1건 = 파일 1개**(`jekyll/_backlogs/`)이므로 네 사람이 동시에 자기 티켓을 고쳐도 병합 충돌이 나지 않습니다.
 주차별 목표는 [8주 마일스톤](/docs/08/), 일자별 기록은 [개발 로그](/progress/), 아직 정하지 못한 것은 [미결 항목](/open-items/)에 있습니다.
 
 <div class="kb-legend">
   <span><span class="role role-infra">인프라</span> 정성윤</span>
-  <span><span class="role role-ai">백엔드·AI</span> 류준</span>
-  <span><span class="role role-app">앱·프론트</span> 장민석</span>
+  <span><span class="role role-ai">백엔드·AI</span> 류준 · 장민석</span>
+  <span><span class="role role-app">프론트엔드</span> 조서희</span>
 </div>
 
 {% assign statuses = "todo,in-progress,done" | split: "," %}
@@ -50,7 +50,7 @@ permalink: /kanban/
       {% endcase %}
       {% for item in items %}
       <div class="card">
-        <span class="role role-{{ item.role }}">{% case item.role %}{% when "infra" %}인프라{% when "ai" %}백엔드·AI{% when "app" %}앱·프론트{% else %}{{ item.role }}{% endcase %}</span><br>
+        <span class="role role-{{ item.role }}">{% case item.role %}{% when "infra" %}인프라{% when "ai" %}백엔드·AI{% when "app" %}프론트엔드{% else %}{{ item.role }}{% endcase %}</span><br>
         <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
       </div>
       {% endfor %}
@@ -68,8 +68,8 @@ permalink: /kanban/
 ```yaml
 ---
 title: "카카오 로그인 API 연동"
-assignee: "류준"          # 정성윤 | 류준 | 장민석
-role: "ai"                # infra | ai | app  (배지 색)
+assignee: "류준"          # 정성윤 | 류준 | 장민석 | 조서희
+role: "ai"                # infra | ai | app  (배지 색 — ai: 류준·장민석, app: 조서희)
 status: "in-progress"     # todo | in-progress | done
 sprint: 1
 priority: 5               # 같은 칸 안에서의 정렬 순서

@@ -32,19 +32,19 @@ date: 2026-08-25
 > 참고: 안 B 의 실측 비용은 생각보다 작다. `scripts/test_stt_v4_streaming.py` 로 이미 측정이 가능하다.
 > 그럼에도 한 번 넉넉히 정하고 분포로 개선을 보여주는 편이 낫다고 판단했다.
 
-## 함께 가야 할 조건 3가지
+## 함께 가야 할 조건 3가지 — 전부 반영 완료 (2026-08-25)
 
-1. **지연 분포(p50/p95) 기록** — 허용 창은 합/불 판정선일 뿐이고 개선을 보여주는 건 분포다.
-   현재 `aggregate_trigger()` 는 `on_time_rate`/`early_rate`/`late_rate` 만 낸다. **분포 계산이 없으므로 추가 필요.**
-2. **3주차 v1 은 STT `is_final` 기반으로** — 우리가 침묵을 직접 세지 말고 STT 엔드포인팅(+346ms)에 올라탄다.
-   침묵 대기를 이중으로 하지 않는 설계다.
-3. **1,500ms 의 산식을 문서에 남길 것** — "침묵 대기 1,000ms + 판정·큐잉 500ms" 와 V4 실측 +346ms 를
-   4.1절에 함께 적는다. "왜 1,500인가" 는 반드시 다시 나온다.
+1. **지연 분포(p50/p95) 기록** — `services/core/eval/harness.py`의 `run_eval`이 트리거 delta를 모아
+   `metrics/latency.py`(`summarize_latency`)로 계산, `report["trigger"]["latency_ms"]`에 싣는다.
+   가짜 predictor로 배선 테스트 추가(`test_harness.py`)
+2. **3주차 v1 은 STT `is_final` 기반으로** — [4.1절](/docs/04/)에 "STT 엔드포인팅 기반" 전략으로 반영
+3. **1,500ms 의 산식을 문서에 남길 것** — [4.1절](/docs/04/)에 "STT 엔드포인팅 +346ms 실측 + 판정·큐잉 여유 500ms" 명시
 
-## 반영 위치 (류준)
+## 반영 위치 (류준) — 전부 완료
 
-- `jekyll/docs/04-핵심기술난제.markdown` 4.1절
-- `jekyll/docs/06-평가설계.markdown` 6.1절 트리거 행 + p50/p95 기록 행
-- `services/core/eval/metrics/trigger.py` — **`ON_TIME_WINDOW_MS` 상수뿐 아니라 파일 상단 독스트링**에도
-  "0~800ms" 가 하드코딩돼 있다. 상수만 바꾸면 주석과 코드가 어긋난다
-- `jekyll/open-items.markdown` 해당 항목 체크
+- `jekyll/docs/04-핵심기술난제.markdown` 4.1절 ✓
+- `jekyll/docs/06-평가설계.markdown` 6.1절 트리거 행 + p50/p95 기록 행 ✓
+- `services/core/eval/metrics/trigger.py` — `ON_TIME_WINDOW_MS` 상수와 파일 상단 독스트링 모두 1,500ms로 갱신 ✓
+- `jekyll/open-items.markdown` 해당 항목 체크 ✓
+
+결정 기록: `_project/decisions/001-기획서-rev4-채택.md`, `_project/decisions/003-인터페이스-스키마-v2.md`

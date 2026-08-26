@@ -3,9 +3,57 @@
 > 세션 인수인계용 비공개 메모. 팀이 함께 보는 기록은 `jekyll/progress.markdown`, 미결은 `jekyll/open-items.markdown`.
 > 여기에는 그쪽에 적기 애매한 내부 사정만 남긴다.
 
-**최종 갱신**: 2026-08-25 (세션 #7)
+**최종 갱신**: 2026-08-26 (세션 #8)
 **현재**: 1주차 / 8스프린트 (2026-08-20 ~ 2026-10-27)
-**전체 상태**: 🟢 저장소 통합 완료. 지식베이스·골든셋·평가 하네스·DDL 초안까지 존재
+**전체 상태**: 🟡 데모 도메인 전환 + 팀 개편 진행 중. 지식베이스·기획서는 4개 도메인
+기준으로, 팀 문서는 4인 체제로 갱신 완료. 골든셋·DB 스키마·백엔드·AI 내부 세부 분담은
+아직 미정(후속 작업 필요)
+
+## 2026-08-26 세션 (이어서) — 팀 개편 4인 체제
+
+같은 세션에서 사용자가 팀 변경도 통보: 플러터 앱 중단, 장민석이 류준과 함께 백엔드·AI로
+합류, 조서희 신규 합류(프론트엔드 전담), 정성윤은 그대로 AWS·인프라.
+
+**끝낸 것**: `CLAUDE.md`(팀 섹션, 커밋 브랜치 컨벤션, 칸반 티켓 예시), `.claude/rules/
+rfp-harness.md`(R&R 표), `.claude/rules/dashboard.md`(담당자), `.claude/agents/
+code-reviewer.md`(스택 목록에서 Flutter 제거), `jekyll/docs/07-역할분담.markdown`(7.1·7.2
+전면 수정), `jekyll/docs/14-이번주할일.markdown`, `jekyll/kanban.markdown`(범례·역할
+라벨), `.github/workflows/pages.yml`(주석), `_project/rev4-보완지시서.md`(10번 항목),
+`_project/decisions/005-팀-개편-4인-체제.md`, `progress.markdown`·`open-items.markdown`.
+
+**의도적으로 건드리지 않은 것**: 기존 칸반 티켓의 `assignee`(작성 당시 실제 담당자
+기록이므로 소급 수정 안 함), `origin/flutter` 원격 브랜치(삭제는 사용자 확인 필요 —
+히스토리 보존 목적으로 남겨둠), `jekyll/sprints/01-sprint1.markdown` 등 과거 진행 로그
+(그 시점 사실 그대로 유지).
+
+**다음 세션이 확인할 것**: 류준·장민석 사이 백엔드·AI 세부 분담(검색/생성/컴플라이언스/
+F-2 등을 어떻게 나눌지) — 아직 팀 합의 전, `open-items.markdown`에 등록.
+
+## 2026-08-26 세션 — 데모 도메인 4종 전환
+
+사용자가 "실제 구할 수 있는 데이터가 금융보험·다산콜센터·쇼핑·질병관리본부로 한정돼
+있으니 이 도메인으로만 한정하라"고 지시. 조사해보니 가상 통신사 "한별텔레콤" 지식베이스는
+**대조할 실제 데이터가 아예 없었던** 반면, AI Hub 「민원(콜센터) 질의-응답」데이터셋은
+정확히 이 4개 도메인으로 실측 라벨링돼 있었음(`data/raw/aihub-minwon-qa/`).
+
+`AskUserQuestion`으로 "4개 전부 지원 vs 1개만 선택 vs 1개+나머지 시연용" 중 확인 →
+**4개 전부 지원**으로 확정.
+
+**이번 세션에서 끝낸 것**: `knowledge-base/` 도메인별 4폴더 재구성(각 terms/manual/
+policy, 도메인 접두어 ID), `CLAUDE.md`·`rev4-보완지시서.md`(9번 항목)·`jekyll/docs/
+01,02,04,05,06,07,09,14,15,16`·`data/README.md`·`knowledge-base/README.md` 갱신,
+결정 기록 `_project/decisions/004`, 칸반 티켓 2건(`w1-knowledge-base.md`,
+`w1-golden-set-10.md`) 갱신, `progress.markdown`·`open-items.markdown` 반영.
+
+**다음 세션이 이어받아야 할 것**:
+1. **골든셋 재작성** — 기존 10개는 무효(구 문서 ID 참조). 4개 도메인 비율 팀 컨펌 필요
+2. **DB 스키마·ERD 재검토** — `subscriber`/`plan`, `closure` evidence 컬럼이 아직 통신
+   도메인 가정. 스키마 변경이 필요한 엔지니어링 작업이라 이번 세션에서 의도적으로
+   미룸([16절 ERD](/docs/16/)의 경고 박스 참고)
+3. `jekyll/docs/03-아키텍처.markdown`은 이번 세션에서 확인/수정하지 못했다 — 도메인
+   라우팅 로직이 들어갈 자리인지 다음 세션에서 점검할 것
+4. `services/core/eval/`의 골든셋 로더·지표 계산이 `domain` 필드를 다루도록 돼 있는지
+   미확인 — 코드베이스 자체는 아직 확인 전
 
 ---
 
