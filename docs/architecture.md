@@ -24,7 +24,7 @@
 | `compliance` | 위반 탐지 + 대체 표현 | C-1~C-4 | 류준·장민석 (공동) |
 | `closure_gate` | 종결 요건 검증 (조건부, 7주차 체크포인트) | F-2 | 류준·장민석 (공동) |
 | `postcall` | 요약·유형 분류·공백 리포트 | D-1~D-4 | 류준·장민석 (공동) |
-| `evaluation` | 평가 하네스 (이미 존재 — `fastapi/evaluation/`) | E-1~E-4 | 설계 류준·장민석 / 운영 정성윤 |
+| `evaluation` | 평가 하네스 (이미 존재 — `fastapi/apps/evaluation/`) | E-1~E-4 | 설계 류준·장민석 / 운영 정성윤 |
 
 | 방향 | 허용 | 이유 |
 |---|---|---|
@@ -57,16 +57,16 @@
 허브가 각 스포크를 호출하는 방식은 **허브가 정의한 아웃바운드 포트**를 스포크가 구현하는 것이다.
 스포크는 허브 포트를 import 하고, 허브는 DI(`dependencies/`)로 구현체를 받는다. 허브 코드에 `import masking`이 나오면 계약 위반이다.
 
-`evaluation`은 예외적으로 파이프라인 밖에 있다. 골든셋을 읽어 각 스포크를 **직접** 채점하되, 접점은 **허브 아웃바운드 포트 그 자체**다 — `evaluation/harness.py`의 `Ports(retrieval=…, masking=…)`에 스포크가 구현한 `hub/app/ports/output/*` 객체를 꽂는다. 스포크 하나에 계약이 둘(허브 포트 + 평가용 Protocol)이면 반드시 갈라지므로 평가 전용 Protocol은 두지 않는다(2026-08-26 이중화 해소). 포트 시그니처를 바꾸면 `evaluation`도 같이 고친다.
+`evaluation`은 예외적으로 파이프라인 밖에 있다. 골든셋을 읽어 각 스포크를 **직접** 채점하되, 접점은 **허브 아웃바운드 포트 그 자체**다 — `apps/evaluation/harness.py`의 `Ports(retrieval=…, masking=…)`에 스포크가 구현한 `apps/hub/app/ports/output/*` 객체를 꽂는다. 스포크 하나에 계약이 둘(허브 포트 + 평가용 Protocol)이면 반드시 갈라지므로 평가 전용 Protocol은 두지 않는다(2026-08-26 이중화 해소). 포트 시그니처를 바꾸면 `evaluation`도 같이 고친다.
 
 ---
 
 ## 2. 앱 내부 레이어 (헥사고날)
 
-허브·스포크 모두 같은 단면이다.
+허브·스포크 모두 같은 단면이다. 앱은 전부 `fastapi/apps/<앱>/` 아래에 있고, `apps/`가 PYTHONPATH에 올라가므로 import는 `hub.app…`처럼 **앱 이름부터** 쓴다(`apps.`를 붙이지 않는다 — 레퍼런스 `minseok/apps/`와 동일).
 
 ```
-<spoke>/
+apps/<spoke>/
 ├── domain/
 │   ├── entities/            # 식별자 있는 것 (Call, TranscriptSegment, Closure …)
 │   ├── value_objects/       # 값으로 비교되는 것 (PiiSpan, DocRef, Verdict …)
@@ -116,7 +116,7 @@ adapter/outbound/log_<이름>_record_adapter.py    # 임시 로그 구현 (영�
 dependencies/<이름>_provider.py                  # DI
 tests/app/use_cases/test_<이름>_interactor.py    # 스텁 포트로 검증
 
-실례: `hub/`의 `transcript_ingest`·`myself` 슬라이스가 이 단면 그대로다.
+실례: `apps/hub/`의 `transcript_ingest`·`myself` 슬라이스가 이 단면 그대로다.
 ```
 
 규칙:
@@ -128,7 +128,7 @@ tests/app/use_cases/test_<이름>_interactor.py    # 스텁 포트로 검증
 3. **유스케이스는 어댑터 스키마가 아니라 `app/dtos`를 받는다.** 스키마 ↔ DTO 변환은 라우터 몫이다.
 4. **아웃바운드 포트는 빈 껍데기 금지.** 인터랙터가 실제로 호출하는 메서드만 정의한다.
 5. **모든 파일 상단에 `# Requirement: <ID>`.** (`rfp-harness.md §1-3`)
-6. 검증 루틴: 라우트 표 전후 diff + `cd fastapi && pytest` + `PYTHONPATH=. lint-imports`([harness.md §2](harness.md)).
+6. 검증 루틴: 라우트 표 전후 diff + `cd fastapi && pytest` + `PYTHONPATH=apps lint-imports`([harness.md §2](harness.md)).
 
 ### 3.1 자기소개 엔드포인트 `GET <prefix>/myself` (HTTP 표면이 있는 스포크만)
 
@@ -146,9 +146,9 @@ HTTP 표면이 있는 스포크는 `GET <prefix>/myself` 를 함께 만든다. *
 
 | 원칙 | 담보 장치 | 이미 있는 사례 |
 |---|---|---|
-| **S**RP | 슬라이스 1:1 — 파일 하나 = 기능 ID 하나 = 바뀌는 이유 하나 | `evaluation/metrics/{retrieval,trigger,compliance,masking,closure_gate,latency}.py` |
+| **S**RP | 슬라이스 1:1 — 파일 하나 = 기능 ID 하나 = 바뀌는 이유 하나 | `apps/evaluation/metrics/{retrieval,trigger,compliance,masking,closure_gate,latency}.py` |
 | **O**CP | 스포크 추가 = 허브 포트 구현체 추가. 허브·다른 스포크 수정 없음 | `main.py`의 `dependency_overrides` + `evaluation.harness.Ports(...)` — 구현체를 꽂기만 |
-| **L**SP | 포트 ABC의 시그니처를 구현체가 그대로 만족. `def`/`async def` 일치 | `hub/app/ports/output/*` ABC 6종 |
+| **L**SP | 포트 ABC의 시그니처를 구현체가 그대로 만족. `def`/`async def` 일치 | `apps/hub/app/ports/output/*` ABC 6종 |
 | **I**SP | 아웃바운드 포트는 인터랙터가 실제로 부르는 메서드만 (§3 규칙 4) | `MaskingPort.mask` 하나뿐 — 호출자는 `transcript_ingest_interactor`·`evaluation.harness` |
 | **D**IP | `app/ports`(추상)를 `adapter`(구체)가 구현. import-linter 계약 1·3이 역방향을 실패시킴 | `evaluation`이 스포크를 모른 채 허브 포트로만 채점 |
 
@@ -162,7 +162,7 @@ DDD 쪽 대응: 바운디드 컨텍스트 = 스포크, 유비쿼터스 언어 = 
 - I/O-bound(DB·ES·모델 추론·STT)는 `async def`, CPU-bound(정규식·RRF·판정)는 `def`. 포트(ABC)와 구현체의 `def`/`async def`를 일치시킨다. 무거운 CPU 작업은 호출 측에서 `asyncio.to_thread`.
 - 환경변수는 `.env.example`에 **키 이름만** 등록하고(`SEC-2`), `os.environ`을 읽는 곳은 `core/config.py` 하나뿐이다. 스포크에서 `os.getenv`·`load_dotenv`를 새로 쓰지 않는다.
 - 마스킹 전 원문은 `hub`의 `TranscriptIngestCommand` → `transcript_ingest_interactor`가 `MaskingPort.mask()`를 부르기 전까지만 존재한다. 기록 포트·로그·DB·다른 스포크로 나가는 모든 문자열은 마스킹 후 `TranscriptEvent`다 (`SEC-1`). 원문을 받는 포트 시그니처를 만들지 않는다.
-- 목표 수치를 코드에 하드코딩하지 않는다. 임계값은 `evaluation/metrics/*.py`의 상수(`ON_TIME_WINDOW_MS` 등)가 정본이고, 기획서 6.1절과 함께 바꾼다.
+- 목표 수치를 코드에 하드코딩하지 않는다. 임계값은 `apps/evaluation/metrics/*.py`의 상수(`ON_TIME_WINDOW_MS` 등)가 정본이고, 기획서 6.1절과 함께 바꾼다.
 - 테스트: 유스케이스는 **스텁 포트**로(mock 프레임워크보다 스텁 구현 선호), 실제 ES·MySQL·STT가 필요한 것은 `@pytest.mark.integration`.
 
 ---

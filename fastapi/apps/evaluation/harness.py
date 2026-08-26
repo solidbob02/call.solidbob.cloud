@@ -3,11 +3,11 @@
 맡는다. 이 파일이 그 "설계"에 해당한다.
 
 스포크(검색·트리거·컴플라이언스·마스킹·F-2)의 접점은 **hub 아웃바운드 포트 하나뿐**이다
-(hub/app/ports/output/ — 2026-08-26 계약 이중화 해소). 스포크가 구현한 포트 객체를 `Ports(...)`에
+(apps/hub/app/ports/output/ — 2026-08-26 계약 이중화 해소). 스포크가 구현한 포트 객체를 `Ports(...)`에
 꽂으면 골든셋으로 채점한다. 아직 구현이 없는 포트는 `None`으로 둬 "측정 불가 — 미구현"으로
 정직하게 보고한다(목표 수치를 지어내지 않는다 — 6.2절 원칙 5).
 
-채점 로직 자체(metrics/)는 완성돼 있고 evaluation/tests/ 로 검증됐다. 이 파일은 포트 → metrics 배선만 한다.
+채점 로직 자체(metrics/)는 완성돼 있고 apps/evaluation/tests/ 로 검증됐다. 이 파일은 포트 → metrics 배선만 한다.
 async 포트(검색·컴플라이언스)는 여기서 `asyncio.run` 으로 돌린다 — 하네스는 스크립트이지 서버가 아니다.
 """
 
@@ -167,7 +167,7 @@ def main() -> None:  # pragma: no cover — 수동 실행용
 
     items = load_golden_set()
     report = run_eval(items, Ports())  # 전부 미구현 상태로 골격만 확인
-    print_report(report, golden_set_path=Path(__file__).resolve().parents[2] / "golden-set" / "v1-10.json")
+    print_report(report, golden_set_path=Path(__file__).resolve().parents[3] / "golden-set" / "v1-10.json")
 
 
 if __name__ == "__main__":  # pragma: no cover

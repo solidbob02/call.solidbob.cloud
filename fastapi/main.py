@@ -11,13 +11,19 @@
 
 from __future__ import annotations
 
+import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI, Request
+# apps/ 를 경로에 올려 각 앱(hub·evaluation·<스포크>)을 최상위 패키지로 인식시킨다.
+# pytest.ini(pythonpath)·.importlinter(PYTHONPATH=apps) 와 같은 맥락 — 세 곳이 항상 같아야 한다.
+sys.path.insert(0, str(Path(__file__).resolve().parent / "apps"))
 
-from core.config import Settings, load_settings
-from hub.adapter.inbound.api.v1.myself_router import myself_router
-from hub.adapter.inbound.api.v1.transcript_ingest_router import transcript_ingest_router
+from fastapi import FastAPI, Request  # noqa: E402
+
+from core.config import Settings, load_settings  # noqa: E402
+from hub.adapter.inbound.api.v1.myself_router import myself_router  # noqa: E402
+from hub.adapter.inbound.api.v1.transcript_ingest_router import transcript_ingest_router  # noqa: E402
 
 SPOKES: list[str] = []  # 스포크를 꽂을 때 이름을 추가한다 — /health 가 그대로 보고한다
 

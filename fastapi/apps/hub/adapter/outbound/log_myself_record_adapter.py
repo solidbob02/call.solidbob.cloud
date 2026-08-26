@@ -10,5 +10,5 @@ logger = logging.getLogger(__name__)
 
 
 class LogMyselfRecordAdapter(MyselfRecordPort):
-    def record(self, query: MyselfQuery) -> None:
+    async def record(self, query: MyselfQuery) -> None:
         logger.info("myself queried name=%s", query.name)

@@ -15,7 +15,7 @@ class TranscriptIngestInteractor(TranscriptIngestUseCase):
         self._masking = masking
         self._record = record
 
-    def ingest(self, command: TranscriptIngestCommand) -> TranscriptEvent:
+    async def ingest(self, command: TranscriptIngestCommand) -> TranscriptEvent:
         masked_text, spans = self._masking.mask(command.raw_text)
         event = TranscriptEvent(
             call_id=command.call_id,
@@ -26,5 +26,5 @@ class TranscriptIngestInteractor(TranscriptIngestUseCase):
             utterance_end_ms=command.utterance_end_ms,
             masked=tuple(spans),
         )
-        self._record.record(event)  # 마스킹 후 — command(원문)는 여기서 더 이상 쓰지 않는다
+        await self._record.record(event)  # 마스킹 후 — command(원문)는 여기서 더 이상 쓰지 않는다
         return event

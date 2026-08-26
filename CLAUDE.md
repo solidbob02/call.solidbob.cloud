@@ -98,8 +98,8 @@ db/                      schema.sql(DDL) · ERD.md · erd.dot · generate_schema
 knowledge-base/          도메인별(finance/dasan/shopping/health) terms / manual / policy
 golden-set/              골든셋 (v1-10.json …)
 docs/                    구조 하네스(harness.md) · 아키텍처(architecture.md) · 도메인(domain.md) · 기획서 rev.4.1 사본. 공개, 지킬 밖
-fastapi/                 FastAPI 코어(백엔드, Python 3.13). main.py(합성 루트) · core/config.py · hub/(7.3절 계약 DTO+포트, 슬라이스 transcript_ingest·myself) · evaluation/(평가 하네스) · .importlinter · requirements.txt · pytest.ini. 테스트는 앱 안 tests/
-                         실행: cd fastapi && uvicorn main:app --reload --env-file ../.env / 검증: cd fastapi && pytest && PYTHONPATH=. lint-imports
+fastapi/                 FastAPI 코어(백엔드, Python 3.13). main.py(합성 루트) · core/config.py · apps/(앱 컨테이너 — hub/: 7.3절 계약 DTO+포트, 슬라이스 transcript_ingest·myself / evaluation/: 평가 하네스 / 이후 스포크) · .importlinter · requirements.txt · pytest.ini. 테스트는 앱 안 tests/
+                         실행: cd fastapi && uvicorn main:app --reload --env-file ../.env / 검증: cd fastapi && pytest && PYTHONPATH=apps lint-imports
 scripts/ data/           유틸리티 / 데이터 (원본은 .gitignore)
 .github/workflows/       Pages 배포 워크플로
 jekyll/                  지킬 사이트 루트 — 지킬 명령은 전부 이 안에서 실행
@@ -182,7 +182,7 @@ date: 2026-08-25
 
 ## 5. 수치를 다루는 규칙
 
-성능 수치는 **평가 하네스(`fastapi/evaluation/`)가 낸 값만** 쓴다. 손으로 적은 숫자를 문서에 넣지 않는다.
+성능 수치는 **평가 하네스(`fastapi/apps/evaluation/`)가 낸 값만** 쓴다. 손으로 적은 숫자를 문서에 넣지 않는다.
 값 하나에는 언제·어느 커밋으로·어떤 명령으로·표본 몇 건인지가 함께 남아야 한다(`db` 스키마의 `eval_run`/`eval_result`).
 넷 중 하나라도 채울 수 없으면 그 숫자는 아직 기록할 준비가 되지 않은 것이다.
 

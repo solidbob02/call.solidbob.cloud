@@ -50,7 +50,7 @@ jobs:
         run: pytest
 
       - name: 구조 계약 검사 (import-linter)
-        run: PYTHONPATH=. lint-imports --config .importlinter
+        run: PYTHONPATH=apps lint-imports --config .importlinter
 
   jekyll:
     # 사이트가 곧 산출물이다. main 에 머지되는 순간 배포되므로, 깨진 채로 들어가면
