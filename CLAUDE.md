@@ -16,6 +16,7 @@
 ```
 
 이 4개를 읽기 전에 코드를 건드리지 않는다. 사용자가 다른 지시를 하면 그것이 우선하고, 대신 위 문서를 그에 맞게 고친다.
+코드(`fastapi/`·`services/gateway/`·`apps/`)를 건드릴 때는 `docs/harness.md`(검증 장치)·`docs/architecture.md`(계층·슬라이스 규칙)를 추가로 먼저 읽는다.
 
 ---
 
@@ -42,6 +43,7 @@
 |---|---|
 | 기획서 rev.4 (3인 팀 버전) 사본 | `_project/plan.md` |
 | rev.4 보완지시서 — 위에 얹히는 패치. **충돌 시 보완지시서가 우선** | `_project/rev4-보완지시서.md` |
+| rev.4.1 — rev.4 + 보완지시서 병합본 (공개 사본, 도메인 4종 전환 이전 판) | `docs/plan-rev4.1.md` |
 | rev.4 대안(5인 트랙 버전) | `_project/plan-rev4-alt-5인안.md` |
 | 이전 판 | `_project/plan-rev1-initial.md` |
 | 결정 기록 | `_project/decisions/` |
@@ -95,7 +97,9 @@ _project/                ⚠ 비공개. 지킬 루트 밖이라 사이트에 올
 db/                      schema.sql(DDL) · ERD.md · erd.dot · generate_schema_docs.py
 knowledge-base/          도메인별(finance/dasan/shopping/health) terms / manual / policy
 golden-set/              골든셋 (v1-10.json …)
-services/                서비스 코드. 현재 core/eval(평가 하네스) + core/tests
+docs/                    구조 하네스(harness.md) · 아키텍처(architecture.md) · 도메인(domain.md) · 기획서 rev.4.1 사본. 공개, 지킬 밖
+fastapi/                 FastAPI 코어(백엔드, Python 3.13). main.py(합성 루트) · core/config.py · hub/(7.3절 계약 DTO+포트, 슬라이스 transcript_ingest·myself) · evaluation/(평가 하네스) · .importlinter · requirements.txt · pytest.ini. 테스트는 앱 안 tests/
+                         실행: cd fastapi && uvicorn main:app --reload --env-file ../.env / 검증: cd fastapi && pytest && PYTHONPATH=. lint-imports
 scripts/ data/           유틸리티 / 데이터 (원본은 .gitignore)
 .github/workflows/       Pages 배포 워크플로
 jekyll/                  지킬 사이트 루트 — 지킬 명령은 전부 이 안에서 실행
@@ -177,7 +181,7 @@ date: 2026-08-25
 
 ## 5. 수치를 다루는 규칙
 
-성능 수치는 **평가 하네스(`services/core/eval/`)가 낸 값만** 쓴다. 손으로 적은 숫자를 문서에 넣지 않는다.
+성능 수치는 **평가 하네스(`fastapi/evaluation/`)가 낸 값만** 쓴다. 손으로 적은 숫자를 문서에 넣지 않는다.
 값 하나에는 언제·어느 커밋으로·어떤 명령으로·표본 몇 건인지가 함께 남아야 한다(`db` 스키마의 `eval_run`/`eval_result`).
 넷 중 하나라도 채울 수 없으면 그 숫자는 아직 기록할 준비가 되지 않은 것이다.
 

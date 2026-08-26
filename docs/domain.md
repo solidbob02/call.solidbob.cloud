@@ -1,0 +1,153 @@
+# 도메인 모델 — 유비쿼터스 언어 (도메인 4종)
+
+> 도메인은 **실제로 확보한 데이터**가 정한다 — AI Hub 「민원(콜센터) 질의-응답」의 4개 도메인(금융보험·다산콜센터·쇼핑·질병관리본부),
+> 근거 `_project/decisions/004`. 여기에는 `knowledge-base/`·`db/schema.sql`·7.3절 계약에 **이미 정의된 것만** 옮겨 적었다.
+> 새 개념을 이 문서에서 만들지 않는다. 스포크 배치는 [architecture.md](architecture.md), 강제 수단은 [harness.md](harness.md).
+
+⚠ **골든셋은 재작성 대기**: `golden-set/v1-10.json`은 구 한별텔레콤 시나리오(`TERM-3.2` 등)를 참조하므로 현재 지식베이스와 맞지 않는다.
+`evaluation/`은 골든셋이 새로 나오기 전까지 구 스키마로 배선만 검증한다. 아래 §2 매핑은 골든셋이 나오면 채운다.
+
+---
+
+## 1. 유비쿼터스 언어
+
+코드·문서·대화에서 같은 말을 쓴다. 왼쪽 용어를 코드 식별자로 쓸 때는 오른쪽 열을 따른다.
+
+| 용어 | 뜻 | 코드 식별자 (DDL·7.3절 기준) |
+|---|---|---|
+| 도메인 | 통화가 속한 업무 영역 4종 중 하나. 검색·F-2·컴플라이언스 규칙이 도메인별로 갈린다 | `domain: "finance" \| "dasan" \| "shopping" \| "health"` — 폴더명과 같게 |
+| 통화 | 상담원과 고객 사이 세션 1건 | `call`, `call_id` |
+| 화자 | 고객 또는 상담원 | `speaker: "customer" \| "agent"` |
+| 발화 | 화자의 문장 단위 전사. 전사 세그먼트 1건 | `utterance`, `transcript_segment`, `segment_id` |
+| 발화 종료 시각 | STT가 발화를 final로 확정한 시각(ms). 트리거 채점의 기준점 | `utterance_end_ms`, `is_final` |
+| 트리거 | "지금 검색하라"는 판정. 발화 종료 후 **0~1,500ms** 안이면 적절 | `TriggerDecision(fire, at_ms)`, `ON_TIME_WINDOW_MS` |
+| 문서 / 조항 | 지식베이스의 검색 단위. 조항 하나 = ES 청크 하나 | `document_id` (`FIN-TERM-3.2` 형식), `doc_type` |
+| 추천 카드 | 검색 결과를 상담원 화면에 띄우는 단위. **출처 없는 카드는 존재하지 않는다**(B-5) | `RecommendationCards.cards[]`, `Source(doc_id, title)`, `score` |
+| 관련 문서 없음 | 근거가 부족할 때 카드 대신 반환하는 상태(B-6) | `cards` 빈 튜플 (`no_relevant_document`) |
+| 컴플라이언스 위반 | 상담원 발화가 응대매뉴얼 1장을 어긴 것. 유형 C-1~C-4, 4개 도메인 공통 | `ComplianceFinding(rule_code, phrase, alternative_source)`, `compliance_flag.rule_code` |
+| 대체 표현 | 위반 표현 대신 권장하는 문구. 출처는 각 도메인 응대매뉴얼 1.4 | `alternative_source: Source("<DOM>-MANUAL-1.4", …)` |
+| PII 패턴 | 마스킹 대상 개인정보 유형 P1~P7. 도메인 무관 | `MaskedSpan(type, span)`, `masking_event.pattern` |
+| 처리유형 | 종결하려는 업무의 종류. **도메인별로 다르다** (§4.3) | `closure_type: str` — 값은 해당 도메인 `*-POLICY-*` 가 정의 |
+| 근거 필드 | 처리유형별 필수 확인 항목. 내부처리규정이 정의 | `evidence: {필드명: bool}` — 필드명은 한글 그대로 |
+| 판정 | F-2 게이트 결과. 규칙이 내고 LLM은 설명만 | `verdict: "approved" \| "blocked"`, `missing[]` |
+| 공백 리포트 | 검색 실패·놓친 위반·사후 문제를 같은 루프로 모은 것(D-4). F-2 미적용 도메인의 대체 검증 수단 | `knowledge_gap.module: "B" \| "C" \| "F"` |
+
+용어 사용 제약(부록 A-1): "안전합니다", "위험도 N%", "완벽히 차단", "불변 감사 로그"는 도메인 용어가 아니다. 코드·UI·문서 어디에도 쓰지 않는다.
+
+---
+
+## 2. 도메인 4종과 바운디드 컨텍스트
+
+**바운디드 컨텍스트 = 스포크**(기능 축)이고, **도메인은 그 안을 가르는 데이터 축**이다. 스포크를 도메인마다 복제하지 않는다 —
+`retrieval`은 하나이고 `domain` 필드로 인덱스를 나눠 검색하며, `closure_gate`는 하나이고 도메인별 `*-POLICY-*` 규칙표를 읽는다.
+
+| 도메인 | 폴더 / 접두어 | 가상 주체 | 실측 카테고리 (AI Hub 라벨) | F-2 |
+|---|---|---|---|---|
+| 금융보험 | `finance/` · `FIN-` | 한별금융 | 사고 및 보상 문의 · 상품 가입 및 해지 · 이체출금대출서비스 · 잔고 및 거래내역 | ✅ 상품해지 · 사고보상 |
+| 다산콜센터 | `dasan/` · `DASAN-` | 한별시 통합민원콜센터 | 대중교통 안내 · 생활하수도 · 일반행정 · 코로나19 상담 | ❌ 안내형 — `DASAN-POLICY-1`이 미적용 사유·대체 검증(D-4) 명시 |
+| 쇼핑 | `shopping/` · `SHOP-` | 한별샵 | 주문 · 결제 · 배송 · 교환 · 반품 · AS · 업무처리 | ✅ 반품 · 교환 |
+| 질병관리본부 | `health/` · `HLT-` | 한별헬스콜 | 건강질병 · 약품식품 · 온라인신고 · 요양기관 현황 · 증상징후 · 진료비정보 · 기타 | ❌ 안내형 — `HLT-POLICY-1` |
+
+| 스포크 | 도메인 의존 | 도메인 무관 |
+|---|---|---|
+| `masking` (C-5) | — | P1~P7 규칙 전부 |
+| `compliance` (C-1~C-4) | C-4 대체 표현 출처(`<DOM>-MANUAL-1.4`) | C-1~C-3 탐지 규칙 |
+| `retrieval` (B-1~B-3) | 검색 대상 인덱스(`domain` 필드), **도메인 라우팅**(통화가 어느 도메인인지 — 미설계) | 트리거 판정, RRF |
+| `generation` (B-4~B-6) | 출처 표기 | 카드 형태, 폴백 |
+| `closure_gate` (F-2) | 처리유형·근거 필드·규칙표 전부 (finance·shopping만) | 판정 알고리즘("전부 true일 때만 approved") |
+| `evaluation` (E) | 골든셋 항목의 `domain` 필드 (로더 갱신 필요) | 지표 계산 |
+
+---
+
+## 3. 지식베이스 — 문서 ID 체계
+
+`<DOM>-<문서>-<장>.<절>` / `<DOM>-POLICY-<처리유형>-<n>`. 각 조항은 `<!-- id: ... -->` 주석으로 ID가 박혀 있고, 청킹 스크립트가 이 주석 기준으로 자른다.
+`document` 테이블(`db/schema.sql`)이 ID를 PK로 갖는 메타데이터이고 본문은 ES에만 있다. 4 도메인 × 3 문서 = 12개.
+
+| 하위 폴더 | 문서 | ID 예 | 역할 |
+|---|---|---|---|
+| `terms/` | 이용약관/안내지침 | `FIN-TERM-3.2`, `DASAN-TERM-5.1` | B 검색 대상. 화면 인용 "이용약관 N.N조" |
+| `manual/` | 응대 매뉴얼 | `FIN-MANUAL-3.1`, `HLT-MANUAL-1.1` | B 검색 대상 + C-4 대체 표현 출처(1.4) + F-2 근거(해당 도메인만) |
+| `policy/` | 내부 처리 규정 | `FIN-POLICY-CLOSE-1`, `SHOP-POLICY-RETURN-1`, `DASAN-POLICY-1`(미적용 선언) | **F-2 게이트가 직접 참조** |
+
+ES는 도메인별 별도 인덱스 또는 같은 인덱스의 `domain` 필드 — 어느 쪽인지 미결(`knowledge-base/README.md`, 아키텍처 3절 갱신 대기).
+
+---
+
+## 4. 핵심 객체와 규칙
+
+### 4.1 PII 패턴 (C-5) — `masking`, 도메인 무관
+
+| 패턴 | 대상 | 방식 | 절대 규칙 범위 | 담당 |
+|---|---|---|---|---|
+| P1 | 주민등록번호 (13자리) | 정규식 | ✅ 누락 0건 | 정성윤 |
+| P2 | 카드번호 (14~16자리) | 정규식 | ✅ | 정성윤 |
+| P3 | 계좌번호 (10~14자리) | 정규식 | ✅ | 정성윤 |
+| P4 | 휴대전화번호 | 정규식 | ✅ | 정성윤 |
+| P5 | 인증번호 (4~6자리, 문맥 조건) | 정규식 + 문맥 | ✅ | 정성윤 |
+| P6 | 인명 | NER | 여유 시 — 미구현 시 N/A | 류준·장민석 |
+| P7 | 상세주소 | NER | 여유 시 — 미구현 시 N/A | 류준·장민석 |
+
+판정 순서(기능 명세 2.4절): ① 구분자·공백 제거 후 연속 숫자열 판정 → ② 한글 수사→숫자(보조) → ③ 정규식 + NER → ④ 마스킹.
+우선순위: **누락 0건 > 과잉 마스킹 억제**. 금융 도메인(카드·계좌)에서 P2·P3 빈도가 특히 높다.
+
+### 4.2 컴플라이언스 위반 유형 (C-1~C-4) — `compliance`, 규칙은 공통
+
+| 유형 | 정의 | 매뉴얼 근거 (각 도메인 동일 절) |
+|---|---|---|
+| C-1 | 확정적 보장 표현 ("무조건", "100% 환불") | `<DOM>-MANUAL-1.1` |
+| C-2 | 불필요한 개인정보 구두 요구 | `<DOM>-MANUAL-1.2` |
+| C-3 | 필수 안내 누락 (해지 시 수수료 고지 등) | `<DOM>-MANUAL-1.3` |
+| C-4 | 권장 대체 표현 제시 | `<DOM>-MANUAL-1.4` |
+
+지표는 재현율 ≥ 0.90 우선, 정밀도 ≥ 0.60.
+
+### 4.3 종결 판정 (F-2) — `closure_gate`, 도메인별 규칙표
+
+처리유형별 근거 필드는 `*-POLICY-*-1`이, 판정 규칙은 `*-POLICY-*-2`가 정의한다.
+
+| 도메인 | 처리유형 | 필수 근거 필드 | 규칙 출처 |
+|---|---|---|---|
+| 금융보험 | 상품해지 | `중도해지수수료_안내` · `약정혜택소멸_안내` · `고객확인_기록` | `FIN-POLICY-CLOSE-1/-2` |
+| 금융보험 | 사고보상 | `사고경위_확인` · `귀책여부_확인` | `FIN-POLICY-COMPENSATE-1/-2` |
+| 쇼핑 | 반품 | `환불금액_안내` · `환불기간_안내` · `상품상태_확인` | `SHOP-POLICY-RETURN-1/-2` |
+| 쇼핑 | 교환 | `교환가능_확인` · `재고_확인` | `SHOP-POLICY-EXCHANGE-1/-2` |
+| 다산 · 질병관리본부 | (없음) | F-2 미적용 — D-4 공백 리포트로 대체 검증 | `DASAN-POLICY-1`, `HLT-POLICY-1` |
+
+규칙: 해당 유형의 필드가 **전부** `true`일 때만 `approved`. 하나라도 `false`면 `blocked` + `missing`에 `false`인 필드명. 평균·부분 점수 없음.
+이 규칙은 `closure_gate/domain/services`가 소유한다 — 허브 DTO(`ClosureVerdict`)는 나르기만 한다.
+"팀이 만든 규정 안에서의 100%"임을 명시한다(순환 검증 — 규정 작성 / 게이트 구현 / 골든셋 라벨링 담당 분리는 4인 체제에서 재배정 필요).
+
+⚠ `db/schema.sql`의 `closure` 테이블 컬럼(`위약금_안내` 등)과 `ENUM('해지','명의변경','보상')`은 아직 통신 도메인이다. 위 표 기준으로 재설계가 필요하다(STATE "DB 스키마·ERD 재검토").
+
+### 4.4 인터페이스 계약 3종 — `hub` DTO
+
+7.3절 v2가 정본(`_project/decisions/003`). 허브 `app/dtos/`가 소유한다. **`domain` 필드는 아직 계약에 없다** — 도메인 라우팅 설계와 함께 v3로 추가해야 한다(미결).
+
+| DTO | 핵심 필드 | 생산자 → 소비자 |
+|---|---|---|
+| `TranscriptEvent` | `call_id`, `segment_id`, `speaker`, `text`(마스킹 후), `masked[]`, `is_final`, `utterance_end_ms` | 게이트웨이 → `hub.transcript_ingest` → `masking` → 대시보드·DB |
+| `RecommendationCards` | `call_id`, `trigger_at_ms`, `cards[]{title, summary, source{doc_id, title}, score}`, `internal_latency_ms`, `e2e_latency_ms` | `retrieval`→`generation` → 허브 → 대시보드 |
+| `ClosureVerdict` | `call_id`, `closure_type`, `reason`, `evidence{…}`, `verdict`, `missing[]`, `source{doc_id, title}` | 대시보드 → 허브 → `closure_gate` → 대시보드·DB |
+
+---
+
+## 5. 골든셋 스키마 ↔ 코드 (재작성 대기)
+
+`evaluation/golden_set.py`가 현재 골든셋(구 스키마)을 파싱한다. 재작성된 골든셋은 항목마다 `domain`이 붙어야 하고, `expected_doc_ids`·`source`는 새 ID(`FIN-TERM-3.2` 등)를 가리켜야 한다. 로더에 `domain` 필드 추가는 그때 한다.
+
+| 골든셋 필드 | `golden_set.py` | 도메인 배치 예정 |
+|---|---|---|
+| `compliance_violation` | `ComplianceViolation` | `compliance/domain/value_objects/` |
+| `pii_patterns[]` | `PiiPattern` | `masking/domain/value_objects/` |
+| `f2_case` | `F2Case` | `closure_gate/domain/` |
+| `expected_doc_ids`, `distractor_doc_ids`, `utterance_end_ms` | `GoldenItem` | `retrieval/domain/` |
+
+---
+
+## 6. 한계 (지우지 않는다)
+
+- 골든셋 v1-10은 **무효**(구 도메인). 4개 도메인 비율 팀 컨펌 후 재작성. 그 전까지 모든 지표는 "측정 불가".
+- 도메인 라우팅(통화 → 4개 중 하나)은 설계 전. 잘못 라우팅되면 검색·F-2가 엉뚱한 규칙표를 보므로 라우팅 정확도 자체가 지표가 돼야 한다 — 6.1절 편입 미결.
+- `db/schema.sql`은 통신 가정(`subscriber`/`plan`, `closure` 컬럼) — 재검토 대기.
+- P6·P7, F-1·G-1 탐지 성능은 측정 불가 범위(5.5절).
