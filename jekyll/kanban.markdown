@@ -70,7 +70,7 @@ permalink: /kanban/
 title: "카카오 로그인 API 연동"
 assignee: "류준"          # 정성윤 | 류준 | 장민석 | 조서희
 role: "ai"                # infra | ai | app  (배지 색 — ai: 류준·장민석, app: 조서희)
-status: "in-progress"     # todo | in-progress | done
+status: "in-progress"     # todo | in-progress | done | cancelled
 sprint: 1
 priority: 5               # 같은 칸 안에서의 정렬 순서
 date: 2026-08-25

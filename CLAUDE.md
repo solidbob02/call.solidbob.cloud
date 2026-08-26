@@ -17,6 +17,7 @@
 
 이 4개를 읽기 전에 코드를 건드리지 않는다. 사용자가 다른 지시를 하면 그것이 우선하고, 대신 위 문서를 그에 맞게 고친다.
 코드(`fastapi/`·`services/gateway/`·`apps/`)를 건드릴 때는 `docs/harness.md`(검증 장치)·`docs/architecture.md`(계층·슬라이스 규칙)를 추가로 먼저 읽는다.
+프론트엔드 작업은 `.claude/rules/dashboard.md`도 함께 본다.
 
 ---
 
@@ -100,6 +101,7 @@ golden-set/              골든셋 (v1-10.json …)
 docs/                    구조 하네스(harness.md) · 아키텍처(architecture.md) · 도메인(domain.md) · 기획서 rev.4.1 사본. 공개, 지킬 밖
 fastapi/                 FastAPI 코어(백엔드, Python 3.13). main.py(합성 루트) · core/config.py · apps/(앱 컨테이너 — hub/: 7.3절 계약 DTO+포트, 슬라이스 transcript_ingest·myself / evaluation/: 평가 하네스 / 이후 스포크) · .importlinter · requirements.txt · pytest.ini. 테스트는 앱 안 tests/
                          실행: cd fastapi && uvicorn main:app --reload --env-file ../.env / 검증: cd fastapi && pytest && PYTHONPATH=apps lint-imports
+apps/                    dashboard(상담원). 고객 화면은 `_project/decisions/009` 로 철회(008 철회)
 scripts/ data/           유틸리티 / 데이터 (원본은 .gitignore)
 .github/workflows/       Pages 배포 워크플로
 jekyll/                  지킬 사이트 루트 — 지킬 명령은 전부 이 안에서 실행

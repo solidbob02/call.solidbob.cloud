@@ -4,6 +4,63 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-26 (22)
+- **자막 간격 2초 단축 + F-2 1/3을 모달 대신 경고 아래 실시간 표시** — 발화 사이 재생 간격을 2초 줄임. blocked 종결은 모달을 열지 않고 경고 패널 하단에 「근거 N건 중 M건 충족」 체크리스트로 갱신. approved만 종결 모달.
+
+### 2026-08-26 (21)
+- **mock 자막 재생을 utterance_end_ms 기준으로 통일** — 앞 8턴만 900ms 압축되던 것을 없애 후반(약 4초 간격)과 같은 호흡으로 맞춤.
+
+### 2026-08-26 (20)
+- **금융보험 mock을 blocked→approved 해지 완료 흐름으로 연장** — evidence를 `중도해지수수료_안내`·`약정혜택소멸_안내`·`고객확인_기록`(FIN-POLICY-CLOSE-1)로 통일. 첫 종결 후 약정 소멸 고지·고객 확인·기록 발화를 이어 붙이고 두 번째 종결은 3건 전부 충족. 모달은 blocked여도 X/닫기로 닫을 수 있음. `typecheck`·`build` 통과.
+
+### 2026-08-26 (19)
+- **F-2 종결 타입·evidence를 §2.7에 맞춤 + mock 4도메인 분리** — `ClosureType`을 상품해지/사고·보상/반품/교환으로 정정(명의변경·해지 제거). 금융보험 해지 evidence를 중도해지수수료_안내·약정혜택_소멸_고지·고지_확인_응답으로 교체. `mock/scenarios/{finance,shopping,dasan,health}` + 헤더 도메인 선택. 종결 모달은 「근거 N건 중 M건 충족」만 표시. 다산·헬스는 종결 이벤트 없음. `typecheck`·`build` 통과.
+
+### 2026-08-26 (18)
+- **책갈피 탭에 카드 제목 표시, 펼친 카드는 유지** — 탭 문구를 약관명 대신 「분실·도난 신고」 등 title 로. 6초 자동 접힘 제거, 접기는 버튼으로만.
+
+### 2026-08-26 (17)
+- **경고 패널 마스킹 유형을 한글로 표시** — P2→카드번호, P4→연락처. mock 연락처 발화는 P4로 구분.
+
+### 2026-08-26 (16)
+- **하단 책갈피 바를 뷰포트에 고정 + 수신 시 슬라이드업** — `app-shell` 마지막 행으로 고정해 자막이 길어져도 바가 화면 아래에 남음. 펼침은 `max-height` 전환(0fr 버그로 내용이 안 보이던 것 수정). mock에서 카드가 하단에서 펼쳐지는 것 확인.
+
+### 2026-08-26 (15)
+- **대시보드 mock 자막 마스킹 4자리 전부 + 통화 시나리오 연장** — `카드번호는 ****` span을 `[6,10)`으로 고쳐 네 자리 모두 표시. 분실 신고 대화 8턴·카드 4장(FIN-TERM-2.1/2.2/3.2/2.3)으로 mock을 늘림.
+
+### 2026-08-26 (14)
+- **상담원 화면을 상단 2분할(자막 2fr · 경고 1fr) + 하단 전체폭 책갈피로 고정** — `App.tsx` 레이아웃. 새 탭은 오른쪽 끝에 누적, 수신 시 슬라이드업 후 6초 접힘(임시). F-2 모달은 그대로. `apps/customer` 없음, `w1-customer-screen` cancelled(009). `typecheck`·`build` 통과.
+
+### 2026-08-26 (13)
+- **고객 화면 스코프 철회 + 상담원 하단 책갈피 카드** — `_project/decisions/009`. `apps/customer` 삭제. 티켓 `w1-customer-screen` cancelled. 대시보드 추천 카드는 사이드바 목록 대신 하단 고정 책갈피(수신 시 슬라이드업, 6초 후 접힘·탭은 유지). `typecheck`·`build` 통과.
+
+### 2026-08-26 (12)
+- **고객 팝업 mock을 데모 도메인 4종으로 맞춤** — 금융보험 · 다산콜센터 · 쇼핑 · 질병관리본부 각 1장(`FIN-TERM-2.1`, `DASAN-TERM-2.1`, `SHOP-TERM-4.1`, `HLT-TERM-2.1`). 7.3절 통신(요금제약관) 카드는 고객 mock에서 제거. 라벨은 한글 도메인명.
+
+### 2026-08-26 (11)
+- **고객 카드뉴스 팝업 재설계** — `CardNewsPopup.tsx`: 4px 책갈피 탭, 카드 바깥 원형 화살표, 하단 점 인디케이터, 우상단 X. 다크 서페이스(`#12141a`) 유지. 여러 장일 때만 화살표·점 표시, ←/→ 키, 180ms 전환. 출처는 source title 태그만.
+
+### 2026-08-26 (10)
+- **고객 화면에서 실시간 자막 제거** — `apps/customer`에 다시 들어가 있던 큰 자막(마스킹 박스 포함)을 삭제. 대기 문구 + 카드뉴스 팝업만 남김. 자막은 상담원 대시보드(`apps/dashboard`) 전용. 근거 `_project/decisions/008`
+
+### 2026-08-26 (9)
+- **고객 화면 재스캐폴딩 (`apps/customer`)** — 대시보드와 같은 `contract.ts`·mock 타이밍(400/900/1600ms). 큰 자막(마스킹 유지) + 전체 화면 카드뉴스(왼쪽 컬러 탭, source만 하단, doc_id·유사도 비표시). e2e 3초 초과는 콘솔 경고만. 자동 접힘 8초는 임시(팀 컨펌). 티켓 [`w1-customer-screen`](/backlog/w1-customer-screen/) in-progress
+
+### 2026-08-26 (8)
+- 고객 화면 스코프 확정, apps/customer 착수
+
+### 2026-08-26 (7)
+- **고객 카드뉴스 mock 6장** — 지식베이스 조항을 옮김(`FIN-TERM-3.2`·`2.1`, `SHOP-TERM-4.1`·`4.2`, `DASAN-MANUAL-2.1`, `HLT-MANUAL-2.1`). 이전/다음으로 넘김. 유사도는 미측정이라 화면에 없음
+
+### 2026-08-26 (6)
+- **고객 화면은 카드뉴스 팝업만** — 대화·자막은 상담원 대시보드에만 두고, `apps/customer` 는 화면 중앙 카드뉴스 오버레이로 7.3절 카드를 띄운다. `_project/decisions/008` 후속 확정, [2.1절](/docs/02/) 반영
+
+### 2026-08-26 (5)
+- **고객 화면 스코프 확정 + `apps/customer` 스캐폴딩** — 상담원 3분할과 같은 `call_id`·[7.3절](/docs/07/) `cards` 를 쓰되 표시는 자막 + 책갈피 카드뉴스 팝업(3초 내, 누적 없음). F-2·경고는 고객 화면에 두지 않음. 근거 `_project/decisions/008`. 티켓 [`w1-customer-scaffold-seohee`](/backlog/w1-customer-scaffold-seohee/). 검증: `typecheck`·`build` 통과, mock 시나리오 화면 확인
+
+### 2026-08-26 (4)
+- **React 대시보드 스캐폴딩 (`apps/dashboard`) — `frontend` 브랜치** — Vite + React 18 + TypeScript strict. 게이트웨이 클라이언트는 real/mock 동일 인터페이스, `.env`의 `VITE_GATEWAY_WS_URL` 유무로 전환. mock은 [7.3절](/docs/07/) v2 예시값(프로모션 할인 카드, 해지 종결 `blocked`)만 재생. 3분할(자막·추천 카드·마스킹 로그) + F-2 종결 모달. 상태관리 zustand는 팀 미정이라 컨펌 필요. 티켓 [`w1-dashboard-scaffold-seohee`](/backlog/w1-dashboard-scaffold-seohee/) (`w1-dashboard-scaffold` 장민석 티켓 대체). 검증: `typecheck`·`build` 통과, mock 시나리오 화면 확인
+
 ### 2026-08-26 (8)
 - **`backend`·`main`(`ai` 브랜치 경유) 통합** — GitHub에서 `backend`→`main` PR에 충돌이 뜬 걸 확인. 원인: `ai` 브랜치(정성윤·장민석)가 내 이전 푸시 지점(`a0f95d3`, 도메인 4종 전환 직후)에서 갈라져 `fastapi/` 헥사고날 아키텍처를 독립적으로 구축했고, 그 이후의 내 작업(골든셋 재작성·DB 스키마 정리·B-0 도메인 라우팅)을 모른 채였다. 구조(`fastapi/`)는 저쪽이 더 진전됐고 내용(골든셋·DB 스키마·B-0)은 이쪽이 최신이라, **`fastapi/` 구조를 정본으로 채택하고 구 `services/core/eval/`의 작업물을 그 위로 포팅**했다: `domain_routing.py` 메트릭 이식, `hub/app/dtos/domain_classification_dto.py`+`hub/app/ports/output/domain_routing_port.py` 신규(기존 6개 포트와 같은 ABC 패턴), `harness.py`에 `DomainRoutingPort` 배선, 테스트 이식(`test_domain_routing_metrics.py` import 경로 수정, `test_harness.py`에 async 가짜 포트 배선 테스트 추가). golden-set·db/schema.sql은 main이 아직 구 버전이라 자동 병합됨(내 쪽 그대로 유지). `services/core/` 디렉토리 삭제. `.claude/rules/rfp-harness.md`·`jekyll/_backlogs/w1-db-schema.md`·`w1-dashboard-scaffold.md`·`knowledge-base/README.md`의 병렬 편집도 수동 병합
 - 남은 것: `cd fastapi && pytest`·`lint-imports` 재확인 후 커밋·푸시

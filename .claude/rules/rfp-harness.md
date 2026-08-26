@@ -25,12 +25,13 @@
 ```
 [상담원 브라우저]                          [Node.js 게이트웨이]        [FastAPI 코어]
 apps/dashboard (React)      --WebSocket-->  services/gateway            fastapi
-├── 실시간 자막 · 추천 카드 · 경고           ├── 오디오 청크 중계        ├── C-5 마스킹
+├── 실시간 자막 · 경고 · 하단 책갈피 카드    ├── 오디오 청크 중계        ├── C-5 마스킹
 └── F-2 종결 모달                           ├── Google STT 연동         ├── 트리거 판정
                                             └── 화자 분리                ├── 검색(ES 하이브리드)
-                                                                        ├── 생성(HF Transformers)
-infra/ (Docker, AWS, MySQL, Elasticsearch)                             ├── 컴플라이언스 분류기
-                                                                        └── F-2 게이트
+                                                                         ├── 생성(HF Transformers)
+                                                                         └── F-2 게이트
+
+infra/ (Docker, AWS, MySQL, Elasticsearch)
 
 [MySQL] call · transcript · recommendation · closure · eval_result
 [Elasticsearch] nori(BM25) + dense_vector + RRF
@@ -40,7 +41,7 @@ infra/ (Docker, AWS, MySQL, Elasticsearch)                             ├──
 |---|---|---|---|
 | **정성윤** | AWS·인프라 | `services/gateway/`, `infra/`, `fastapi/apps/masking/`(C-5, 예외적으로 코어 내 배치) | [팀 분업](/docs/07/) |
 | **류준 · 장민석** | 백엔드·AI (공동, 기능별 분할 없음) | `fastapi/`(검색·리랭킹·트리거·생성·컴플라이언스·F-2 게이트·평가 하네스) — 둘이 함께 작업한다([7.1절](/docs/07/)) | [팀 분업](/docs/07/) |
-| **조서희** | 프론트엔드 | `apps/dashboard/`(React 대시보드), 결과 시각화(matplotlib) | [팀 분업](/docs/07/) |
+| **조서희** | 프론트엔드 | `apps/dashboard/`(상담원: 자막·경고·하단 책갈피 카드), 결과 시각화(matplotlib) | [팀 분업](/docs/07/), `_project/decisions/009` |
 
 > **팀 개편 (2026-08-26)**: 원래 3인 체제에서 플러터 앱 개발을 중단하고, 장민석이
 > 프론트엔드에서 류준과 함께 백엔드·AI로 옮겼다. 조서희가 신규 합류해 프론트엔드를
@@ -91,7 +92,8 @@ claude "rfp-harness.md의 요구사항을 반영해 CallGuard 모노레포 뼈�
 2. services/gateway: Node.js WebSocket 게이트웨이 골격 + Google STT 스트리밍 연동 지점 +
    COST-1 사용량 가드(STT_MAX_SECONDS_PER_DAY/_MONTH 초과 시 스트림 오픈 거부)
 3. fastapi: FastAPI 앱 골격 + MySQL 연결 설정 (SEC-2 반영, .env.example의 키 이름만 사용)
-4. apps/dashboard: React 프로젝트 초기화 (2.1절 3분할 화면 레이아웃만 — 자막/카드/경고)
+4. apps/dashboard: React 프로젝트 초기화 (2.1절 — 자막/경고 + 하단 책갈피 카드)
+   고객 화면 apps/customer 는 만들지 않는다. `_project/decisions/009`
 5. 모든 주요 생성 파일 상단에 관련 [요구 ID] 주석 명시할 것"
 ```
 
@@ -119,8 +121,8 @@ claude "C-5 요구사항에 따라 fastapi/apps/masking/에 STT 전사 결과를
 
 ```
 claude "2.1절 화면 구성을 위한 React 컴포넌트를 만들어줘.
-- 3분할 레이아웃: 실시간 자막 / 추천 카드(출처·유사도 포함) / 경고
-- F-2 게이트 결과는 이 화면 위 모달로 표시 (2.7절)
+- 상담원 apps/dashboard: 실시간 자막 / 경고, 추천 카드는 하단 책갈피 팝업, F-2는 모달
+- 고객 화면 없음 (`_project/decisions/009`)
 - 위험도 점수나 '안전합니다' 류 표현이 UI 어디에도 없어야 함 (부록 A-1 연동)"
 ```
 
