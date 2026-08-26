@@ -32,6 +32,8 @@ concurrency:
 #   이름을 바꾸면 보호 설정이 존재하지 않는 검사를 기다리게 되어 PR 이 영원히 머지되지 않는다.
 #   바꿀 때는 룰셋(Settings → Rules → Rulesets → main → Require status checks)을 **함께** 고친다.
 #   2026-08-26: fastapi/ 를 server/ · ai/ 로 나누면서 job `backend` → `server` + `ai` 로 갈렸다.
+#   2026-08-26: 브랜치도 디렉터리 이름에 맞췄다 — `backend`→`ai`(류준) · `ai`→`server`(장민석).
+#   위 트리거 목록이 브랜치 이름에 걸린 유일한 곳이다. job 이름(= 필수 통과 검사)은 브랜치명과 무관하다.
 jobs:
   server:
     # 요청이 흐르는 길 — 계약(포트·DTO)·파이프라인 배선·클린 아키텍처.

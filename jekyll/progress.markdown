@@ -4,6 +4,18 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-26 (51)
+- **`main` 동기화** — `ai`(구 `backend`) 브랜치를 `origin/main`(`3c518de`)으로 fast-forward. 조서희 님 대시보드 스캐폴딩 전체(`apps/dashboard/` 컴포넌트·스토어·4도메인 mock 시나리오·계약 타입)와 고객 화면 철회(`decisions/014`)를 받았다. 충돌 0건, 로컬 커밋 유실 0건
+- **브랜치 개명의 나머지 절반 — `backend`→`ai`(류준).** 장민석 님이 `ai`→`server` 를 먼저 마쳤고(위 (44)), 그 이름이 비어서 이어받았다. 이로써 **브랜치 이름 = 담당 디렉터리 이름**이 전부 맞았다. 브랜치 수는 넷 그대로다(`decisions/011` 유지). 이제 **`ai` 브랜치에서 `ai/` 를, `server` 브랜치에서 `server/` 를** 고친다. 근거·되돌리는 법: `_project/decisions/015`, 티켓 [w2-branch-rename](/backlog/w2-branch-rename/)
+- **`decisions/012` 가 이 개명을 미룬 이유는 틀린 것이었다** — "브랜치명을 바꾸면 main 룰셋의 필수 통과 검사 이름까지 함께 고쳐야 한다"고 적혀 있었으나, 그 검사 이름은 `test.yml` 의 **job 이름**(`server`·`ai`·`jekyll`)이지 브랜치 이름이 아니다(`gh api .../rules/branches/main` 으로 확인). 실제로 브랜치 이름이 걸린 곳은 **push 트리거 목록 한 줄뿐**이었고, 룰셋·`branch-protection.json` 은 손대지 않았다(장민석 님도 위 (44) 에서 같은 결론에 도달했다). admin 권한도 필요 없었다
+- **지우기 전에 미머지 커밋을 확인했다** — `origin/backend` 와 구 `origin/ai` 둘 다 `origin/main` 의 조상이었다(`git merge-base --is-ancestor`). 미머지 0건이라 삭제로 잃은 작업이 없다
+- **⚠ `ai` 라는 이름이 사람을 갈아탔다** — PR #28 이전 기록(PR #15·#22·#27, `STATE.md`)의 `ai` 브랜치는 **장민석**이고, 그 이후는 **류준**이다. 옛 기록은 그 시점의 사실이라 고치지 않았다(절대 원칙 8). 대신 `CLAUDE.md` §7 과 `decisions/015` 에 "옛 이름 주의" 절을 넣었다
+- **담당 분리를 문서 전체에 반영** — 아직 "류준·장민석 공동"으로 남아 있던 곳을 `decisions/012` 기준으로 고쳤다: `ai/CLAUDE.md` §6(→ 류준)·`server/CLAUDE.md` §5(→ 장민석, C-5 마스킹만 정성윤)·[7.1 담당표](/docs/07/)를 `ai/`·`server/` 두 줄로 분리·[7.2](/docs/07/) "공동 작업" 줄을 "디렉터리로 나눈다"로 교체·`docs/architecture.md` 스포크 표에 **위치** 열 추가
+- **7.1 표 아래에 경계 판정 기준을 넣었다** — "품질을 만들거나 재는 코드인가 → `ai/`" / "요청 하나를 처리하는 데 반드시 실행되는가 → `server/`". C-5·F-2 가 `server/` 인 이유(규칙 기반 판정, 모델 미관여 — 절대 원칙 9)도 함께 적었다
+- **`generation`·`compliance` 의 위치를 `server/apps/` → `ai/apps/` 로 정정** — `.claude/rules/rfp-harness.md §3.1` 이 `fastapi/` 분리 이전 표기를 유지하고 있었다. 두 모듈 다 모델(EXAONE·분류기)을 로드하는데 **`server/.importlinter` 계약 2 가 `server/` 안의 `torch`·`transformers`·`langchain`·`langgraph` import 를 금지**하므로 거기서는 애초에 만들 수 없다. 문서가 아니라 구조 계약이 이미 정답을 갖고 있던 경우다. ⚠ 장민석 님 확인 대상으로 [미결](/open-items/)에 올렸다
+- **`CLAUDE.md` §7 의 필수 통과 검사 이름도 실제와 어긋나 있었다** — `backend`·`jekyll` 로 적혀 있었으나 룰셋은 이미 `server`·`ai`·`jekyll` 이다. 표를 고치고, "검사 이름은 job 이름이지 브랜치 이름이 아니다"를 §7 에 명시했다. **정성윤 님이 아래 (50) 에서 같은 곳을 더 낫게 고쳤다** — 이름을 바꿀 때 함께 고칠 세 곳(트리거·job 이름·룰셋)을 실제 사례 3건과 함께 못박은 판을 채택하고, 내 판에만 있던 "옛 이름 주의"만 얹었다
+- 다음: `ai/` 2주차 작업 — B-1~B-3 검색(트리거 판정·하이브리드·리랭킹) 이어서
+
 ### 2026-08-26 (50)
 - **브랜치 개편에 CI·문서를 맞췄다 — `backend` 삭제, `ai`(류준)·`server`(장민석) 확정.** 담당 디렉터리 분리(`decisions/012`)에 맞춰 브랜치 이름을 정리한 결과, **브랜치 이름 = 디렉터리 이름 = CI job 이름**이 됐다. 그런데 `test.yml` 트리거 목록이 `[main, PM, backend, server, frontend]` 로 남아 있었다 — **없어진 `backend` 를 가리키고 실제 쓰는 `ai` 가 빠져 있어, 류준이 `ai` 브랜치에 푸시해도 테스트가 돌지 않는 상태**였다. `[main, PM, ai, server, frontend]` 로 교체
 - **오늘 같은 함정에 세 번째로 걸렸다** — ① 오전 `flutter`→`ai` 개명 때 트리거 목록 누락 ② `fastapi/` 분리로 job 이름이 `backend`→`server`+`ai` 로 갈렸을 때 룰셋의 필수 통과 검사 누락(PR 이 없는 검사를 기다리며 머지 불가) ③ 이번 브랜치 개편 때 트리거 목록 누락. 매번 **이름을 한 곳만 바꾸고 나머지가 조용히 어긋났다.** `CLAUDE.md` §7 에 "이름을 바꿀 때는 세 곳을 함께 고친다 — `test.yml` 트리거(브랜치) · `test.yml` job 이름 · main 룰셋의 필수 통과 검사"를 실제 사례와 함께 못박았다
@@ -26,6 +38,7 @@ permalink: /progress/
 
 ### 2026-08-26 (45)
 - **상담원 화면에 떠있는 패널 셸** — 페이지 배경 `#EDECE7`·블러 블롭 2개, 본체를 흰 카드(radius 20px)로 띄움. 헤더 로고 그림자·도메인 select·다시 재생(재생 아이콘). 자막·카드 내부는 그대로. `typecheck`·`build` 통과. 1024px에서 padding 20px 확인.
+
 ### 2026-08-26 (44)
 - **브랜치 `ai` → `server` 로 개명.** 담당 디렉터리 분리(`_project/decisions/012` — 류준 `ai/` · 장민석 `server/`) 직후 [7절](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md)이 "⚠ 브랜치 이름과 엇갈린다 — 장민석은 브랜치 `ai`에서 `server/`를 고친다"고 적어야 했던 상태를 해소한 것이다. 이제 장민석은 브랜치 `server` 에서 `server/` 를 고친다
 - 함께 고친 곳 — `.github/workflows/test.yml` 트리거 목록(`ai` → `server`), `CLAUDE.md` 팀 절·브랜치 절

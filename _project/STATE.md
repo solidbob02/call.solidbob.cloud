@@ -3,7 +3,7 @@
 > 세션 인수인계용 비공개 메모. 팀이 함께 보는 기록은 `jekyll/progress.markdown`, 미결은 `jekyll/open-items.markdown`.
 > 여기에는 그쪽에 적기 애매한 내부 사정만 남긴다.
 
-**최종 갱신**: 2026-08-26 (frontend 토스식 레이아웃)
+**최종 갱신**: 2026-08-26 (브랜치 개명 `backend`→`ai` 완료 · 담당 분리 문서 전면 반영 / frontend 토스식 레이아웃)
 **현재**: 1주차 **마감 완료** / 8스프린트 (2026-08-20 ~ 2026-10-27) → 2주차 진행 중
 **전체 상태**: 🟢 1주차 목표 6개 전부 달성. 데모 도메인 4종·팀 4인 체제·골든셋 50건·
 DB 스키마 도메인 정리·B-0 도메인 라우팅 설계·CI 3종·main 브랜치 보호까지 끝났다.
@@ -21,9 +21,50 @@ ai/       품질을 만들고 재는 쪽   청킹·BM25·리랭크·모델 학�
 `server/.importlinter` 계약 2 가 막는다. 각 디렉터리에 영역 규칙 `CLAUDE.md` 가 있다.
 아래 이전 세션 기록의 `fastapi/` 경로는 **그 시점의 사실**이므로 고치지 않았다.
 
-> ⚠ CI job 이름이 `backend` → `server` + `ai` 로 바뀌었다. **main 룰셋의 필수 통과 검사도
-> 함께 바꿔야 한다** — 안 바꾸면 없는 검사(`backend`)를 기다리며 PR 이 영원히 머지되지 않는다.
-> 룰셋 변경은 `solidbob02` 계정(admin) 몫이다.
+> ✅ **해결됨.** CI job 이름 `backend` → `server` + `ai` 에 맞춰 main 룰셋도 이미
+> `[server, ai, jekyll]` 로 바뀌어 있다(2026-08-26 확인).
+> `gh api repos/solidbob02/call.solidbob.cloud/rules/branches/main` 으로 확인 가능.
+
+**브랜치 이름도 담당 디렉터리에 맞췄다 — 양쪽 다 완료 (2026-08-26).**
+장민석 님이 `ai`→`server`(PR #28)를 먼저, 류준이 `backend`→`ai`(PR #31, `decisions/015`)를 이어서.
+
+```
+류준    브랜치 ai      ←  디렉터리 ai/       (구 브랜치 backend, 삭제됨)
+장민석   브랜치 server  ←  디렉터리 server/   (구 브랜치 ai)
+정성윤   브랜치 PM      조서희  브랜치 frontend
+```
+
+> ⚠ **`ai` 라는 이름이 사람을 갈아탔다.** 아래 2026-08-26 이전 세션 기록에 나오는
+> `ai` 브랜치는 **장민석**, `backend` 는 **류준**이다. 그날 이후의 `ai` 는 류준이다.
+> 옛 기록은 그 시점의 사실이라 고치지 않았다(절대 원칙 8).
+
+> 필수 통과 검사 이름은 `test.yml` 의 **job 이름**이지 브랜치 이름이 아니다 —
+> 브랜치를 개명해도 룰셋은 손댈 필요가 없었다. `decisions/012` 가 반대로 적어 두어
+> 이 정리를 하루 미뤘던 것을 `decisions/015` 에 기록해 뒀다.
+
+## 2026-08-26 세션 (류준, 브랜치 ai) — main 동기화 + 브랜치 개명 + 담당 분리 반영
+
+**끝낸 것**
+1. `main`(`3c518de`) fast-forward — 조서희 님 대시보드 스캐폴딩 전체 + `decisions/014`(고객 화면 철회) 흡수. 충돌 0건
+2. **브랜치 개명** `backend`→`ai`. 장민석 님이 `ai`→`server` 를 먼저 마쳐 이름이 비어 있었다
+3. 아직 "류준·장민석 공동"으로 남아 있던 문서를 `decisions/012` 기준으로 전부 갱신
+
+**개명에서 배운 것 — `decisions/012` 의 미룬 이유가 틀렸다.** "브랜치명을 바꾸면 main 룰셋의
+필수 통과 검사 이름까지 고쳐야 한다(admin 몫)"고 적혀 있었지만, 그 검사 이름은 `test.yml` 의
+**job 이름**이다. 브랜치 이름이 걸린 곳은 push 트리거 목록 한 줄뿐이었다. 룰셋·
+`branch-protection.json` 은 손대지 않았고 admin 권한도 필요 없었다.
+
+**지우기 전에 확인한 것**: `origin/backend` 와 구 `origin/ai` 둘 다 `origin/main` 의 조상
+(`git merge-base --is-ancestor`) — 미머지 0건. 되돌리려면 `git push origin main:backend`.
+
+**곁가지로 찾은 모순 — 아직 열려 있다.** `.claude/rules/rfp-harness.md §3.1` 이
+`generation`(B-4~B-6)·`compliance`(C-1~C-4)를 `server/apps/` 로 적어 뒀는데, 둘 다 모델을
+로드하므로 **`server/.importlinter` 계약 2**(`torch`·`transformers`·`langchain`·`langgraph`
+금지)에 걸려 거기서는 만들 수 없다. `ai/apps/` 로 정정하고 `docs/architecture.md §1` 에 근거를
+남겼으나 **담당이 장민석 → 류준으로 옮겨가는 변경**이라 확인이 필요하다. `open-items` 에 올렸다.
+
+**다음 세션이 이어받을 것**: `ai/` 2주차 B-1~B-3(트리거 판정·하이브리드 검색·리랭킹).
+ES 인덱스 분리 여부 미결이 적재를 막고 있는 상태는 그대로다.
 
 ## 2026-08-26 세션 #10 (ai) — 첫 스포크 청킹 — 첫 스포크 청킹 + 브랜치 통합 준비
 
