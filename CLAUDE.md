@@ -18,6 +18,7 @@
 이 4개를 읽기 전에 코드를 건드리지 않는다. 사용자가 다른 지시를 하면 그것이 우선하고, 대신 위 문서를 그에 맞게 고친다.
 코드를 건드릴 때는 `docs/harness.md`(검증 장치)·`docs/architecture.md`(계층·슬라이스 규칙)를 추가로 먼저 읽고,
 **그 디렉터리의 `CLAUDE.md` 를 함께 읽는다** — `server/CLAUDE.md`(요청이 흐르는 길) · `ai/CLAUDE.md`(품질을 만들고 재는 쪽).
+프론트엔드 작업은 `.claude/rules/dashboard.md`도 함께 본다.
 
 ---
 
@@ -138,6 +139,7 @@ ai/                      품질을 만들고 재는 쪽 (Python 3.13). 청킹·B
                          · requirements.txt · pytest.ini · CLAUDE.md(영역 규칙). 배포: ai.solidbob.cloud
                          검증: cd ai && pytest && PYTHONPATH=apps:../server/apps lint-imports --config .importlinter
                          의존 방향은 ai → server 한쪽뿐이다 (evaluation 이 hub 계약을 import). 역방향은 계약이 막는다
+apps/                    dashboard(상담원). 고객 화면은 `_project/decisions/014` 로 철회(013 철회)
 scripts/ data/           유틸리티 / 데이터 (원본은 .gitignore)
 .github/workflows/       Pages 배포(pages.yml) · CI(test.yml — server · ai · jekyll job) · branch-protection.json
 jekyll/                  지킬 사이트 루트 — 지킬 명령은 전부 이 안에서 실행
@@ -187,7 +189,7 @@ permalink: /<경로>/
 
 **티켓 1건 = 파일 1개.** `jekyll/_backlogs/` 아래 개별 마크다운으로 만든다.
 세 사람이 하나의 표를 같이 고치면 병합 충돌이 나므로, 보드를 페이지에 직접 그리지 않는다.
-`/kanban/` 페이지가 컬렉션을 읽어 담당자별 3열(할 일 / 진행 중 / 완료)로 렌더링한다.
+`/kanban/` 페이지가 컬렉션을 읽어 담당자 사이드바와 3열(할 일 / 진행 중 / 완료) 보드를 한 페이지에서 전환한다.
 
 ```yaml
 ---
