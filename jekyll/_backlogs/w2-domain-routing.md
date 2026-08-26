@@ -2,7 +2,7 @@
 title: "도메인 라우팅 방식 결정 — 4개 중 어디를 검색할 것인가"
 assignee: "공동"
 role: "ai"
-status: "todo"
+status: "done"
 sprint: 2
 priority: 1
 date: 2026-08-26
@@ -30,3 +30,5 @@ date: 2026-08-26
 
 결정 + `_project/decisions/006-도메인-라우팅.md` 작성 + 인터페이스 계약에 도메인 필드
 반영 여부 확정([7.3절](/docs/07/)).
+
+**2026-08-26 — 결정 완료: 자동 분류(B안).** 상담원 수동 선택이 아니라 초반 발화를 4클래스로 분류하고 신뢰도가 낮으면 4개 인덱스 하이브리드 검색으로 폴백한다. 근거: `_project/decisions/007-도메인-라우팅-자동분류-확정.md`. **분류기 구현·학습은 이 티켓이 아니라** [w1-domain-routing](/backlog/w1-domain-routing/)에서 이어진다(미착수).

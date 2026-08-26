@@ -2,7 +2,7 @@
 title: "MySQL 스키마 확정"
 assignee: "류준"
 role: "ai"
-status: "in-progress"
+status: "done"
 sprint: 1
 priority: 6
 date: 2026-08-25
@@ -30,3 +30,5 @@ date: 2026-08-25
 미결(현재는 ID 접두어 `FIN-`/`DASAN-`/`SHOP-`/`HLT-`만으로 구분). 실제 MySQL 마이그레이션
 적용은 아직 착수 전.
 ※ 기획서 [7.1절](/docs/07/)상 MySQL 스키마 담당은 정성윤이나 실제 작성은 류준(+2026-08-26부터 장민석 공동)이 했다. 역할 표기 정리 필요.
+
+**2026-08-26 — 완료.** 도메인 4종 전환에 맞춘 스키마 정리까지 반영됐다(`plan` 제거, `subscriber`→`customer`, `call.domain` 신설, `closure` evidence 교체, 17→16 테이블). 근거: `_project/decisions/006-db-스키마-도메인-정리.md`

@@ -6,6 +6,9 @@ status: "todo"
 sprint: 2
 priority: 6
 date: 2026-08-26
+paths:
+  - "services/gateway/stt/*"
+  - "scripts/*stt*"
 ---
 
 AI Hub 음성을 파일 단위로 전사하는 경로를 붙인다. 실시간 스트리밍은 3주차다.
