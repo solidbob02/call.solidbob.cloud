@@ -8,9 +8,8 @@ priority: 7
 date: 2026-08-26
 ---
 
-`apps/dashboard` 를 만든다. 1주차에 계획만 잡혀 있던 작업이며, 팀 개편(`_project/decisions/005`)으로
-프론트엔드 담당이 조서희로 확정되면서 2주차로 이월했다. 착수 전이라 1주차 티켓은 삭제하고
-이 티켓 하나로 합쳤다.
+`apps/dashboard` 를 만든다. 1주차 티켓([w1-dashboard-scaffold](/backlog/w1-dashboard-scaffold/))에서
+이월된 작업이며, 팀 개편으로 담당이 조서희로 바뀌었다.
 
 **막혔던 전제는 풀렸다** — 인터페이스 계약이 v2 로 확정됐다([7.3절](/docs/07/),
 `_project/decisions/003`).
