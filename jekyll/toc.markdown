@@ -31,8 +31,9 @@ permalink: /toc/
 <h2>4. 개발 일정 및 추진 체계</h2>
 <ol class="subitems">
   <li><span class="num">1)</span><a href="/docs/08/">8주 마일스톤</a></li>
-  <li><span class="num">2)</span><a href="/docs/07/">팀 분업</a></li>
-  <li><span class="num">3)</span><a href="/docs/11/">리스크 및 대응</a></li>
+  <li><span class="num">2)</span><a href="/kanban/">칸반 보드</a></li>
+  <li><span class="num">3)</span><a href="/docs/07/">팀 분업</a></li>
+  <li><span class="num">4)</span><a href="/docs/11/">리스크 및 대응</a></li>
 </ol>
 
 <h2>5. 부록</h2>

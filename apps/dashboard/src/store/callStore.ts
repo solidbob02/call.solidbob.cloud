@@ -30,6 +30,13 @@ export interface MaskingLogEntry {
   utterance_end_ms: number;
 }
 
+export interface PanelCard {
+  card: RecommendationCard;
+  trigger_at_ms: number;
+  closure: ClosureEvent | null;
+  settled: boolean;
+}
+
 export interface CallState {
   mode: GatewayMode;
   connected: boolean;
@@ -37,18 +44,17 @@ export interface CallState {
   demoDomain: DemoDomain;
   callId: string | null;
   utterances: Utterance[];
-  cards: RecommendationCard[];
+  cards: PanelCard[];
   maskingLog: MaskingLogEntry[];
   closure: ClosureEvent | null;
-  closureOpen: boolean;
-  expandedIndex: number | null;
-  dockEpoch: number;
   applyTranscript: (event: TranscriptEvent) => void;
-  applyRecommendation: (cards: RecommendationCard[], callId: string) => void;
-  expandCard: (index: number) => void;
-  collapseCards: () => void;
+  applyRecommendation: (
+    cards: RecommendationCard[],
+    callId: string,
+    triggerAtMs: number,
+  ) => void;
   applyClosure: (event: ClosureEvent) => void;
-  dismissClosure: () => void;
+  settleClosure: (closureType: ClosureEvent["closure_type"]) => void;
   setStatus: (mode: GatewayMode, connected: boolean) => void;
   setError: (message: string) => void;
   setDemoDomain: (domain: DemoDomain) => void;
@@ -58,13 +64,49 @@ export interface CallState {
 const emptyCall = {
   callId: null as string | null,
   utterances: [] as Utterance[],
-  cards: [] as RecommendationCard[],
+  cards: [] as PanelCard[],
   maskingLog: [] as MaskingLogEntry[],
   closure: null as ClosureEvent | null,
-  closureOpen: false,
-  expandedIndex: null as number | null,
-  dockEpoch: 0,
 };
+
+function attachIndex(cards: PanelCard[], event: ClosureEvent): number {
+  const sameType = cards.findIndex(
+    (item) => item.closure?.closure_type === event.closure_type,
+  );
+  if (sameType !== -1) {
+    return sameType;
+  }
+  for (let i = cards.length - 1; i >= 0; i -= 1) {
+    if (cards[i].closure === null) {
+      return i;
+    }
+  }
+  return cards.length - 1;
+}
+
+function withClosure(
+  cards: PanelCard[],
+  event: ClosureEvent,
+): PanelCard[] {
+  if (cards.length === 0) {
+    return cards;
+  }
+  const index = attachIndex(cards, event);
+  return cards.map((item, i) =>
+    i === index ? { ...item, closure: event, settled: false } : item,
+  );
+}
+
+export function evidenceTally(closure: ClosureEvent): {
+  met: number;
+  total: number;
+} {
+  const keys = Object.keys(closure.evidence);
+  return {
+    total: keys.length,
+    met: keys.filter((key) => closure.evidence[key] === true).length,
+  };
+}
 
 export const useCallStore = create<CallState>((set) => ({
   mode: "mock",
@@ -111,11 +153,11 @@ export const useCallStore = create<CallState>((set) => ({
     });
   },
 
-  applyRecommendation: (incoming, callId) => {
+  applyRecommendation: (incoming, callId, triggerAtMs) => {
     set((state) => {
       const withSource = incoming.filter(hasCardSource);
       const seen = new Set(
-        state.cards.map((card) => `${card.source.doc_id}\0${card.title}`),
+        state.cards.map((item) => `${item.card.source.doc_id}\0${item.card.title}`),
       );
       const added = withSource.filter(
         (card) => !seen.has(`${card.source.doc_id}\0${card.title}`),
@@ -123,41 +165,43 @@ export const useCallStore = create<CallState>((set) => ({
       if (added.length === 0) {
         return { callId };
       }
-      return {
-        callId,
-        cards: [...state.cards, ...added],
-        expandedIndex: state.cards.length + added.length - 1,
-        dockEpoch: state.dockEpoch + 1,
-      };
-    });
-  },
-
-  expandCard: (index) => {
-    set((state) => {
-      if (index < 0 || index >= state.cards.length) {
-        return state;
+      let cards: PanelCard[] = [
+        ...state.cards,
+        ...added.map((card) => ({
+          card,
+          trigger_at_ms: triggerAtMs,
+          closure: null,
+          settled: false,
+        })),
+      ];
+      if (state.closure !== null) {
+        const attached = cards.some(
+          (item) => item.closure?.closure_type === state.closure?.closure_type,
+        );
+        if (!attached) {
+          cards = withClosure(cards, state.closure);
+        }
       }
-      return {
-        expandedIndex: index,
-        dockEpoch: state.dockEpoch + 1,
-      };
+      return { callId, cards };
     });
-  },
-
-  collapseCards: () => {
-    set({ expandedIndex: null });
   },
 
   applyClosure: (event) => {
-    set({
+    set((state) => ({
       callId: event.call_id,
       closure: event,
-      closureOpen: event.verdict === "approved",
-    });
+      cards: withClosure(state.cards, event),
+    }));
   },
 
-  dismissClosure: () => {
-    set({ closureOpen: false });
+  settleClosure: (closureType) => {
+    set((state) => ({
+      cards: state.cards.map((item) =>
+        item.closure?.closure_type === closureType
+          ? { ...item, settled: true }
+          : item,
+      ),
+    }));
   },
 
   setStatus: (mode, connected) => {

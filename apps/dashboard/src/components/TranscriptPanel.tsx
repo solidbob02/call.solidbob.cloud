@@ -16,27 +16,38 @@ export function TranscriptPanel(): ReactElement {
           <p className="empty">발화가 아직 없습니다.</p>
         ) : (
           <ol className="utterance-list">
-            {utterances.map((item) => (
-              <li
-                key={item.segment_id}
-                className={`utterance ${item.speaker}${item.is_final ? "" : " interim"}`}
-              >
-                <span className="bar" aria-hidden="true" />
-                <div className="utterance-body">
-                  <div className="utterance-meta">
-                    <span className="speaker">
-                      {item.speaker === "customer" ? "고객" : "상담원"}
-                    </span>
-                    <time className="ts" dateTime={`+${item.utterance_end_ms}ms`}>
-                      {formatOffsetMs(item.utterance_end_ms)}
-                    </time>
+            {utterances.map((item) => {
+              const hasAlert = item.masked.length > 0;
+              return (
+                <li
+                  key={item.segment_id}
+                  className={`utterance ${item.speaker}${item.is_final ? "" : " interim"}`}
+                >
+                  <span className="bar" aria-hidden="true" />
+                  <div className="utterance-body">
+                    <div className="utterance-meta">
+                      <span className="speaker">
+                        {item.speaker === "customer" ? "고객" : "상담원"}
+                      </span>
+                      <time
+                        className="ts"
+                        dateTime={`+${item.utterance_end_ms}ms`}
+                      >
+                        {formatOffsetMs(item.utterance_end_ms)}
+                      </time>
+                    </div>
+                    <div className="utterance-line">
+                      <p className="utterance-text">
+                        <MaskedText text={item.text} masked={item.masked} />
+                      </p>
+                      {hasAlert ? (
+                        <span className="alert-pill">⚠ 경고</span>
+                      ) : null}
+                    </div>
                   </div>
-                  <p className="utterance-text">
-                    <MaskedText text={item.text} masked={item.masked} />
-                  </p>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ol>
         )}
       </div>

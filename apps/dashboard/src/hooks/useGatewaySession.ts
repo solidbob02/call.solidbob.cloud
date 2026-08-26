@@ -40,7 +40,11 @@ export function useGatewaySession(): { replay: () => void } {
       client.connect({
         onTranscript: queueTranscript,
         onRecommendation: (batch) => {
-          useCallStore.getState().applyRecommendation(batch.cards, batch.call_id);
+          useCallStore.getState().applyRecommendation(
+            batch.cards,
+            batch.call_id,
+            batch.trigger_at_ms,
+          );
         },
         onClosure: (event) => {
           useCallStore.getState().applyClosure(event);

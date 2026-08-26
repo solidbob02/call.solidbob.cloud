@@ -23,6 +23,7 @@ export function AppHeader({ onReplay }: AppHeaderProps): ReactElement {
   return (
     <header className="app-header">
       <div className="brand">
+        <span className="brand-logo" aria-hidden="true" />
         <span className="brand-mark">CallGuard</span>
         <span className="brand-sub">상담원 어시스트</span>
       </div>
@@ -45,9 +46,9 @@ export function AppHeader({ onReplay }: AppHeaderProps): ReactElement {
           </label>
         ) : null}
         <span className="call-id">{callId ?? "대기"}</span>
-        <span className={`status ${connected ? "on" : "off"}`}>
-          {mode === "mock" ? "mock" : "live"}
-          {connected ? " · 연결" : " · 끊김"}
+        <span className={`conn-badge ${connected ? "on" : "off"}`}>
+          {connected ? <span className="conn-dot" aria-hidden="true" /> : null}
+          {connected ? "연결됨" : "끊김"}
         </span>
         {isCoreApiConfigured() ? <span className="status">REST</span> : null}
         {mode === "mock" ? (

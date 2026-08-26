@@ -27,7 +27,7 @@ export function MaskedText({ text, masked }: MaskedTextProps): ReactElement {
     }
     if (end > start) {
       parts.push(
-        <mark key={`m-${index}`} className="masked-span" title={mask.type}>
+        <mark key={`m-${index}`} className="masked-span">
           {sliceByCodepoints(text, start, end)}
         </mark>,
       );
