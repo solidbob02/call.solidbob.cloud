@@ -11,13 +11,14 @@
 # (apps/ 를 경로에 올려야 hub·evaluation 등이 최상위 패키지로 보인다. main.py 의 sys.path.insert 와 동일한 맥락.)
 # 스포크를 새로 만들면 아래 다섯 목록 전부에 이름을 추가한다 (docs/architecture.md §1 의 표 순서).
 # 아직 없는 패키지를 적으면 lint-imports 가 "모듈 없음"으로 실패하므로, 실제로 만든 것만 적는다.
-# 예정: retrieval · generation · compliance · masking · closure_gate · postcall
+# 예정: generation · compliance · masking · closure_gate · postcall  (retrieval 은 2026-08-26 등록됨)
 # =============================================================================
 
 [importlinter]
 root_packages =
     hub
     evaluation
+    retrieval
     core
 include_external_packages = True
 
@@ -36,6 +37,7 @@ layers =
 containers =
     hub
     evaluation
+    retrieval
 
 # -----------------------------------------------------------------------------
 # 계약 2) 스타 토폴로지 — 스포크는 서로를 import 하지 않는다
@@ -47,6 +49,7 @@ name = 스포크 상호 독립 (스포크 ↔ 스포크 직접 참조 금지)
 type = independence
 modules =
     evaluation
+    retrieval
 
 # -----------------------------------------------------------------------------
 # 계약 3) 프레임워크 격리 — app·domain 계층은 웹/DB/검색엔진/모델 프레임워크를 모른다
@@ -59,6 +62,7 @@ type = forbidden
 source_modules =
     hub.app
     evaluation
+    retrieval.domain
 forbidden_modules =
     fastapi
     sqlalchemy
@@ -79,6 +83,7 @@ name = 도메인 순수성 (domain → pydantic import 금지)
 type = forbidden
 source_modules =
     evaluation
+    retrieval.domain
 forbidden_modules =
     pydantic
 
@@ -93,3 +98,4 @@ source_modules =
     hub
 forbidden_modules =
     evaluation
+    retrieval

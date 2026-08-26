@@ -4,6 +4,16 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-26 (14)
+- **첫 스포크 `fastapi/apps/retrieval/` 착수 — 지식베이스 청킹**(`w2-kb-index`). `domain/services/chunking.py`(조항 마커 파싱 + 상한 초과 시 문단 경계 분할)·`domain/value_objects/chunk.py`·`adapter/outbound/knowledge_base_loader.py`·`scripts/index_knowledge_base.py`. **청크 102개**(finance 34·shopping 27·health 21·dasan 20), 두 번 돌려 바이트 단위로 동일함을 확인. `.importlinter` 다섯 목록에 `retrieval` 등록 — 계약 5종 KEPT, `pytest` **64개 통과**(45→64)
+- **청킹 방식을 티켓의 "고정 길이"에서 "1 조항 = 1 청크"로 변경** — 조항 102개 길이를 실측하니 중앙값 101자·최대 332자로 **400자 초과가 0건**이라, 고정 길이(500자 등)로 자르면 조항이 쪼개지는 게 아니라 여러 조항이 한 청크로 뭉친다. 그러면 골든셋 `expected_doc_ids`(조항 ID 기준)로 Recall@5 를 채점할 수 없다. 상한 400자는 문서가 길어질 때를 위한 안전장치로만 남겼다
+- **골든셋 재작성(오늘 11:20, 류준) 검증** — 도메인 분포(finance 4·shopping 3·dasan 2·health 1)와 참조 문서 ID 3건이 `knowledge-base/` 92개 안에 전부 실재함을 확인. 깨진 참조 0건
+- **낡은 문서 정리** — `docs/domain.md`가 오늘 끝난 작업 3건(골든셋 재작성·DB 스키마 정리·도메인 라우팅 확정)을 여전히 "대기/미설계"로 적고 있어 갱신. `jekyll/docs/05`(⚠ 미반영)·`docs/14`(⚠ 재작성 필요)도 함께. 해소된 「한계」 항목은 지우지 않고 취소선 + 해소 근거를 붙였다. 아직 사실인 미결 2건(계약 `domain` 필드 v3, ES 인덱스 분할)은 그대로 뒀다
+- 티켓 정합성 정정 — `w2-naive-rag` 가 `services/core/`·`RetrievalPredictor` Protocol(구 구조)을 가리키고 있어 `fastapi/apps/retrieval/`·`RetrievalPort` ABC(async)로 갱신. `w2-kb-index` 는 청킹 방식 변경 근거를 본문에 남기고 `in-progress` 로, `w2-golden-set-50` 은 "기존 10건 무효" 표현을 정정
+- **`w2-db-schema-domain`·`w2-domain-routing` 은 내 수정을 물리고 류준 님 판(`origin/main`)을 채택** — 같은 티켓을 양쪽이 각각 고쳤고 류준 님이 13:03 으로 먼저였다. `CLAUDE.md` 칸반 규칙("나중에 시작한 쪽이 물러난다")을 따랐다. 두 티켓 모두 류준 님은 `done`, 나는 `in-progress` 로 봤는데 완료 조건의 팀 승인·계약 `domain` 필드 판단이 갈린 것이다. 계약 `domain` 필드 미결은 [7.3절](/docs/07/)에 그대로 남아 있다
+- 로컬 개발 환경 구축 — `.venv`(Python 3.13.13) + `fastapi/requirements.txt`
+- 남은 것: ES 적재(인덱스 분할 여부 미결로 막힘), `w2-naive-rag` BM25 검색 경로
+
 ### 2026-08-26 (13)
 - **AI 모델 구성 전면 확정 — Opus 교차검증 반영** — 사용자가 별도로 Claude Opus에게 5개 역할(임베딩·생성·생성 대조군·NER·분류기) 전부 모델을 추천받아왔다. 그대로 받지 않고 검증 가능한 주장을 전부 직접 확인: ① `ko-sroberta-multitask`의 `sentence_bert_config.json`에 `max_seq_length: 128` 실제 확인(아키텍처는 512 지원하지만 SentenceTransformer로 쓰면 128에서 잘림), 지식베이스 조항 103건 직접 토크나이즈해 **8.7%가 128토큰 초과** 확인 → `KoE5`(512토큰, 1024차원, MIT)로 교체 확정. ② `EXAONE-4.0-1.2B`를 실제로 받아 `exaone3.5:2.4b`와 같은 방식으로 재측정 — **250토큰 2.01~2.14초로 3.5보다 1.7배 빠르고 크기는 절반**이라 다시 교체. 단 하이브리드 reasoning 모델이라 기본 상태로는 Qwen3와 같은 실패 모드(추론에 토큰 예산 전부 소진, 답 못 냄)가 실측으로 재현돼 **`/api/chat`+`think:false` 필수**임을 확인. NC 라이선스 원문도 확인(포트폴리오 프로젝트라 문제없음 판단). ③ 분류기(`KcELECTRA-base`)·NER(`koelectra-ner`)는 유지하되 `klue/roberta-base`를 분류기 대조군으로 추가(5주차 실측 비교) — 이건 파인튜닝 헤드가 없어 지금 실측 불가, 결정만 하고 측정은 미룸. `KoE5`·`klue/roberta-base` 로컬 다운로드 완료, `kanana-1.5-2.1b-instruct`(생성 대조군)는 Ollama에서 못 찾아 6주차로 미룸
 - `scripts/download_models.py` TARGETS 갱신(KoE5·klue-roberta-base 추가, polyglot 제거는 이전 세션에서 이미 반영), [3.1절](/docs/03/)·[4.3절](/docs/04/) 갱신, 결정 기록 `_project/decisions/010-AI-모델-구성-확정.md`(`decisions/009`는 후속 갱신 절 추가로 연결)
