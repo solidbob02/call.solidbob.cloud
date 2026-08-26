@@ -4,6 +4,11 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-26 (4)
+- **골든셋 10건 재작성** — 한별텔레콤 시나리오였던 기존 10건을 4개 도메인(금융보험·다산콜센터·쇼핑·질병관리본부) 기준으로 전면 재작성. 분포: 금융보험 4(B·C-1·F-2×2)·다산콜센터 2(B·C-5)·쇼핑 3(B·C-5·F-2)·질병관리본부 1(C-2). F-2 케이스는 F-2 적용 도메인(금융보험·쇼핑)에서만 작성. `services/core/eval/golden_set.py`에 `domain` 필드 파싱 추가, `test_golden_set.py`에 도메인 커버리지·F-2 도메인 제약 테스트 2건 추가 — `pytest services/core` 27개 전부 통과. `golden-set/README.md` 갱신
+- `w1-dashboard-scaffold.md` 담당자를 장민석 → 조서희로 변경 (팀 개편 반영 — [7.1절](/docs/07/))
+- 남은 것: 팀 리뷰(F-2 케이스는 규정 작성자 아닌 사람이 검수), 도메인별 Recall@5 집계를 `harness.py`에 배선
+
 ### 2026-08-26 (3)
 - **백엔드·AI(류준·장민석) 내부 분담 방식 확정** — 기능별로 쪼개 전담을 나누지 않고 **둘이 함께(공동 작업)** 하기로 확정. `jekyll/docs/07`·`open-items.markdown`·`.claude/rules/rfp-harness.md`·`14-이번주할일.markdown` 반영, `_project/decisions/005` 갱신
 
