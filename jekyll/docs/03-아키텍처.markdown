@@ -30,7 +30,7 @@ permalink: /docs/03/
        │                  ├─ dense_vector (임베딩)
        │                  └─ RRF 병합
        │
-       ├─ 생성 모듈 ──→ [HF Transformers] 근거 기반 요약
+       ├─ 생성 모듈 ──→ [Ollama: EXAONE 4.0 1.2B] 근거 기반 요약
        │
        ├─ 컴플라이언스 모듈 ──→ [분류기]
        │
@@ -47,7 +47,7 @@ permalink: /docs/03/
 
 **F-2는 새 구성요소가 아니라 기존 FastAPI 코어 내 모듈로 들어간다.**
 
-## 3.1 도구 매핑 (투입자원 기준 — 목록 밖 도구 없음)
+## 3.1 도구 매핑
 
 | 투입자원 | 활용 방식 | 필수도 |
 |---|---|---|
@@ -57,7 +57,8 @@ permalink: /docs/03/
 | WebSocket | 실시간 양방향 통신 | 필수 |
 | Google STT | 스트리밍 음성인식 + 화자분리 | 필수 |
 | Elasticsearch | nori + dense_vector 하이브리드 검색 | 필수 |
-| **HuggingFace Transformers** | **① 임베딩 모델 ② 컴플라이언스 분류기 ③ 카드 요약 생성** | 필수 |
+| **HuggingFace Transformers** | **① 임베딩 모델(`KoE5`) ② 컴플라이언스 분류기 파인튜닝(`KcELECTRA-base` + `klue/roberta-base` 대조군) ③ NER(P6·P7, `koelectra-ner`)** | 필수 |
+| **Ollama** | **카드 요약 생성(B-4) 서빙 — 2026-08-26 추가** | 필수 |
 | React | 상담원 대시보드 | 필수 |
 | MySQL | 통화 메타·전사·추천·종결·평가 결과 | 필수 |
 | Git | 형상관리 | 필수 |
@@ -68,9 +69,60 @@ permalink: /docs/03/
 | VirtualBox | 로컬 테스트 환경 | 선택 |
 | OpenCV | 본 주제에서 활용처 없음 | 제외 |
 
-> **생성 모델 확정**: 별도 상용 API를 도입하지 않는다. **HuggingFace Transformers로 소형 한국어 오픈 모델을 로드해 카드 요약을 생성**한다. 카드 요약은 검색된 근거를 2~3문장으로 다듬는 제한된 작업이라 대형 모델이 필요 없고, 레이턴시에도 유리하다.
+> **목록 밖 도구 없음 원칙에 대한 예외 (2026-08-26)**: `Ollama`는 원래 투입자원
+> 목록에 없던 도구다. 실측 결과 HuggingFace Transformers 직접 로드로는 레이턴시
+> 목표를 못 맞춰(아래) 사용자가 직접 지시한 스택(HuggingFace + Ollama, AWS 배포)으로
+> 예외를 받아들였다. 상용 API가 아니라 로컬/오픈 웨이트 서빙 도구라는 점에서
+> "상용 API 도입 금지" 원칙은 지킨다. 근거: `_project/decisions/009-생성모델-EXAONE-Ollama-확정.md`.
+
+> **생성 모델 — EXAONE 4.0 1.2B로 확정 (2026-08-26, `_project/decisions/010`)**
 >
-> **[V2 확인 완료]** 개발 환경은 Apple M5 MacBook Air(통합메모리 24GB) — CUDA GPU는 없고 PyTorch MPS 백엔드로 가속한다. `EleutherAI/polyglot-ko-1.3b`급 소형 모델부터 시작해 골든셋으로 첫 토큰 지연·품질을 실측하고, 필요할 때만 단계적으로 올린다. bitsandbytes 등 CUDA 전용 양자화 도구는 이 환경에서 쓸 수 없다.
+> `EleutherAI/polyglot-ko-1.3b`(HF Transformers, MPS)를 실제로 로드해 250토큰 생성을
+> 측정한 결과 **7.6~7.7초**로 목표(3~5초)를 크게 초과했고, instruction 튜닝이 안 된
+> 베이스 모델이라 요약 지시를 따르지 못하고 원문을 반복 출력했다(품질도 실패).
+>
+> Ollama(llama.cpp/GGUF) 서빙으로 후보를 비교(중국 출처 모델 제외), 1차로
+> `exaone3.5:2.4b`(3.63초, 71.6 tok/s)로 확정했다가, 같은 날 Opus 교차검증으로 나온
+> `EXAONE-4.0-1.2B`를 추가로 실측해 **다시 교체**했다:
+>
+> | 모델 | 출처 | 250토큰 전체 | 처리량 |
+> |---|---|---|---|
+> | `llama3.2:3b` | Meta 🇺🇸 | 2.75s(111토큰, 자연종료) | 57 tok/s — 지시 이행 불완전 |
+> | `exaone3.5:2.4b` | LG AI Research 🇰🇷 | 3.63s (250토큰 강제 도달) | 71.6 tok/s |
+> | **`EXAONE-4.0-1.2B`** | **LG AI Research 🇰🇷** | **2.01~2.14s (250토큰 강제 도달)** | **~126 tok/s** |
+>
+> **`EXAONE-4.0-1.2B`를 Ollama로 서빙하는 쪽으로 확정.** `exaone3.5:2.4b`보다 약
+> 1.7배 빠르고 GGUF 크기는 절반(812MB), 품질도 손색없다. **단, 하이브리드 reasoning
+> 모델이라 기본 상태로는 `num_predict` 예산을 추론에 다 쓰고 실제 답을 못 낸다**
+> (Qwen3에서 먼저 겪은 것과 같은 실패 모드, 실측 확인). **`/api/chat` 엔드포인트 +
+> `"think": false` 옵션을 반드시 함께 써야 한다** — `/api/generate`에서는 `think:false`
+> 가 반영되지 않았다. 라이선스는 `EXAONE AI Model License Agreement 1.2 - NC`(비상업,
+> 원문 확인) — 팀 포트폴리오 프로젝트라 문제없다고 판단. 재현: `scripts/test_generation_latency.py`
+> (HF 버전, 비교용), `scripts/test_ollama_latency.py`.
+>
+> **[V2 확인 완료]** 개발 환경은 Apple M5 MacBook Air(통합메모리 24GB) / Apple M4
+> MacBook(통합메모리 16GB) 2대 — CUDA GPU는 없고 Metal(MPS/llama.cpp) 가속만
+> 가능하다. bitsandbytes 등 CUDA 전용 양자화 도구는 이 환경에서 쓸 수 없다.
+
+> **임베딩 모델 — KoE5로 확정 (2026-08-26, `_project/decisions/010`)**
+>
+> 기존 `ko-sroberta-multitask`는 아키텍처(RoBERTa, 512 포지션)와 무관하게
+> `sentence_bert_config.json`에 `max_seq_length: 128`이 박혀 있어 **SentenceTransformer로
+> 쓰면 128토큰에서 조용히 잘린다**(설정 파일로 실측 확인). 지식베이스 조항 103건을
+> 실제 토크나이즈한 결과 **8.7%가 128토큰을 초과**했다. `nlpai-lab/KoE5`
+> (`intfloat/multilingual-e5-large` 파인튜닝, MIT)는 이 truncation 설정이 없어 512토큰
+> 그대로 쓰고, 임베딩 차원도 1024(기존 768) — **ES `dense_vector` 매핑 차원을
+> 768→1024로 바꿔야 한다**(4주차 인덱스 생성 전).
+
+> **컴플라이언스 분류기·NER — 유지 + 대조군 추가 (2026-08-26)**
+>
+> `beomi/KcELECTRA-base`(C-1~4·B-0)와 `monologg/koelectra-base-v3-naver-ner`(C-5
+> NER)는 **그대로 유지**한다 — 둘 다 이미 비중국 출처이고, KcELECTRA는 댓글 코퍼스
+> 학습이라 STT 오탈자에 강해([5주차 오류 내성 실험](/docs/04/)과 성격이 맞는다.
+> 대신 **`klue/roberta-base`를 분류기 대조군으로 추가**해 5주차에 실측 비교한다.
+> NER의 P7(상세주소)은 NAVER NER 코퍼스에 전용 태그가 없어 **규칙 기반 보강이
+> 필요**하다(미착수). 생성 모델과 달리 인코더는 파인튜닝 헤드 없이 정확도를 잴 수
+> 없어 이번 세션에서는 결정만 하고 실측은 4~5주차로 미룬다.
 
 > **캐시 저장소**: 별도 저장소를 두지 않는다. **프로세스 인메모리 LRU + MySQL 영속화**로 처리한다.
 
