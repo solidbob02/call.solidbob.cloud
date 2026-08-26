@@ -1,0 +1,68 @@
+# Requirement: SEC-2
+"""환경변수 → 상수. 이 저장소에서 `os.environ` 을 읽는 곳은 이 파일 하나뿐이다.
+
+- 키 이름은 저장소 루트 `.env.example` 과 1:1 이다. 새 키를 추가하면 그쪽에도 등록한다 (이름만, 값 없음).
+- 값은 `.env`(gitignore) 에서 온다. 이 모듈은 `.env` 를 직접 파싱하지 않는다 — 프로세스 환경에 이미
+  실려 있다고 가정한다 (uvicorn `--env-file .env`, Docker `env_file:`, CI 시크릿). python-dotenv 를
+  들이지 않는 이유: 로드 지점이 두 곳이 되면 어느 값이 이겼는지 추적이 안 된다.
+- 비밀값은 로그·예외 메시지·`/health` 응답에 싣지 않는다 (docs/architecture.md §5, CLAUDE.md §8).
+"""
+
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass
+
+
+def _env(name: str, default: str | None = None) -> str | None:
+    value = os.environ.get(name)
+    return value if value not in (None, "") else default
+
+
+def _env_int(name: str, default: int | None = None) -> int | None:
+    raw = _env(name)
+    return int(raw) if raw is not None else default
+
+
+@dataclass(frozen=True)
+class Settings:
+    # --- MySQL (call · transcript_segment · recommendation · closure · eval_result …) ---
+    mysql_host: str | None
+    mysql_port: int
+    mysql_db_name: str | None
+    mysql_user: str | None
+    mysql_password: str | None
+    database_url: str | None
+
+    # --- Elasticsearch (B-2 하이브리드 검색) ---
+    elasticsearch_url: str | None
+    elasticsearch_api_key: str | None
+
+    # --- HuggingFace (임베딩·분류기·카드 요약 모델; 공개 모델이면 비워도 됨) ---
+    huggingface_token: str | None
+
+    @property
+    def mysql_configured(self) -> bool:
+        return bool(self.database_url) or all(
+            (self.mysql_host, self.mysql_db_name, self.mysql_user, self.mysql_password)
+        )
+
+    @property
+    def elasticsearch_configured(self) -> bool:
+        return bool(self.elasticsearch_url)
+
+
+def load_settings() -> Settings:
+    """호출 시점의 환경을 읽는다. 앱 기동 시 한 번 부르고 DI 로 넘긴다 — 모듈 전역에 캐시하지 않는다
+    (테스트에서 환경을 바꿔가며 부를 수 있어야 한다)."""
+    return Settings(
+        mysql_host=_env("MYSQL_HOST"),
+        mysql_port=_env_int("MYSQL_PORT", 3306) or 3306,
+        mysql_db_name=_env("MYSQL_DB_NAME"),
+        mysql_user=_env("MYSQL_USER"),
+        mysql_password=_env("MYSQL_PASSWORD"),
+        database_url=_env("DATABASE_URL"),
+        elasticsearch_url=_env("ELASTICSEARCH_URL"),
+        elasticsearch_api_key=_env("ELASTICSEARCH_API_KEY"),
+        huggingface_token=_env("HUGGINGFACE_TOKEN"),
+    )

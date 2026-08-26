@@ -68,3 +68,6 @@ docker-compose.override.yml
 
 # Claude Code 개인 설정 — 팀 공유 대상이 아니다 (.claude/settings.json 은 공유)
 .claude/settings.local.json
+
+# import-linter 캐시 (fastapi/)
+.import_linter_cache/
