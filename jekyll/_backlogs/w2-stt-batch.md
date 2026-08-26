@@ -2,13 +2,14 @@
 title: "STT 배치 모드 연동 — 녹음 파일 전사"
 assignee: "정성윤"
 role: "infra"
-status: "todo"
+status: "in-progress"
 sprint: 2
 priority: 6
 date: 2026-08-26
 paths:
   - "services/gateway/stt/*"
   - "scripts/*stt*"
+  - "scripts/transcribe_batch.py"
 ---
 
 AI Hub 음성을 파일 단위로 전사하는 경로를 붙인다. 실시간 스트리밍은 3주차다.
@@ -30,3 +31,27 @@ AI Hub 음성을 파일 단위로 전사하는 경로를 붙인다. 실시간 �
 ## 완료 조건
 
 같은 명령으로 재실행하면 이미 전사된 파일은 건너뛰고, 사용량이 로그에 남는다.
+
+## 2026-08-26 — 스크립트 작성 완료, 실행 검증은 남음
+
+`scripts/transcribe_batch.py`.
+
+**할당량을 태우지 않는 것이 이 티켓의 핵심**이라 두 장치를 넣었다.
+
+- **COST-1 애플리케이션 가드** — `data/processed/stt-usage.json` 에 날짜별 사용 초를 누적하고,
+  `.env` 의 `STT_MAX_SECONDS_PER_DAY`(600)·`_MONTH`(3600)를 넘길 파일은 **요청을 보내지 않고 건너뛴다.**
+  중간에 죽지 않고 나머지 파일은 계속 처리한다. GCP 콘솔 쿼터(1차)에 이은 2차 방어선이다
+- **내용 해시 캐시** — 같은 오디오는 다시 전사하지 않는다(경로가 바뀌어도 동일 판정).
+  검색·트리거·마스킹 실험에서 같은 전사 결과를 반복해 쓰기 위한 것이다
+- `--dry-run` 으로 **쓰기 전에 몇 초를 쓸지** 먼저 볼 수 있다
+
+발화 종료 시각이 골든셋 스펙에 필요해 `enable_word_time_offsets` 를 켜고 단어별 `start_ms`/`end_ms` 를 저장한다.
+
+**검증한 것** (합성 wav 로): 대상 없음 → exit 1, `--dry-run` 초 계산, 900초 파일이 일 한도 600초에
+걸려 건너뛰어지고 5초 파일은 계속 처리됨, 캐시된 파일 재전사 안 함.
+
+**검증하지 못한 것** — 실제 API 호출 경로. 이 머신에 `data/raw/` 오디오도 `google-cloud-speech` 도 없다.
+오디오가 있는 머신에서 `--dry-run` 으로 먼저 확인한 뒤 소량(5~10건)으로 실행해야 한다.
+
+출력은 `data/processed/stt/` (gitignore 대상). **전사 원문에는 개인정보가 그대로 들어 있으므로 커밋하지 않는다** —
+마스킹(C-5)은 별도 모듈의 책임이다.

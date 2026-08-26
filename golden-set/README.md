@@ -60,8 +60,8 @@
 - [x] **2주차 50개 작성 완료**(2026-08-26) — `v1-50.json`. F-2 케이스는 규정 작성자(류준·
       장민석)가 아닌 사람이 검수해야 한다([보완지시서 3번](https://github.com/solidbob02/call.solidbob.cloud)) — **팀 리뷰 대기**
 - [ ] 3주차: 150개로 확장 → 공식 기준선 확정, CI에 고정
-- [x] `fastapi/apps/evaluation/`에서 이 JSON을 그대로 읽어 채점 — 로더가 `domain` 필드를
-      파싱한다(`fastapi/apps/evaluation/golden_set.py`). B-0 도메인 분류 정확도는 `harness.py`에
+- [x] `ai/apps/evaluation/`에서 이 JSON을 그대로 읽어 채점 — 로더가 `domain` 필드를
+      파싱한다(`ai/apps/evaluation/golden_set.py`). B-0 도메인 분류 정확도는 `harness.py`에
       배선 완료(`_project/decisions/007`). **도메인별 Recall@5 집계**는 B-2 하이브리드
       검색 스포크 구현 시점의 후속 작업 — 아직 그 모듈 자체가 없음
 - [ ] `w2-baseline.md`(잠정 베이스라인 측정)가 이 파일을 쓸지, 계속 `v1-10.json`으로

@@ -145,7 +145,7 @@ call.domain 확정 (2026-08-26 DB 스키마 정리로 추가, `_project/decision
 ```
 
 평가는 [6.1절](/docs/06/) **B-0 도메인 분류 정확도(목표 ≥0.95)**로 하네스에 배선했다
-(`fastapi/evaluation/metrics/domain_routing.py`) — 실제 KcELECTRA 분류기 구현은 아직
+(`ai/apps/evaluation/metrics/domain_routing.py`) — 실제 KcELECTRA 분류기 구현은 아직
 미착수, 학습 데이터 확보(골든셋 확대) 이후 진행한다.
 
 ---

@@ -1,0 +1,39 @@
+# CallGuard ai/ — 모델·검색·평가 의존성.
+# 2026-08-26 fastapi/ 를 server/ · ai/ 로 나누면서 분리했다.
+#
+# 여기에는 **품질을 만들고 재는 데 필요한 것**을 둔다. 요청을 처리하는 런타임
+# 의존성(fastapi·uvicorn)은 server/requirements.txt 에 있다.
+# 섞으면 서버 컨테이너가 torch 때문에 수 GB 커진다.
+#
+# Python 3.13 (pyenv). 설치 (저장소 루트에서 — .venv 는 루트에 둔다,
+# scripts/check_requirements_updates.py 가 그 경로를 본다):
+#   python3.13 -m venv .venv && source .venv/bin/activate
+#   pip install -r ai/requirements.txt
+#
+# 모델 받기:
+#   python scripts/download_models.py
+#
+# 버전은 매주 월요일 09:00에 로컬 launchd(com.callguard.requirements-check)가 PyPI
+# 최신 버전을 확인해 이 파일과 .venv를 자동 갱신한다 (scripts/check_requirements_updates.py).
+
+# --- 모델 (V2 확인: Apple M5, CUDA 없음 → MPS 가속) ---
+torch==2.13.0
+transformers==5.15.1
+huggingface_hub==1.28.0
+sentencepiece==0.2.2
+accelerate==1.14.0
+
+# --- 계약 DTO 검증 ---
+# evaluation 이 hub 의 pydantic DTO 를 import 한다 (의존 방향 ai → server).
+pydantic==2.13.4
+
+# --- 검증 ---
+pytest==9.1.1
+import-linter==2.13
+
+# --- 아직 도입하지 않은 것 ---
+# 실제로 쓰기 시작할 때 버전을 고정해 추가한다. 미리 적어두면 CI 가 쓰지도 않는 것을 설치한다.
+#   elasticsearch        B-2 하이브리드 검색 (nori BM25 + dense_vector + RRF)
+#   rank-bm25            BM25 단독 베이스라인 (2주차 w2-naive-rag)
+#   sentence-transformers  임베딩 · 리랭킹
+#   langchain · langgraph  파이프라인 오케스트레이션

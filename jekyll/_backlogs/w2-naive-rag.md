@@ -32,5 +32,5 @@ class RetrievalPort(ABC):
 
 ## 완료 조건
 
-`fastapi/apps/retrieval/` 에 구현체가 있고, `evaluation.harness.Ports(retrieval=...)` 에
+`ai/apps/retrieval/` 에 구현체가 있고, `evaluation.harness.Ports(retrieval=...)` 에
 꽂으면 Recall@5·MRR 이 계산된다. `.importlinter` 다섯 목록에 `retrieval` 등록 + 계약 5종 통과.

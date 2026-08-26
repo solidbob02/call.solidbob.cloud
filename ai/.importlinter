@@ -1,0 +1,80 @@
+# =============================================================================
+# import-linter — CallGuard ai/ 아키텍처 하네스 (코드 레벨)
+# =============================================================================
+# ai/ 는 "품질을 만들고 재는 쪽"이다. 청킹·BM25·리랭크·임베딩·모델 학습과
+# 평가 하네스가 여기 산다. 요청 처리 경로(라우터·인터랙터)는 server/ 에 있다.
+#
+# 강제하는 규칙:
+#   (1) 앱 '내부'  — 헥사고날/클린: adapter → app → domain (역방향 금지)
+#   (2) 모듈 사이  — 모듈끼리 직접 참조 금지. 접점은 server 의 hub 포트(추상)뿐
+#   (3) 도메인 순수성 — 알고리즘 계층은 프레임워크·모델 라이브러리를 모른다
+#
+# 실행:
+#   cd ai && PYTHONPATH=apps:../server/apps lint-imports --config .importlinter
+#
+# (../server/apps 를 올리는 이유: evaluation 이 hub 의 포트·DTO 를 import 한다.
+#  의존 방향은 ai → server 한쪽뿐이며, 반대는 server/.importlinter 계약 2 가 막는다.)
+# 모듈을 새로 만들면 root_packages 와 계약 1·2 의 목록에 이름을 추가한다.
+# 예정: generation(B-4~B-6) · compliance(C-1~C-4) · training(모델 학습) · orchestration(랭그래프)
+# =============================================================================
+
+[importlinter]
+root_packages =
+    evaluation
+    retrieval
+include_external_packages = True
+
+# -----------------------------------------------------------------------------
+# 계약 1) 클린 아키텍처 — adapter > app > domain
+# -----------------------------------------------------------------------------
+# 검색·모델 코드도 계층을 지킨다. Elasticsearch 클라이언트·모델 로더는 adapter 이고,
+# 청킹 규칙·랭킹 산식 같은 알고리즘은 domain 이다. 라이브러리를 바꿔도 domain 은 그대로여야 한다.
+# 괄호 = 그 계층이 없는 모듈을 허용 (evaluation 은 채점 코드라 계층 분리 없음).
+[importlinter:contract:clean-architecture]
+name = 클린 아키텍처 계층 (adapter > app > domain)
+type = layers
+layers =
+    (adapter)
+    (app)
+    (domain)
+containers =
+    evaluation
+    retrieval
+
+# -----------------------------------------------------------------------------
+# 계약 2) 모듈 상호 독립 — 스포크끼리 직접 참조하지 않는다
+# -----------------------------------------------------------------------------
+# 파이프라인 배선(마스킹 → 트리거 → 검색 → 생성)은 server 의 hub 포트를 경유한다.
+# evaluation 은 골든셋으로 각 모듈을 채점하지만 hub 포트(추상)로만 접점을 두므로
+# retrieval 을 직접 import 하지 않는다. 이게 깨지면 한 모듈 교체가 전체 수정이 된다.
+[importlinter:contract:module-independence]
+name = 모듈 상호 독립 (ai 모듈 ↔ 모듈 직접 참조 금지)
+type = independence
+modules =
+    evaluation
+    retrieval
+
+# -----------------------------------------------------------------------------
+# 계약 3) 도메인 순수성 — 알고리즘 계층은 프레임워크·모델 라이브러리를 모른다
+# -----------------------------------------------------------------------------
+# 청킹 규칙·랭킹 산식은 순수 파이썬이어야 한다. torch·transformers·elasticsearch 는
+# adapter 에서 부른다. 평가 하네스(evaluation)도 규칙 기반 채점이므로 여기 포함된다 —
+# "LLM 을 채점자로 쓰지 않는다"(절대 원칙 1)를 코드 구조로 고정하는 계약이다.
+[importlinter:contract:domain-purity]
+name = 도메인 순수성 (domain·evaluation → 프레임워크·모델 라이브러리 import 금지)
+type = forbidden
+source_modules =
+    evaluation
+    retrieval.domain
+forbidden_modules =
+    fastapi
+    sqlalchemy
+    pymysql
+    elasticsearch
+    torch
+    transformers
+    sentence_transformers
+    langchain
+    langgraph
+    google
+    pydantic

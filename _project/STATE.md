@@ -3,12 +3,26 @@
 > 세션 인수인계용 비공개 메모. 팀이 함께 보는 기록은 `jekyll/progress.markdown`, 미결은 `jekyll/open-items.markdown`.
 > 여기에는 그쪽에 적기 애매한 내부 사정만 남긴다.
 
-**최종 갱신**: 2026-08-26 (세션 #10, 첫 스포크 착수 + 브랜치 통합 준비까지)
-**현재**: 1주차 종료 → **2주차 진입**. 8스프린트 중 1/8 (2026-08-20 ~ 2026-10-27)
-**전체 상태**: 🟢 1주차 완료. 2주차 첫 작업(`retrieval` 스포크 청킹)까지 `main` 에 들어갔다.
-골든셋 50건·AI 모델 구성 확정·DB 스키마 도메인 정리·B-0 라우팅 설계가 모두 끝났고,
-**첫 스포크가 실제로 생겼다**(`fastapi/apps/retrieval/`). 남은 코어 스포크(마스킹·컴플라이언스
-·생성·F-2)는 미착수
+**최종 갱신**: 2026-08-26 (세션 #10, `server/`·`ai/` 서브도메인 분리까지)
+**현재**: 1주차 **마감 완료** / 8스프린트 (2026-08-20 ~ 2026-10-27) → 2주차 진행 중
+**전체 상태**: 🟢 1주차 목표 6개 전부 달성. 데모 도메인 4종·팀 4인 체제·골든셋 50건·
+DB 스키마 도메인 정리·B-0 도메인 라우팅 설계·CI 3종·main 브랜치 보호까지 끝났다.
+실제 모듈 구현(검색·마스킹·컴플라이언스·F-2)은 2주차 진행 중.
+
+**백엔드 디렉터리가 바뀌었다 (2026-08-26)** — `fastapi/` 를 둘로 나눴다.
+
+```
+server/   요청이 흐르는 길   계약(포트·DTO)·파이프라인 배선·클린 아키텍처   → server.solidbob.cloud
+ai/       품질을 만들고 재는 쪽   청킹·BM25·리랭크·모델 학습·평가 하네스     → ai.solidbob.cloud
+```
+
+의존 방향은 **ai → server 한쪽뿐**이다(evaluation 이 hub 계약을 import). 역방향은
+`server/.importlinter` 계약 2 가 막는다. 각 디렉터리에 영역 규칙 `CLAUDE.md` 가 있다.
+아래 이전 세션 기록의 `fastapi/` 경로는 **그 시점의 사실**이므로 고치지 않았다.
+
+> ⚠ CI job 이름이 `backend` → `server` + `ai` 로 바뀌었다. **main 룰셋의 필수 통과 검사도
+> 함께 바꿔야 한다** — 안 바꾸면 없는 검사(`backend`)를 기다리며 PR 이 영원히 머지되지 않는다.
+> 룰셋 변경은 `solidbob02` 계정(admin) 몫이다.
 
 ## 2026-08-26 세션 #10 (ai) — 첫 스포크 청킹 + 브랜치 통합 준비
 
@@ -30,15 +44,10 @@
 `ko-sroberta` 의 `max_seq_length=128` — 우리 청크의 15~28% 가 잘린다), 류준이 이를 독립 검증해
 `_project/decisions/010-AI-모델-구성-확정.md` 로 확정했다. 내 세션에서 문서를 쓰지는 않았다.
 
-**브랜치 통합 준비 상태 (다음 세션이 이어받을 것)**:
-- `ai` 브랜치에 고유 커밋 **0건** — 모든 작업이 `main` 에 반영됐다. 지금 `ai` 를 지워도 잃는 게 없다
-- **합친 뒤에 고쳐야 하는 곳 2군데**: `.github/workflows/test.yml:19`
-  (`branches: [main, PM, backend, ai, frontend]`) 와 `CLAUDE.md` §7 브랜치 규칙.
-  **먼저 고치면 안 된다** — `ai` 가 살아 있는 동안 트리거에서 빼면 그 브랜치 푸시에 테스트가 안 돈다
-- `main` 에 **브랜치 보호 설정이 없다**(API 404). `pages.yml` 은 `main` push 시 즉시 공개 배포다.
-  브랜치를 없애고 `main` 직접 커밋으로 가려면 보호 설정을 먼저 켜야 한다 — 지금은 PR·CI 가 유일한 게이트다
-- 네 브랜치가 **같은 파일 영역을 만지고 있다**(`jekyll/_backlogs`, `fastapi/apps/hub/app/*`).
-  브랜치가 격리를 제공하지 못하는 상태라 통합 논의의 근거가 된다
+**브랜치 통합 준비 (→ 통합하지 않기로 결정됨, 2026-08-26)**: 당시 `ai` 브랜치에 고유
+커밋이 0건이라 지워도 잃을 것이 없는 상태였고 통합을 준비했으나, 팀은 **네 브랜치를 그대로
+유지**하기로 정했다 — 충돌 원인은 브랜치 수가 아니라 같은 티켓 동시 수정이라는 판단.
+근거: `_project/decisions/009-브랜치-정책과-main-보호.md`. `main` 보호 설정은 별도로 적용됐다.
 
 **다음 세션이 확인할 것**: 브랜치 통합 방식 확정(팀 결정 사항, `_project/decisions/` 대상).
 그리고 `w2-naive-rag` 는 ES 인덱스 분할 결정이 나야 착수할 수 있다.
@@ -58,7 +67,7 @@ GitHub에서 `backend`→`main` PR이 충돌났다(사용자가 스크린샷으�
 **실제로 한 일**: `git merge origin/main` 실행 후 충돌 5건(rfp-harness.md, w1-dashboard
 -scaffold.md, w1-db-schema.md, progress.markdown, knowledge-base/README.md) 수동 해결
 + 파일 위치 충돌 2건(domain_routing.py 관련) + modify/delete 충돌 2건(harness.py,
-test_harness.py — main에서 fastapi/evaluation/으로 이미 이동됨). golden-set/v1-10.json과
+test_harness.py — main에서 ai/apps/evaluation/으로 이미 이동됨). golden-set/v1-10.json과
 db/schema.sql 계열은 main이 그 시점 이후 안 건드려서 3-way 병합이 자동으로 내 버전을
 채택함(충돌 없음) — 확인 완료.
 
@@ -68,7 +77,7 @@ async — 컴플라이언스 포트와 동급) 신규 작성, `harness.py`에 `D
 `domain_routing.py` 메트릭 그대로 이식, 테스트 이식(import 경로 수정 + async 가짜 포트
 배선 테스트 추가). `services/core/` 디렉토리 완전 삭제(`__pycache__`만 남아있었음).
 
-**검증**: `cd fastapi && pytest` 45개 전부 통과(main 37개 + 내 도메인 라우팅 8개),
+**검증**: `cd server && pytest` 45개 전부 통과(main 37개 + 내 도메인 라우팅 8개),
 `lint-imports --config .importlinter` 5개 계약 전부 KEPT(내 새 포트가 아키텍처 경계를
 위반하지 않음 확인), 지킬 빌드 + 링크 검사(52페이지, 깨진 링크 0) 통과.
 
@@ -186,7 +195,7 @@ policy, 도메인 접두어 ID), `CLAUDE.md`·`rev4-보완지시서.md`(9번 항
    미룸([16절 ERD](/docs/16/)의 경고 박스 참고)
 3. `jekyll/docs/03-아키텍처.markdown`은 이번 세션에서 확인/수정하지 못했다 — 도메인
    라우팅 로직이 들어갈 자리인지 다음 세션에서 점검할 것
-4. `fastapi/apps/evaluation/`의 골든셋 로더·지표 계산이 `domain` 필드를 다루도록 돼 있는지
+4. `ai/apps/evaluation/`의 골든셋 로더·지표 계산이 `domain` 필드를 다루도록 돼 있는지
    미확인 — 코드베이스 자체는 아직 확인 전
 
 ---
@@ -228,7 +237,7 @@ policy, 도메인 접두어 ID), `CLAUDE.md`·`rev4-보완지시서.md`(9번 항
 3. **AI Hub 데이터 신청** — `open-items.markdown` 기준 아직 미완료. 팀원 한 명이 진행 중이라고 들었으므로 현황 확인 필요.
 4. **인터페이스 스키마 3종 확정** — 초안은 기획서 7.3절. 팀 컨펌 대기.
 5. **평가 하네스 CI 연결** — 하네스 골격은 류준이 완료(테스트 24개 통과). CI는 정성윤 담당. `.github/workflows/test.yml`은 2026-08-26에 `fastapi/` 기준(working-directory, Python 3.13, import-linter step, `ai` 브랜치 추가)으로 갱신됨.
-6. **백엔드 루트 `fastapi/` + 허브-스포크 (2026-08-26, `ai` 브랜치)** — `services/core/eval`→`fastapi/evaluation`, `hub/`에 `transcript_ingest`·`myself` 슬라이스(프랙탈 단면), 계약 5종 `fastapi/.importlinter` 통과, 테스트 37개. `backend` 브랜치의 stash는 `ai`에 복원 후 삭제. 스포크 0개 — `POST /hub/transcripts`는 masking 스포크가 꽂히기 전까지 501.
+6. **백엔드 루트 `fastapi/` + 허브-스포크 (2026-08-26, `ai` 브랜치)** — `services/core/eval`→`fastapi/evaluation`, `hub/`에 `transcript_ingest`·`myself` 슬라이스(프랙탈 단면), 계약 5종 `server/.importlinter` 통과, 테스트 37개. `backend` 브랜치의 stash는 `ai`에 복원 후 삭제. 스포크 0개 — `POST /hub/transcripts`는 masking 스포크가 꽂히기 전까지 501.
 7. **첫 스포크 착수 순서** — `masking`(정성윤, P1~P5) → `retrieval`(류준·장민석, B-1 트리거 is_final 기반 + B-2 + **도메인 라우팅**). 각 스포크는 `docs/architecture.md §3` 단면대로, `apps/hub/app/ports/output/<이름>_port.py` 구현, `main.py` `dependency_overrides`와 `evaluation.harness.Ports(...)` 양쪽에 꽂고 `.importlinter` 다섯 목록에 이름 추가.
 8. **도메인 4종이 백엔드에 미친 것** — `ClosureType`은 `str`(도메인별 처리유형), `docs/domain.md` 재작성 완료. 아직 안 된 것: 7.3절 계약에 `domain` 필드(v3), `golden_set.py` 로더 `domain` 필드, 도메인 라우팅 설계, `closure` DDL. F-2 규칙(verdict/missing ↔ evidence)은 `closure_gate/domain/services` 몫.
 
