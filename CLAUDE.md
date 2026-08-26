@@ -16,7 +16,8 @@
 ```
 
 이 4개를 읽기 전에 코드를 건드리지 않는다. 사용자가 다른 지시를 하면 그것이 우선하고, 대신 위 문서를 그에 맞게 고친다.
-코드(`fastapi/`·`services/gateway/`·`apps/`)를 건드릴 때는 `docs/harness.md`(검증 장치)·`docs/architecture.md`(계층·슬라이스 규칙)를 추가로 먼저 읽는다.
+코드를 건드릴 때는 `docs/harness.md`(검증 장치)·`docs/architecture.md`(계층·슬라이스 규칙)를 추가로 먼저 읽고,
+**그 디렉터리의 `CLAUDE.md` 를 함께 읽는다** — `server/CLAUDE.md`(요청이 흐르는 길) · `ai/CLAUDE.md`(품질을 만들고 재는 쪽).
 
 ---
 
@@ -124,10 +125,18 @@ db/                      schema.sql(DDL) · ERD.md · erd.dot · generate_schema
 knowledge-base/          도메인별(finance/dasan/shopping/health) terms / manual / policy
 golden-set/              골든셋 (v1-10.json …)
 docs/                    구조 하네스(harness.md) · 아키텍처(architecture.md) · 도메인(domain.md) · 기획서 rev.4.1 사본. 공개, 지킬 밖
-fastapi/                 FastAPI 코어(백엔드, Python 3.13). main.py(합성 루트) · core/config.py · apps/(앱 컨테이너 — hub/: 7.3절 계약 DTO+포트, 슬라이스 transcript_ingest·myself / evaluation/: 평가 하네스 / 이후 스포크) · .importlinter · requirements.txt · pytest.ini. 테스트는 앱 안 tests/
-                         실행: cd fastapi && uvicorn main:app --reload --env-file ../.env / 검증: cd fastapi && pytest && PYTHONPATH=apps lint-imports
+server/                  요청이 흐르는 길 (Python 3.13). 계약(포트·DTO)·파이프라인 배선·클린 아키텍처.
+                         main.py(합성 루트) · core/config.py · apps/hub/(7.3절 계약 DTO+포트, 슬라이스 transcript_ingest·myself)
+                         · .importlinter(계약 4종) · requirements.txt · pytest.ini · CLAUDE.md(영역 규칙). 배포: server.solidbob.cloud
+                         실행: cd server && uvicorn main:app --reload --env-file ../.env
+                         검증: cd server && pytest && PYTHONPATH=apps lint-imports --config .importlinter
+ai/                      품질을 만들고 재는 쪽 (Python 3.13). 청킹·BM25·리랭크·임베딩·모델 학습·랭그래프.
+                         apps/retrieval/(검색) · apps/evaluation/(평가 하네스) · .importlinter(계약 3종)
+                         · requirements.txt · pytest.ini · CLAUDE.md(영역 규칙). 배포: ai.solidbob.cloud
+                         검증: cd ai && pytest && PYTHONPATH=apps:../server/apps lint-imports --config .importlinter
+                         의존 방향은 ai → server 한쪽뿐이다 (evaluation 이 hub 계약을 import). 역방향은 계약이 막는다
 scripts/ data/           유틸리티 / 데이터 (원본은 .gitignore)
-.github/workflows/       Pages 배포 워크플로
+.github/workflows/       Pages 배포(pages.yml) · CI(test.yml — server · ai · jekyll job) · branch-protection.json
 jekyll/                  지킬 사이트 루트 — 지킬 명령은 전부 이 안에서 실행
   index.markdown         표지 (layout: cover)
   toc.markdown           목차
@@ -219,7 +228,7 @@ paths:                    # (선택) 이 티켓 소관 파일. 세션 종료 검
 
 ## 5. 수치를 다루는 규칙
 
-성능 수치는 **평가 하네스(`fastapi/apps/evaluation/`)가 낸 값만** 쓴다. 손으로 적은 숫자를 문서에 넣지 않는다.
+성능 수치는 **평가 하네스(`ai/apps/evaluation/`)가 낸 값만** 쓴다. 손으로 적은 숫자를 문서에 넣지 않는다.
 값 하나에는 언제·어느 커밋으로·어떤 명령으로·표본 몇 건인지가 함께 남아야 한다(`db` 스키마의 `eval_run`/`eval_result`).
 넷 중 하나라도 채울 수 없으면 그 숫자는 아직 기록할 준비가 되지 않은 것이다.
 
