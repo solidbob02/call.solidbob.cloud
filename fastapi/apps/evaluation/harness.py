@@ -2,7 +2,7 @@
 """평가 하네스 골격 — [팀 분업 7.2절] 1주차엔 류준이 설계만 하고 이후 운영은 정성윤이
 맡는다. 이 파일이 그 "설계"에 해당한다.
 
-스포크(검색·트리거·컴플라이언스·마스킹·F-2)의 접점은 **hub 아웃바운드 포트 하나뿐**이다
+스포크(도메인 라우팅·검색·트리거·컴플라이언스·마스킹·F-2)의 접점은 **hub 아웃바운드 포트 하나뿐**이다
 (apps/hub/app/ports/output/ — 2026-08-26 계약 이중화 해소). 스포크가 구현한 포트 객체를 `Ports(...)`에
 꽂으면 골든셋으로 채점한다. 아직 구현이 없는 포트는 `None`으로 둬 "측정 불가 — 미구현"으로
 정직하게 보고한다(목표 수치를 지어내지 않는다 — 6.2절 원칙 5).
@@ -21,6 +21,7 @@ from typing import Awaitable, TypeVar
 from hub.app.dtos.transcript_dto import TranscriptEvent
 from hub.app.ports.output.closure_gate_port import ClosureGatePort
 from hub.app.ports.output.compliance_port import CompliancePort
+from hub.app.ports.output.domain_routing_port import DomainRoutingPort
 from hub.app.ports.output.masking_port import MaskingPort
 from hub.app.ports.output.retrieval_port import RetrievalPort
 from hub.app.ports.output.trigger_port import TriggerPort
@@ -28,6 +29,7 @@ from hub.app.ports.output.trigger_port import TriggerPort
 from .golden_set import GoldenItem, load_golden_set
 from .metrics import closure_gate as closure_gate_metrics
 from .metrics import compliance as compliance_metrics
+from .metrics import domain_routing as domain_routing_metrics
 from .metrics import latency as latency_metrics
 from .metrics import masking as masking_metrics
 from .metrics import retrieval as retrieval_metrics
@@ -44,6 +46,7 @@ def _run(coro: Awaitable[T]) -> T:
 class Ports:
     """구현되지 않은 스포크는 None으로 둔다 — 해당 지표는 리포트에서 "미구현"으로 표시된다."""
 
+    domain_routing: DomainRoutingPort | None = None
     retrieval: RetrievalPort | None = None
     trigger: TriggerPort | None = None
     compliance: CompliancePort | None = None
@@ -68,6 +71,22 @@ def _event_from_item(item: GoldenItem) -> TranscriptEvent:
 
 def run_eval(items: list[GoldenItem], ports: Ports) -> dict:
     report: dict = {}
+
+    # B-0: 도메인 라우팅 (자동 분류) — 정답 도메인이 있고 분류할 발화 텍스트가 있는 항목만 채점
+    domain_items = [
+        it for it in items if it.domain is not None and (it.customer_utterance or it.agent_utterance)
+    ]
+    if ports.domain_routing is None:
+        report["domain_routing"] = NOT_IMPLEMENTED
+    else:
+        expected_domains = [it.domain for it in domain_items]
+        predicted_domains = [
+            _run(ports.domain_routing.classify(it.customer_utterance or it.agent_utterance or "")).domain
+            for it in domain_items
+        ]
+        report["domain_routing"] = domain_routing_metrics.score_domain_routing(
+            expected_domains, predicted_domains
+        )
 
     # B: 검색 (Recall@5, MRR)
     b_items = [it for it in items if it.module == "B"]

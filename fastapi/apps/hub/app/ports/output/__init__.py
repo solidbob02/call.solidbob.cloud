@@ -5,13 +5,14 @@ dependencies/ 에서 결합한다. **이 포트들이 유일한 계약이다** �
 
 호출자:
 - MaskingPort ← hub.app.use_cases.transcript_ingest_interactor, evaluation.harness
-- TriggerPort · RetrievalPort · GenerationPort · CompliancePort · ClosureGatePort ← evaluation.harness
+- TriggerPort · RetrievalPort · DomainRoutingPort · GenerationPort · CompliancePort · ClosureGatePort ← evaluation.harness
   (파이프라인 슬라이스가 생기면 그 인터랙터도 호출자가 된다)
 - *RecordPort ← 각 슬라이스 인터랙터
 """
 
 from .closure_gate_port import ClosureGatePort
 from .compliance_port import CompliancePort
+from .domain_routing_port import DomainRoutingPort
 from .generation_port import GenerationPort
 from .masking_port import MaskingPort
 from .myself_record_port import MyselfRecordPort
@@ -22,6 +23,7 @@ from .trigger_port import TriggerPort
 __all__ = [
     "ClosureGatePort",
     "CompliancePort",
+    "DomainRoutingPort",
     "GenerationPort",
     "MaskingPort",
     "MyselfRecordPort",

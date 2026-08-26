@@ -6,15 +6,35 @@
 
 from evaluation.golden_set import load_golden_set
 from evaluation.harness import Ports, run_eval
-from hub.app.dtos import ClosureVerdict, MaskedSpan, TranscriptEvent, TriggerDecision
-from hub.app.ports.output import ClosureGatePort, MaskingPort, TriggerPort
+from hub.app.dtos import ClosureVerdict, DomainClassification, MaskedSpan, TranscriptEvent, TriggerDecision
+from hub.app.ports.output import ClosureGatePort, DomainRoutingPort, MaskingPort, TriggerPort
 
 
 def test_all_ports_none_reports_not_implemented():
     items = load_golden_set()
     report = run_eval(items, Ports())
-    for section in ("retrieval", "trigger", "compliance", "masking", "closure_gate"):
+    for section in ("domain_routing", "retrieval", "trigger", "compliance", "masking", "closure_gate"):
         assert report[section] == "측정 불가 — 모듈 미구현"
+
+
+class _EchoDomainRouting(DomainRoutingPort):
+    """발화 안에 도메인 이름이 그대로 있으면 정답을 맞히는 가짜 포트 — 배선만 검증한다."""
+
+    async def classify(self, utterance: str) -> DomainClassification:
+        for domain in ("finance", "dasan", "shopping", "health"):
+            if domain in utterance:
+                return DomainClassification(domain=domain, confidence=1.0)
+        return DomainClassification(domain="finance", confidence=0.0)  # 못 찾으면 임의 기본값
+
+
+def test_domain_routing_wiring_with_fake_port():
+    items = load_golden_set()
+    report = run_eval(items, Ports(domain_routing=_EchoDomainRouting()))
+    result = report["domain_routing"]
+    # 골든셋 10건 전부 domain 필드는 있지만, F-2 케이스(GS-008~010)는 발화 텍스트가
+    # 없고 closure_intent만 있어 분류 대상에서 빠진다 — 텍스트가 있는 7건만 채점된다.
+    assert result["n"] == 7
+    assert 0.0 <= result["accuracy"] <= 1.0
 
 
 class _PerfectClosureGate(ClosureGatePort):

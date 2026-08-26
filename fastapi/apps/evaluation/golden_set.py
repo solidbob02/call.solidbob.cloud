@@ -44,6 +44,7 @@ class F2Case:
 class GoldenItem:
     id: str
     module: str
+    domain: str | None = None  # "finance" | "dasan" | "shopping" | "health"
     customer_utterance: str | None = None
     agent_utterance: str | None = None
     utterance_end_ms: int | None = None
@@ -66,6 +67,7 @@ def load_golden_set(path: Path | str = DEFAULT_GOLDEN_SET_PATH) -> list[GoldenIt
             GoldenItem(
                 id=entry["id"],
                 module=entry["module"],
+                domain=entry.get("domain"),
                 customer_utterance=entry.get("customer_utterance"),
                 agent_utterance=entry.get("agent_utterance"),
                 utterance_end_ms=entry.get("utterance_end_ms"),
