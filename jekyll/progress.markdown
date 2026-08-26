@@ -4,6 +4,15 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-26 (19)
+- **`main` 병합 — `server/`·`ai/` 분리를 `backend` 브랜치로 받았다.** 충돌 2건은 번호 충돌이었다: `progress.markdown` 은 양쪽이 `(15)` 를 써서 장민석 님 항목을 `(18)` 로 옮겼고(**내용은 그대로** — 절대 원칙 8), `_project/STATE.md` 는 "현재 상태" 문서라 최신판(main)을 정본으로 두고 장민석 님 세션 #10 기록은 그 아래에 보존했다. 그 안의 "브랜치 통합 준비" 안내만 결정이 뒤집힌 사실(`decisions/011`)을 덧붙였다 — STATE 는 다음 세션이 그대로 따라가는 문서라 낡은 안내를 남기면 잘못 이어받는다
+- **결정 기록 번호 충돌을 고쳤다 — `009` 가 둘이었다.** `009-생성모델-EXAONE-Ollama-확정.md`(내가 오전에 작성)와 `009-브랜치-정책과-main-보호.md`(정성윤, 오후)가 같은 번호였고, **`decisions/009` 로만 참조한 곳이 5군데**라 어느 문서인지 모호했다. §4 "나중에 시작한 쪽이 물러난다"에 따라 나중 것을 **`011`** 로 옮기고 참조 3곳(`CLAUDE.md`·`STATE.md`·이 로그)과 문서 자체 제목을 고쳤다. 진행 기록은 경로만 고치고 문장은 건드리지 않았다
+- **담당 분리 확정 — 류준 `ai/` · 장민석 `server/`**(`_project/decisions/012`). `decisions/005` 의 "기능별 분할 없음"을 갱신한다. 나누지 않기로 했던 이유가 "경계가 없어서"였는데, `fastapi/` 분리로 디렉터리·의존 방향(`ai → server` 한쪽)·`.importlinter` 계약·영역별 `CLAUDE.md` 가 이미 경계를 정의하고 있다
+- **⚠ 브랜치 이름과 디렉터리 이름이 엇갈린다** — 류준은 브랜치 `backend` 에서 `ai/` 를, 장민석은 브랜치 `ai` 에서 `server/` 를 고치게 된다. 브랜치는 넷을 유지하기로 해(`decisions/011`) 지금은 이름만 어긋난 상태다. **바꾸지 않고 남겨 뒀다** — 브랜치명을 바꾸면 `test.yml` 트리거와 **main 룰셋의 필수 통과 검사 이름**까지 함께 고쳐야 하고, 어긋나면 PR 이 없는 검사를 기다리며 영원히 머지되지 않는다(룰셋은 `solidbob02` admin 몫). 팀 확인 대상
+- **미결 정리** — "브랜치 구조 통합 여부"를 결정됨으로 닫았다(통합하지 않음 + main 보호 적용 완료)
+- **로컬 잔재 정리** — `fastapi/hub`·`fastapi/evaluation` 이 `.pyc` 캐시만 남은 채 떠 있었다(`fastapi/apps/` 재배치 때 git 은 추적 파일만 옮기고 gitignore 된 `__pycache__` 는 옛 경로에 버려진다). 저장소 전체를 `git clean -Xd --dry-run` 으로 훑어 캐시·빌드 산출물만 지웠다 — `.env`·`models/`·`data/raw/`·`logs/`·`.venv/` 는 gitignore 대상이지만 **"커밋하면 안 되는 것"이지 "지워도 되는 것"이 아니라** 그대로 뒀다
+- 남은 것: ES 인덱스 분할 여부(2주차 진행을 막고 있다 — 이제 `ai/` 담당이라 내 쪽 결정). 브랜치명 정리 여부는 팀 확인
+
 ### 2026-08-26 (18)
 - **브랜치 통합 준비 — `ai` 쪽 정리**. PR #22 머지로 `ai` 브랜치에 고유 커밋이 0건이 됐다(청킹·골든셋 50건·문서 정합성 전부 `main` 반영 확인). **지금 `ai` 를 정리해도 잃는 것이 없다**
 - **합친 뒤에 고쳐야 할 곳 2군데를 찾아 기록** — `.github/workflows/test.yml:19`(`branches: [main, PM, backend, ai, frontend]`)와 [7절 브랜치 규칙](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md). **먼저 고치면 안 된다** — `ai` 가 살아 있는 동안 트리거에서 빼면 그 브랜치 푸시에 CI 가 돌지 않는다
@@ -26,7 +35,7 @@ permalink: /progress/
 - **남은 것 — 머지 전에 두 가지가 필요하다.** ① **CI job 이름이 `backend` → `server`+`ai` 로 바뀌어 main 룰셋의 필수 통과 검사도 함께 바꿔야 한다**(`[backend, jekyll]` → `[server, ai, jekyll]`). 안 바꾸면 없는 검사를 기다리며 PR 이 영원히 머지되지 않는다 — 어제 주석으로 경고해 둔 함정에 오늘 우리가 걸린다. 룰셋 변경은 `solidbob02` 계정(admin) 몫이다 ② **`backend`·`ai` 브랜치의 미머지 작업과 전면 충돌한다.** `fastapi/` 전체가 움직였으므로 류준·장민석 님과 합의가 필요하다
 
 ### 2026-08-26 (16)
-- **브랜치 정책 확정 — 넷을 유지하고 합치지 않는다.** `ai` 를 `backend` 에 합치자는 안이 나왔으나 채택하지 않았다. **브랜치를 합쳐도 충돌은 줄지 않는다** — PR #22 의 충돌 3건(`w2-domain-routing`·`w2-db-schema-domain`·`progress.markdown`)은 브랜치 수가 아니라 **같은 티켓을 두 사람이 같은 시각에 다른 값으로 고친 것**이 원인이고, 합친 브랜치 안에서도 똑같이 일어난다. 실제 해결책은 [§4 티켓 선점 규칙](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md)("먼저 손댄 쪽이 산다")을 지키는 쪽이다. `CLAUDE.md` §7 을 브랜치 절과 main 절로 나눠 다시 썼다. 근거: `_project/decisions/009-브랜치-정책과-main-보호.md`
+- **브랜치 정책 확정 — 넷을 유지하고 합치지 않는다.** `ai` 를 `backend` 에 합치자는 안이 나왔으나 채택하지 않았다. **브랜치를 합쳐도 충돌은 줄지 않는다** — PR #22 의 충돌 3건(`w2-domain-routing`·`w2-db-schema-domain`·`progress.markdown`)은 브랜치 수가 아니라 **같은 티켓을 두 사람이 같은 시각에 다른 값으로 고친 것**이 원인이고, 합친 브랜치 안에서도 똑같이 일어난다. 실제 해결책은 [§4 티켓 선점 규칙](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md)("먼저 손댄 쪽이 산다")을 지키는 쪽이다. `CLAUDE.md` §7 을 브랜치 절과 main 절로 나눠 다시 썼다. 근거: `_project/decisions/011-브랜치-정책과-main-보호.md` *(작성 당시 009 였으나 번호가 겹쳐 011 로 옮겼다 — 아래 (18) 참고. 경로만 고쳤고 내용은 그대로다)*
 - **main 에 보호 설정이 하나도 없다는 것을 확인했다** — `branches/main/protection` → **404**. `pages.yml` 이 main push 에 즉시 배포하므로, 누구든 실수로 main 에 직접 push 하면 **테스트 결과와 무관하게 이미 배포된 뒤**가 된다. CI 를 아무리 잘 만들어도 "배포 후에 빨간불을 보는" 구조였다. 설정 값을 `.github/branch-protection.json` 에 준비했다 — PR 필수(승인 1), 필수 통과 검사 `backend`·`jekyll`, force push·브랜치 삭제 금지
 - **보호 설정 적용 완료** — 내 계정(`SeongYuna`)은 push 권한만 있고 `admin` 이 없어(`permissions.admin=false`) API 로 켤 수 없었다(PUT → 404. GitHub 은 권한 부족을 404 로 돌려준다). 소유자 `solidbob02` 계정이 **클래식 보호 대신 룰셋**으로 적용했다 — `enforcement: active`, 대상 `~DEFAULT_BRANCH`, 규칙 4종(`deletion`·`non_fast_forward`·`pull_request` 승인 1·`required_status_checks [backend, jekyll]` strict), 우회 허용 대상 없음. **중간에 한 번 헛돌았다** — 룰셋은 생성 직후 기본이 `enforcement: disabled` 이고 대상 브랜치도 비어 있어서, 규칙을 다 채웠는데도 아무것도 막지 않는 상태였다. `branches/main` 의 `protected: false` 로 알아냈다. 확인은 `rules/branches/main`(지금 적용 중인 규칙)으로 했다 — `branches/main/protection` 은 admin 없이는 404 라 못 쓴다. **이로써 "테스트가 빨간불이어도 main 에 들어가면 그대로 배포"되던 구멍이 막혔다**
 - **워크플로에 안전장치 주석** — `test.yml` 의 job 이름 `backend`·`jekyll` 은 보호 설정의 **필수 통과 검사 이름**이 된다. 이름을 바꾸면 보호 설정이 존재하지 않는 검사를 기다리며 **조용히 무력화**되므로 그 사실을 job 정의 바로 위에 박아 뒀다. `pages.yml` 에는 "보호 설정 이후 이 push 는 PR 머지로만 발생한다"를 적었다. 트리거 목록 자체는 브랜치를 합치지 않기로 해서 바꿀 것이 없었다(`main, PM, backend, ai, frontend` + main 대상 PR)
