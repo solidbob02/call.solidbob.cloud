@@ -14,7 +14,7 @@ name: CI — 하네스 테스트 · 사이트 빌드
 
 on:
   push:
-    branches: [main, PM, backend, frontend, flutter]
+    branches: [main, PM, backend, ai, frontend]
   pull_request:
     branches: [main]
   workflow_dispatch:

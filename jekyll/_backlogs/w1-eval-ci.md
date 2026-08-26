@@ -14,7 +14,7 @@ date: 2026-08-25
 
 ## 1단계 — 테스트 자동 실행 (2026-08-26)
 
-`.github/workflows/test.yml` 추가. `main`·`PM`·`backend`·`frontend`·`flutter` 푸시와
+`.github/workflows/test.yml` 추가. `main`·`PM`·`backend`·`ai`·`frontend` 푸시와
 `main` 대상 PR 에서 실행된다.
 
 **범위를 좁게 잡은 이유**
