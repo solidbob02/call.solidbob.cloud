@@ -4,6 +4,12 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-26 (16)
+- **브랜치 구조 통합 — 하지 않기로 결정.** 네 브랜치(`PM`/`backend`/`ai`/`frontend`) 체제를 그대로 유지한다. [미결 항목](/open-items/)에 올렸던 검토 건을 닫았고, 검토 중 확인된 사실은 남겼다 — 네 브랜치가 같은 파일 영역을 만져 격리 효과가 크지 않다는 점, `ai`·`backend` 가 둘 다 백엔드·AI 라는 점, 그리고 **`main` 에 브랜치 보호 설정이 없어 `pages.yml` 이 즉시 공개 배포하므로 PR·CI 가 유일한 게이트**라는 점
+- 통합을 안 하기로 한 이상 `.github/workflows/test.yml` 의 브랜치 목록과 [7절 브랜치 규칙](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md)은 **손대지 않는다**
+- **충돌 대응 방향은 브랜치가 아니라 티켓 선점으로** — 오늘 `w2-db-schema-domain`·`w2-domain-routing` 중복은 13분 차이로 났다. 브랜치를 합쳐도 같은 시각에 같은 티켓을 고치면 똑같이 충돌하므로, 착수할 때 `status: in-progress` 로 먼저 선점·푸시하는 쪽으로 간다
+- 남은 것: **ES 인덱스 분할 결정**이 2주차 진행을 막고 있는 유일한 항목 — 청킹은 끝났으나 적재와 `w2-naive-rag` 가 그 뒤다
+
 ### 2026-08-26 (15)
 - **브랜치 통합 준비 — `ai` 쪽 정리**. PR #22 머지로 `ai` 브랜치에 고유 커밋이 0건이 됐다(청킹·골든셋 50건·문서 정합성 전부 `main` 반영 확인). **지금 `ai` 를 정리해도 잃는 것이 없다**
 - **합친 뒤에 고쳐야 할 곳 2군데를 찾아 기록** — `.github/workflows/test.yml:19`(`branches: [main, PM, backend, ai, frontend]`)와 [7절 브랜치 규칙](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md). **먼저 고치면 안 된다** — `ai` 가 살아 있는 동안 트리거에서 빼면 그 브랜치 푸시에 CI 가 돌지 않는다
