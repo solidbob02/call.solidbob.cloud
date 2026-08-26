@@ -10,7 +10,7 @@ depends_on:
   - "w2-baseline"
 paths:
   - ".github/workflows/*"
-  - "fastapi/apps/evaluation/*"
+  - "ai/apps/evaluation/*"
 ---
 
 [w1-eval-ci](/backlog/w1-eval-ci/) 의 2단계. 1단계(회귀 방지)는 1주차에 끝났고, 이 티켓은

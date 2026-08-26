@@ -24,7 +24,7 @@
 | `compliance` | 위반 탐지 + 대체 표현 | C-1~C-4 | 류준·장민석 (공동) |
 | `closure_gate` | 종결 요건 검증 (조건부, 7주차 체크포인트) | F-2 | 류준·장민석 (공동) |
 | `postcall` | 요약·유형 분류·공백 리포트 | D-1~D-4 | 류준·장민석 (공동) |
-| `evaluation` | 평가 하네스 (이미 존재 — `fastapi/apps/evaluation/`) | E-1~E-4 | 설계 류준·장민석 / 운영 정성윤 |
+| `evaluation` | 평가 하네스 (이미 존재 — `ai/apps/evaluation/`) | E-1~E-4 | 설계 류준·장민석 / 운영 정성윤 |
 
 | 방향 | 허용 | 이유 |
 |---|---|---|
@@ -63,7 +63,7 @@
 
 ## 2. 앱 내부 레이어 (헥사고날)
 
-허브·스포크 모두 같은 단면이다. 앱은 전부 `fastapi/apps/<앱>/` 아래에 있고, `apps/`가 PYTHONPATH에 올라가므로 import는 `hub.app…`처럼 **앱 이름부터** 쓴다(`apps.`를 붙이지 않는다 — 레퍼런스 `minseok/apps/`와 동일).
+허브·스포크 모두 같은 단면이다. 앱은 전부 `server/apps/<앱>/` 아래에 있고, `apps/`가 PYTHONPATH에 올라가므로 import는 `hub.app…`처럼 **앱 이름부터** 쓴다(`apps.`를 붙이지 않는다 — 레퍼런스 `minseok/apps/`와 동일).
 
 ```
 apps/<spoke>/
@@ -128,7 +128,7 @@ tests/app/use_cases/test_<이름>_interactor.py    # 스텁 포트로 검증
 3. **유스케이스는 어댑터 스키마가 아니라 `app/dtos`를 받는다.** 스키마 ↔ DTO 변환은 라우터 몫이다.
 4. **아웃바운드 포트는 빈 껍데기 금지.** 인터랙터가 실제로 호출하는 메서드만 정의한다.
 5. **모든 파일 상단에 `# Requirement: <ID>`.** (`rfp-harness.md §1-3`)
-6. 검증 루틴: 라우트 표 전후 diff + `cd fastapi && pytest` + `PYTHONPATH=apps lint-imports`([harness.md §2](harness.md)).
+6. 검증 루틴: 라우트 표 전후 diff + `cd server && pytest` + `PYTHONPATH=apps lint-imports`([harness.md §2](harness.md)).
 
 ### 3.1 자기소개 엔드포인트 `GET <prefix>/myself` (HTTP 표면이 있는 스포크만)
 

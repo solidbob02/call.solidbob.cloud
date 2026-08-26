@@ -72,6 +72,19 @@ permalink: /progress/
 
 ### 2026-08-26 (4)
 - **React 대시보드 스캐폴딩 (`apps/dashboard`) — `frontend` 브랜치** — Vite + React 18 + TypeScript strict. 게이트웨이 클라이언트는 real/mock 동일 인터페이스, `.env`의 `VITE_GATEWAY_WS_URL` 유무로 전환. mock은 [7.3절](/docs/07/) v2 예시값(프로모션 할인 카드, 해지 종결 `blocked`)만 재생. 3분할(자막·추천 카드·마스킹 로그) + F-2 종결 모달. 상태관리 zustand는 팀 미정이라 컨펌 필요. 티켓 [`w1-dashboard-scaffold-seohee`](/backlog/w1-dashboard-scaffold-seohee/) (`w1-dashboard-scaffold` 장민석 티켓 대체). 검증: `typecheck`·`build` 통과, mock 시나리오 화면 확인
+
+### 2026-08-26 (17)
+- **백엔드를 서브도메인 둘로 나눴다 — `fastapi/` → `server/` + `ai/`.** DNS 에 `server.solidbob.cloud`·`ai.solidbob.cloud` 가 잡혀 있어 코드 배치도 그에 맞췄다. **`server/` 는 요청이 흐르는 길**(계약 포트·DTO, 파이프라인 배선, 클린 아키텍처), **`ai/` 는 품질을 만들고 재는 쪽**(청킹·BM25·리랭크·임베딩·모델 학습·랭그래프·평가 하네스). `git mv` 로 옮겨 히스토리는 보존됐다(server 63파일 / ai 39파일)
+- **경계는 짐작이 아니라 의존 방향을 조사해 정했다** — `retrieval`→`hub` 참조 **0건**(완전 독립), `evaluation`→`hub` **9건**(계약만), `hub`→스포크 **0건**. 이미 `hub` 가 포트를 정의하고 스포크가 구현하는 한쪽 방향이라, 그 선을 그대로 서브도메인 경계로 썼다. **의존은 `ai → server` 한쪽뿐**이고 `server/.importlinter` 계약 2 가 역방향을 막는다 — `torch`·`transformers`·`langchain`·`langgraph` 도 금지 목록에 넣었다. 서버 컨테이너에 그것들이 들어오면 방향이 이미 무너진 것이다
+- **C-5 마스킹과 F-2 게이트는 `server/` 에 뒀다** — 지시받은 분류에 없어 판단이 필요했다. **둘 다 규칙 기반 판정이고 요청 경로에서 매번 실행된다.** 모델이 관여하지 않으므로 서버 쪽이다. "판정은 규칙이, 설명만 LLM이 한다"(절대 원칙 9)를 디렉터리 배치로 고정한 셈이다
+- **영역 규칙 `CLAUDE.md` 를 각 루트에 뒀다** — 하는 일/하지 않는 일을 표로 못박고, 헷갈릴 때의 판단 기준("요청 하나를 처리하는 데 반드시 실행되는가?" → server / "품질을 만들거나 재는 코드인가?" → ai)을 넣었다. `ai/CLAUDE.md` 의 절대 규칙에 **"LLM 을 채점자로 쓰지 않는다"** 를 넣고, `.importlinter` 계약 3 이 `evaluation` 에서 모델 라이브러리 import 를 막아 **구조로 고정**했다. `docs/harness.md` 가 "영역 CLAUDE.md 는 규칙이 분화될 때 만든다"고 예고했던 그 시점이 왔다
+- **의존성도 갈랐다** — `server/requirements.txt` 는 런타임(fastapi·uvicorn·pydantic·google-cloud-speech)만, `ai/requirements.txt` 는 모델(torch·transformers 등)만. 섞으면 서버 컨테이너가 torch 때문에 수 GB 커지고 CI 가 쓰지도 않는 것을 설치한다. 아직 안 쓰는 것(elasticsearch·rank-bm25·langchain·langgraph)은 주석으로만 적어 뒀다 — 미리 넣으면 CI 가 설치한다
+- **CI 를 `server`·`ai` 두 job 으로 나눴다.** `ai` job 에 torch 를 설치하지 않는다 — 지금 테스트가 쓰지 않고 매번 수 GB 를 받게 된다. 모델이 실제로 필요한 테스트는 `@pytest.mark.slow`/`integration` 으로 빠진다
+- **검증** — 이 머신에 `pip` 이 없어 pytest 를 못 돌렸다. 대신 정적으로 확인했다: 앱 간 import **78건 전부 새 경로에서 해석됨**, 전 파일 컴파일 문법 오류 0건, `server`→`ai` 참조 0건, 사이트 빌드 52페이지·링크 0건. **실제 테스트는 CI 가 돌린다**
+- **문서 참조 49건 정리** — `CLAUDE.md`·`README.md`·`docs/harness.md`·`.claude/rules/rfp-harness.md`·`_project/STATE.md`·데이터 README 3종·사이트 문서 3종. 진행 로그·스프린트 로그·결정 기록의 `fastapi/` 언급은 **그 시점의 사실이라 고치지 않았다**(절대 원칙 8). 팀원 티켓 3건은 내가 옮겨서 깨진 **경로만** 고쳤고 상태·담당은 건드리지 않았다
+- **남은 것 — 머지 전에 두 가지가 필요하다.** ① **CI job 이름이 `backend` → `server`+`ai` 로 바뀌어 main 룰셋의 필수 통과 검사도 함께 바꿔야 한다**(`[backend, jekyll]` → `[server, ai, jekyll]`). 안 바꾸면 없는 검사를 기다리며 PR 이 영원히 머지되지 않는다 — 어제 주석으로 경고해 둔 함정에 오늘 우리가 걸린다. 룰셋 변경은 `solidbob02` 계정(admin) 몫이다 ② **`backend`·`ai` 브랜치의 미머지 작업과 전면 충돌한다.** `fastapi/` 전체가 움직였으므로 류준·장민석 님과 합의가 필요하다
+
+
 ### 2026-08-26 (16)
 - **브랜치 정책 확정 — 넷을 유지하고 합치지 않는다.** `ai` 를 `backend` 에 합치자는 안이 나왔으나 채택하지 않았다. **브랜치를 합쳐도 충돌은 줄지 않는다** — PR #22 의 충돌 3건(`w2-domain-routing`·`w2-db-schema-domain`·`progress.markdown`)은 브랜치 수가 아니라 **같은 티켓을 두 사람이 같은 시각에 다른 값으로 고친 것**이 원인이고, 합친 브랜치 안에서도 똑같이 일어난다. 실제 해결책은 [§4 티켓 선점 규칙](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md)("먼저 손댄 쪽이 산다")을 지키는 쪽이다. `CLAUDE.md` §7 을 브랜치 절과 main 절로 나눠 다시 썼다. 근거: `_project/decisions/009-브랜치-정책과-main-보호.md`
 - **main 에 보호 설정이 하나도 없다는 것을 확인했다** — `branches/main/protection` → **404**. `pages.yml` 이 main push 에 즉시 배포하므로, 누구든 실수로 main 에 직접 push 하면 **테스트 결과와 무관하게 이미 배포된 뒤**가 된다. CI 를 아무리 잘 만들어도 "배포 후에 빨간불을 보는" 구조였다. 설정 값을 `.github/branch-protection.json` 에 준비했다 — PR 필수(승인 1), 필수 통과 검사 `backend`·`jekyll`, force push·브랜치 삭제 금지

@@ -1,0 +1,83 @@
+# =============================================================================
+# import-linter — CallGuard server/ 아키텍처 하네스 (코드 레벨)
+# =============================================================================
+# server/ 는 "요청이 흐르는 길"이다. 계약(포트·DTO)을 정의하고 파이프라인을 배선한다.
+# 판정·학습·검색 알고리즘은 여기 살지 않는다 — ai/ 가 담당한다.
+#
+# 강제하는 규칙:
+#   (1) 앱 '내부'   — 헥사고날/클린: adapter → app → domain (역방향 금지)
+#   (2) 방향       — server 는 ai 를 import 하지 않는다 (계약을 주는 쪽이 받는 쪽을 몰라야 한다)
+#   (3) 프레임워크 격리 — app·domain 은 웹/DB/검색엔진/모델을 모른다
+#
+# 실행:
+#   cd server && PYTHONPATH=apps lint-imports --config .importlinter
+#
+# (apps/ 를 경로에 올려야 hub 가 최상위 패키지로 보인다. main.py 의 sys.path.insert 와 동일한 맥락.)
+# 스포크를 새로 만들면 root_packages 와 계약 1 의 containers 에 이름을 추가한다.
+# 예정: masking(C-5) · closure_gate(F-2) · postcall(D-4)  — 규칙 기반 판정이라 server 쪽이다.
+# =============================================================================
+
+[importlinter]
+root_packages =
+    hub
+    core
+include_external_packages = True
+
+# -----------------------------------------------------------------------------
+# 계약 1) 클린 아키텍처 — adapter > app > domain
+# -----------------------------------------------------------------------------
+# 상위(adapter)는 하위(app·domain)를 import 할 수 있고, 하위는 상위를 import 할 수 없다.
+# 괄호 = 그 계층이 없는 앱을 허용 (hub 는 지금 domain 이 없다).
+[importlinter:contract:clean-architecture]
+name = 클린 아키텍처 계층 (adapter > app > domain)
+type = layers
+layers =
+    (adapter)
+    (app)
+    (domain)
+containers =
+    hub
+
+# -----------------------------------------------------------------------------
+# 계약 2) 의존 방향 — server 는 ai 를 모른다
+# -----------------------------------------------------------------------------
+# hub 가 포트(추상)를 정의하고 ai 쪽 모듈이 그것을 구현한다. 방향은 ai → server 한쪽뿐이다.
+# server 가 ai 를 import 하는 순간 두 서브도메인이 한 덩어리가 되어 따로 배포할 수 없다.
+# 구체 구현은 실행 시점에 어댑터로 주입한다(hub/dependencies/).
+[importlinter:contract:no-ai-dependency]
+name = 서브도메인 방향 (server → ai import 금지)
+type = forbidden
+source_modules =
+    hub
+    core
+forbidden_modules =
+    evaluation
+    retrieval
+    langchain
+    langgraph
+    torch
+    transformers
+
+# -----------------------------------------------------------------------------
+# 계약 3) 프레임워크 격리 — app·domain 계층은 웹/DB/검색엔진을 모른다
+# -----------------------------------------------------------------------------
+# HTTP(fastapi)·DB(sqlalchemy/pymysql)·검색(elasticsearch)·STT(google)는 adapter 계층의 관심사다.
+# (pydantic 은 app/dtos 에서 실용적으로 허용, domain 에서는 금지 — 계약 4.)
+[importlinter:contract:framework-isolation]
+name = 프레임워크 격리 (app·domain → fastapi/sqlalchemy/elasticsearch import 금지)
+type = forbidden
+source_modules =
+    hub.app
+forbidden_modules =
+    fastapi
+    sqlalchemy
+    pymysql
+    elasticsearch
+    google
+
+# -----------------------------------------------------------------------------
+# 계약 4) 도메인 순수성 — domain 계층은 pydantic 도 모른다 (순수 파이썬)
+# -----------------------------------------------------------------------------
+# C-5 마스킹 규칙·F-2 게이트 판정이 여기 산다. "판정은 규칙이 한다"(절대 원칙 9)를
+# 코드 구조로 고정하는 계약. hub 에 domain 이 생기면 hub.domain 을 여기에 추가한다.
+# 지금은 domain 계층이 없어 비어 있다 — 스포크가 생기는 시점에 채운다.
