@@ -4,6 +4,14 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-27
+- **MySQL 영속성 어댑터 구현**(`w2-mysql-persistence`, in-progress). `adapter/outbound/mysql/` 에 커넥션 팩토리와 `TranscriptIngestRecordPort` 구현체를 만들고, 프로바이더가 **MySQL 설정이 있으면 리포지토리·없으면 로그 어댑터**로 떨어지게 배선했다. `pytest` **34개 통과**(28→34), 계약 3종 KEPT
+- **실제 MySQL 없이 SEC-1 을 검증했다** — 커넥션을 `Protocol` 로 추상화해 가짜를 꽂고, 리포지토리가 쿼리 인자로 무엇을 넘기는지 그대로 들여다봐 **원문이 없음을 테스트로 고정**했다. 그동안 "스키마 리뷰로 검증"한다고만 돼 있던 항목이다
+- **7.3절이 이미 정해둔 규칙을 어댑터가 지킨다** — *"DB에는 `is_final: true`만 저장"*. [V4 실측](/docs/05/)상 20초에 interim 이 199건 오는데, `record()` 는 interim 이면 **커넥션조차 열지 않는다**. 마스킹 구간은 다시 넣기 전에 지운다(같은 segment 재수신 시 이전 구간이 남아 섞인다)
+- `aiomysql==0.3.2` 추가(포트가 `async` 라 async 드라이버). **`.importlinter` 금지 목록에도 넣어** adapter 밖에서 import 하면 실패하게 했다 — 드라이버가 app 계층으로 새는 것을 구조로 막는다
+- **발견 — 계약과 스키마 불일치**: [7.3절](/docs/07/) 예시는 `"segment_id": "seg_0031"` 로 문자열인데 `transcript_segment.segment_id` 는 BIGINT, 요청 스키마도 `int` 다. **코드와 DB 는 서로 맞고 계약 예시만 어긋난다** — 예시를 고칠지 타입을 바꿀지 팀 결정 사항이라 티켓에 적어두고 손대지 않았다
+- 남은 것: 실제 MySQL 에 붙여본 적이 없다. `db/schema.sql` 마이그레이션이 미착수라 붙일 DB 가 없어 integration 테스트는 `skip` 으로 자리만 잡았다. 그 뒤 `w3-transcript-query-api`(조회 API)
+
 ### 2026-08-26 (46)
 - **`POST /hub/search` 구현 — 상담원 수동 검색 폴백**(`w2-search-endpoint` done). [§3 프랙탈 단면](https://github.com/solidbob02/call.solidbob.cloud/blob/main/docs/architecture.md) 그대로 스키마→라우터→DTO→입력포트→인터랙터→프로바이더→테스트 8개 파일. `RetrievalPort` 가 이미 있어 `server/` 는 HTTP 경계만 얹었다 — DB 도 필요 없어 백로그 6건 중 유일하게 지금 완결 가능한 티켓이었다
 - **빈 목록으로 통과시키지 않고 501 을 돌려준다.** 빈 결과는 "관련 문서 없음"(B-6)과 구분되지 않아, 200 으로 통과시키면 **검색이 죽은 것인지 정말 없는 것인지 알 수 없게 된다**([절대 원칙 10](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md) — 측정할 수 없는 상태를 만들지 않는다). `masking_provider` 가 같은 이유로 501 인 것과 같은 판단
