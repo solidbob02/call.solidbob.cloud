@@ -155,6 +155,7 @@ permalink: /<경로>/
 ---
 title: "카카오 로그인 API 연동"
 assignee: "류준"          # 정성윤 | 류준 | 장민석 | 조서희
+                          # 백엔드·AI 공동 작업은 "류준·장민석", 팀 전체는 "공동"
 role: "ai"                # infra | ai | app  (배지 — ai: 류준·장민석, app: 조서희)
 status: "in-progress"     # todo | in-progress | done
 sprint: 1
