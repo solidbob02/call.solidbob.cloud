@@ -4,6 +4,16 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-26 (10)
+- **검수 방식을 "건건이" 대신 "체크포인트에 모아서"로 전환** — 사용자 지시: 아직 검수할 실물(실행되는 서비스, 실측 지표)이 부족하고 4인 전원이 각자 담당을 동시에 진행 중이라, 완료 건마다 즉시 검수를 기다리지 않고 계속 작업하다가 **4주차 말(5주차 오류 내성 실험 착수 직전)에 팀 전체가 모여 한 번에 검증**하기로 확정. 기존 6주차 코어 기준선·7주차 F-2 체크포인트는 유지, 그 사이에 하나 추가. 근거: `_project/decisions/008-검증-체크포인트-방식-전환.md`. [8절 마일스톤](/docs/08/)에 절 추가, [7.4절](/docs/07/) 원칙 추가, `w1-db-schema.md`·`w2-golden-set-50.md`의 완료 조건을 "체크포인트에서 일괄 승인/교차검수"로 재정의
+- 검수 없이 확정된 것처럼 기록하지는 않는다 — 두 티켓 모두 여전히 `in-progress`로 남겨둠
+
+### 2026-08-26 (9)
+- **골든셋 50건 작성** — `golden-set/v1-50.json` 신규(기존 10건 GS-001~010 포함). 도메인 분포: 금융보험 18(F-2 9)·쇼핑 16(F-2 7)·다산콜센터 9·질병관리본부 7 — 균등 대신 F-2 적용 도메인에 더 배정(`w2-golden-set-50.md`가 남긴 질문에 대한 답). 모듈 분포: B 14·C-1 3·C-2 3·C-3 4(신규 모듈 — 필수 안내 누락)·C-5 10(P1~P7 전 패턴)·F-2 16. 모든 문서 ID를 `knowledge-base/`의 실제 `<!-- id: -->` 주석과 대조해 검증(존재하지 않는 ID 0건), `fastapi/apps/evaluation/golden_set.py` 로더로 실제 파싱 확인(코드 변경 없음). `golden-set/README.md` 갱신
+- **낡은 2주차 티켓 2건 정리** — `w2-domain-routing.md`(자동 분류로 이미 확정됨, `_project/decisions/007`)와 `w2-db-schema-domain.md`(DB 스키마 도메인 정리 이미 완료, `_project/decisions/006`)를 `done`으로 정정. 둘 다 "아직 안 정해짐/안 끝남"으로 남아 있어 팀이 헷갈릴 수 있었음
+- 장민석이 `fastapi/apps/` 아키텍처 구조를 작업 중이라, 이번 작업은 의도적으로 `golden-set/`·`jekyll/_backlogs/` 등 fastapi/ 코드와 겹치지 않는 범위로만 진행
+- 남은 것: F-2 케이스(16건) 검수 — 작성자(류준)가 아닌 사람이 확인
+
 ### 2026-08-26 (8)
 - **`backend`·`main`(`ai` 브랜치 경유) 통합** — GitHub에서 `backend`→`main` PR에 충돌이 뜬 걸 확인. 원인: `ai` 브랜치(정성윤·장민석)가 내 이전 푸시 지점(`a0f95d3`, 도메인 4종 전환 직후)에서 갈라져 `fastapi/` 헥사고날 아키텍처를 독립적으로 구축했고, 그 이후의 내 작업(골든셋 재작성·DB 스키마 정리·B-0 도메인 라우팅)을 모른 채였다. 구조(`fastapi/`)는 저쪽이 더 진전됐고 내용(골든셋·DB 스키마·B-0)은 이쪽이 최신이라, **`fastapi/` 구조를 정본으로 채택하고 구 `services/core/eval/`의 작업물을 그 위로 포팅**했다: `domain_routing.py` 메트릭 이식, `hub/app/dtos/domain_classification_dto.py`+`hub/app/ports/output/domain_routing_port.py` 신규(기존 6개 포트와 같은 ABC 패턴), `harness.py`에 `DomainRoutingPort` 배선, 테스트 이식(`test_domain_routing_metrics.py` import 경로 수정, `test_harness.py`에 async 가짜 포트 배선 테스트 추가). golden-set·db/schema.sql은 main이 아직 구 버전이라 자동 병합됨(내 쪽 그대로 유지). `services/core/` 디렉토리 삭제. `.claude/rules/rfp-harness.md`·`jekyll/_backlogs/w1-db-schema.md`·`w1-dashboard-scaffold.md`·`knowledge-base/README.md`의 병렬 편집도 수동 병합
 - 남은 것: `cd fastapi && pytest`·`lint-imports` 재확인 후 커밋·푸시
