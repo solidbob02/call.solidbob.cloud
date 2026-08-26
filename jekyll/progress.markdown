@@ -4,6 +4,12 @@ title: 진행상황
 permalink: /progress/
 ---
 
+### 2026-08-26 (44)
+- **브랜치 `ai` → `server` 로 개명.** 담당 디렉터리 분리(`_project/decisions/012` — 류준 `ai/` · 장민석 `server/`) 직후 [7절](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md)이 "⚠ 브랜치 이름과 엇갈린다 — 장민석은 브랜치 `ai`에서 `server/`를 고친다"고 적어야 했던 상태를 해소한 것이다. 이제 장민석은 브랜치 `server` 에서 `server/` 를 고친다
+- 함께 고친 곳 — `.github/workflows/test.yml` 트리거 목록(`ai` → `server`), `CLAUDE.md` 팀 절·브랜치 절
+- **`.github/branch-protection.json` 은 건드리지 않았다** — 그 안의 `contexts: [server, ai, jekyll]` 는 브랜치 이름이 아니라 **CI job 이름**(디렉터리 기준)이라 개명과 무관하다. 헷갈리기 쉬워 브랜치 절에 주석으로 못박았다
+- 류준 님은 아직 엇갈린 채다 — 브랜치 `backend` 에서 `ai/` 를 고친다. 그쪽 개명 여부는 담당자 판단
+
 ### 2026-08-26 (43)
 - **Jekyll CI 깨진 링크 수정** — `w1-dashboard-scaffold-seohee`가 이미 삭제된 `/backlog/w1-dashboard-scaffold/`를 가리켜 내부 링크 검사가 실패했다. 링크를 텍스트로 바꿨다.
 
