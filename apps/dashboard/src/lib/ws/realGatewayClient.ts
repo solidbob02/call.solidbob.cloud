@@ -364,7 +364,7 @@ function readSpeaker(value: unknown): Speaker | null {
 function readClosureType(value: unknown): ClosureType | null {
   if (
     value === "상품해지" ||
-    value === "사고·보상" ||
+    value === "보상" ||
     value === "반품" ||
     value === "교환"
   ) {

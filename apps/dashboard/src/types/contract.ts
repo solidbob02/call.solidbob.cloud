@@ -31,7 +31,7 @@ export const DEMO_DOMAIN_LABELS: Record<DemoDomain, string> = {
 };
 
 /** §2.7 처리 유형. 다산콜센터·질병관리본부는 F-2 미적용이라 이 값이 오지 않는다. */
-export type ClosureType = "상품해지" | "사고·보상" | "반품" | "교환";
+export type ClosureType = "상품해지" | "보상" | "반품" | "교환";
 
 export interface TranscriptEvent {
   call_id: string;
