@@ -5,6 +5,12 @@ permalink: /progress/
 ---
 
 ### 2026-08-27
+- **조회·수집 API 2건 구현**(`w3-transcript-query-api`·`w4-knowledge-gap-intake` done). MySQL 이 뜨면서 막힘이 풀린 것들이다. `GET /hub/calls/{id}/transcript` · `POST /hub/knowledge-gaps`. `pytest` **114개 통과**(87→114), 계약 3종 KEPT
+- **기록 포트와 조회 포트를 나눴다** — 쓰기는 파이프라인 입구(마스킹 직후), 읽기는 상담원이 화면에서 되돌아볼 때 일어난다. 한 포트에 묶으면 쓰기만 필요한 곳도 조회 구현을 갖게 된다
+- **interim 중복은 조회에서 따로 걸러낼 것이 없었다** — 영속성 계층이 이미 `is_final=true` 만 저장한다([7.3절](/docs/07/)). `total` 은 확정 발화 총수다
+- **N+1 을 피했다** — 마스킹 구간이 별도 테이블이라 세그먼트마다 쿼리하면 N+1 이 된다. 페이지의 `segment_id` 를 모아 한 번에 읽고 메모리에서 붙인다
+- **공백 신고는 걸러내지 않는다** — 중복이든 애매하든 그대로 받는다. 무엇이 공백인지 판단하는 것은 집계 단계(`ai/`) 일이고 입구에서 거르면 그 판단의 재료가 사라진다. 다만 설명이 db `VARCHAR(300)` 을 넘으면 **소리 없이 잘려 신고 내용이 사라지므로** 422 로 막았다
+- 남은 것: `w7-card-feedback` 은 **스키마 변경(팀 승인)** 이 걸려 있어 아직 착수하지 않았다 — `recommendation_card` 에 채택 여부 컬럼이 없다
 - **로컬 MySQL 도커 구성 + 스키마 첫 실제 적용**(`w2-local-mysql` done). `infra/docker-compose.yml` + `README.md` — 팀원 누구나 `cd infra && docker compose up -d` 로 같은 상태를 만든다. 최초 기동 시 `db/schema.sql` 이 자동 적용된다. 조회 API 3건([w3](/backlog/w3-transcript-query-api/)·[w4](/backlog/w4-knowledge-gap-intake/)·[w7](/backlog/w7-card-feedback/))이 전부 여기서 막혀 있었다
 - **⚠ 적용해보니 스키마 결함 2건이 드러났다 — ERD·정규화 검토로는 잡을 수 없던 것들이다**
   - **예약어**: `CALL` 이 MySQL 예약어라 `CREATE TABLE call (` 에서 파싱이 멈추고 **16개 중 2개만 생성**됐다. `recommendation_card.rank` 도 예약어(8.0 윈도우 함수). → 생성기가 식별자를 전부 백틱으로 감싸게 고쳤다

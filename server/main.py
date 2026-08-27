@@ -24,11 +24,13 @@ from fastapi import FastAPI, Request  # noqa: E402
 from core.config import Settings, load_settings  # noqa: E402
 from hub.adapter.inbound.api.v1.closure_router import closure_router  # noqa: E402
 from hub.adapter.inbound.api.v1.compliance_router import compliance_router  # noqa: E402
+from hub.adapter.inbound.api.v1.knowledge_gap_router import knowledge_gap_router  # noqa: E402
 from hub.adapter.inbound.api.v1.myself_router import myself_router  # noqa: E402
 from hub.adapter.inbound.api.v1.postcall_router import postcall_router  # noqa: E402
 from hub.adapter.inbound.api.v1.recommendation_router import recommendation_router  # noqa: E402
 from hub.adapter.inbound.api.v1.search_router import search_router  # noqa: E402
 from hub.adapter.inbound.api.v1.transcript_ingest_router import transcript_ingest_router  # noqa: E402
+from hub.adapter.inbound.api.v1.transcript_query_router import transcript_query_router  # noqa: E402
 
 SPOKES: list[str] = []  # 스포크를 꽂을 때 이름을 추가한다 — /health 가 그대로 보고한다
 
@@ -48,11 +50,13 @@ app = FastAPI(
 
 app.include_router(closure_router)
 app.include_router(compliance_router)
+app.include_router(knowledge_gap_router)
 app.include_router(myself_router)
 app.include_router(postcall_router)
 app.include_router(recommendation_router)
 app.include_router(search_router)
 app.include_router(transcript_ingest_router)
+app.include_router(transcript_query_router)
 
 
 @app.get("/health")
