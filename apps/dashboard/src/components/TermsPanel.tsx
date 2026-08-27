@@ -311,9 +311,7 @@ function ClosureBlock({
           const met = closure.evidence[key] === true;
           return (
             <li key={key} className={met ? "met" : "missing"}>
-              <span className={`evidence-icon-wrap ${met ? "met" : "missing"}`}>
-                {met ? <CheckIcon /> : <CrossIcon />}
-              </span>
+              {met ? <CheckIcon /> : <CrossIcon />}
               <span>{key.replace(/_/g, " ")}</span>
             </li>
           );
@@ -336,7 +334,7 @@ function ProgressRing({
   total: number;
 }): ReactElement {
   const size = 38;
-  const stroke = 3;
+  const stroke = 2.2;
   const radius = (size - stroke) / 2;
   const center = size / 2;
   const circumference = 2 * Math.PI * radius;
@@ -356,7 +354,7 @@ function ProgressRing({
         cy={center}
         r={radius}
         fill="none"
-        stroke="#ecece7"
+        stroke="var(--line)"
         strokeWidth={stroke}
       />
       <circle
@@ -477,15 +475,15 @@ function CheckIcon(): ReactElement {
     <svg
       className="evidence-icon"
       viewBox="0 0 16 16"
-      width="11"
-      height="11"
+      width="14"
+      height="14"
+      fill="none"
       aria-hidden="true"
     >
       <path
         d="M3.4 8.2 6.5 11.1 12.6 4.8"
-        fill="none"
-        stroke="#1F7A43"
-        strokeWidth="1.8"
+        stroke="currentColor"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -498,15 +496,15 @@ function CrossIcon(): ReactElement {
     <svg
       className="evidence-icon"
       viewBox="0 0 16 16"
-      width="11"
-      height="11"
+      width="14"
+      height="14"
+      fill="none"
       aria-hidden="true"
     >
       <path
         d="M4.6 4.6l6.8 6.8M11.4 4.6l-6.8 6.8"
-        fill="none"
-        stroke="#8F2A29"
-        strokeWidth="1.8"
+        stroke="currentColor"
+        strokeWidth="2"
         strokeLinecap="round"
       />
     </svg>
