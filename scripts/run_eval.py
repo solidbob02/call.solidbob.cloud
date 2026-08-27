@@ -31,9 +31,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path[:0] = [str(ROOT / "ai" / "apps"), str(ROOT / "server" / "apps")]
 
+from closure_gate.adapter.outbound.rule_closure_gate_adapter import (  # noqa: E402
+    RuleClosureGateAdapter,
+)
 from evaluation.golden_set import load_golden_set  # noqa: E402
 from evaluation.harness import Ports, run_eval  # noqa: E402
 from evaluation.report import print_report  # noqa: E402
+from masking.adapter.outbound.rule_masking_adapter import RuleMaskingAdapter  # noqa: E402
 from retrieval.adapter.outbound.es_bm25_retriever import EsBm25Retriever  # noqa: E402
 from retrieval.adapter.outbound.es_index import SINGLE_INDEX  # noqa: E402
 
@@ -59,12 +63,21 @@ def _es_client(url: str | None):
 
 
 def build_ports(client, *, index: str) -> Ports:
-    """구현된 스포크만 꽂는다. 나머지는 None — 하네스가 "미구현"으로 보고한다."""
+    """구현된 스포크만 꽂는다. 나머지는 None — 하네스가 "미구현"으로 보고한다.
+
+    `masking`·`closure_gate` 는 `server/apps/` 에 산다. 규칙 기반 판정이라 요청 경로에서
+    매번 실행되기 때문이다(`server/CLAUDE.md` §0). **여기서 꽂는 것이 계약 위반이 아닌 이유**:
+    의존 방향은 `ai → server` 한쪽이고(`server/.importlinter` 계약 2), 이 파일은 두 모듈
+    **밖의 합성 루트**라 어느 쪽 계약에도 걸리지 않는다.
+
+    ⚠ **ES 가 없어도 마스킹·F-2 는 채점된다.** 둘 다 외부 의존이 없는 순수 규칙이라
+    `ELASTICSEARCH_URL` 없이도 숫자가 나온다 — 검색만 "측정 불가"로 남는다.
+    """
     return Ports(
         retrieval=EsBm25Retriever(client, index=index) if client is not None else None,
+        masking=RuleMaskingAdapter(),          # C-5 (server/apps/masking)
+        closure_gate=RuleClosureGateAdapter(),  # F-2 (server/apps/closure_gate)
         # 아직 없는 것: domain_routing(B-0) · trigger(3주차) · compliance(6주차)
-        #             masking(server/apps/masking — 포트 어댑터 배선은 별건)
-        #             closure_gate(F-2, 7주차 조건부)
     )
 
 
