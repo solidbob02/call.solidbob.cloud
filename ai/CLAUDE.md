@@ -52,12 +52,22 @@ ai/
       domain/           청킹 규칙 · 랭킹 산식 — 순수 파이썬
       adapter/outbound/ 지식베이스 로더 · ES 색인(es_index.py) · (예정) 모델 로더
       tests/
+    training/           B-0 도메인 분류기 학습·추론
+      domain/services/  AI Hub 표기 ↔ 도메인 코드 매핑 — 순수
+      adapter/outbound/ 데이터 로더 · KcELECTRA 파인튜닝 · 추론 어댑터
+      tests/
     evaluation/         E-1~E-4 평가 하네스
       golden_set.py     골든셋 로더
       harness.py        hub 포트를 소비해 각 모듈을 채점
       metrics/          retrieval · trigger · masking · compliance · closure_gate · domain_routing · latency
       tests/
+  provider.py           **합성 루트** — server/main.py 가 스포크를 꽂는 지점
+  tests/                합성 루트 전용 (모듈끼리 못 보는 것을 여기서 교차 검증)
 ```
+
+**`provider.py`·`tests/` 가 `apps/` 밖에 있는 이유**: `retrieval`·`training`·`evaluation` 은
+서로를 import 할 수 없다(`.importlinter` 계약 2 — **테스트도 계약 대상이다**). 두 모듈을
+동시에 아는 코드는 계약 밖에 둔다. `server/main.py`·`server/tests/` 와 같은 자리다.
 
 **예정 모듈** — 실제로 만들 때 `.importlinter` 의 `root_packages` 와 계약 1·2 목록에 추가한다.
 
@@ -65,8 +75,9 @@ ai/
 |---|---|---|
 | `generation` | 근거 기반 카드 생성 · 출처 표시 | B-4~B-6 |
 | `compliance` | 컴플라이언스 탐지 분류기 | C-1~C-4 |
-| `training` | 도메인 분류기(B-0) 등 모델 학습 | B-0 |
 | `orchestration` | 랭그래프 파이프라인 | — |
+
+`training` 은 2026-08-27 에 만들어졌다(B-0 분류기).
 
 ---
 
@@ -125,6 +136,9 @@ CI(`.github/workflows/test.yml`)의 `ai` job 이 이 둘을 돌린다.
 원래는 백엔드·AI 를 "둘이 함께"(`decisions/005`) 하기로 했으나, `fastapi/` 가 두
 서브도메인으로 갈리면서 나눌 경계가 실제로 생겨 **디렉터리 경계를 담당 경계로** 삼았다.
 
-**경계에 걸친 것은 혼자 정하지 않는다.** `../server/` 의 포트·DTO 가 바뀌면 여기가 깨지고,
+**계약을 건드리면 양쪽이 함께 깨진다.** `../server/` 의 포트·DTO 가 바뀌면 여기가 깨지고,
 여기서 포트 구현 시그니처를 임의로 바꾸면 `../server/` 의 배선이 깨진다.
-**계약을 건드릴 때는 양쪽을 함께 보고 장민석과 합의한다.**
+그러니 계약을 손대기 전에 `../server/` 를 먼저 grep 해서 **무엇이 깨지는지 확인한다.**
+
+합의를 절차로 요구하지는 않는다(2026-08-27, `_project/decisions/023`). 네 사람이 **같은 공간에서
+일하므로 필요하면 그 자리에서 말로 맞춘다.** 규칙이 할 일은 "무엇이 깨지는지 먼저 보라"까지다.

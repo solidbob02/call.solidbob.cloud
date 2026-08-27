@@ -21,7 +21,7 @@ paths:
 
 `server/.importlinter` 계약 2 가 `hub`·`masking`·`closure_gate`·`core` → `ai` import 를 금지한다.
 
-## 결정 — 같은 프로세스, `main.py` 가 꽂는다 (`_project/decisions/023`)
+## 결정 — 같은 프로세스, `main.py` 가 꽂는다 (`_project/decisions/024`)
 
 **설계가 이미 답을 갖고 있었다.**
 

@@ -22,7 +22,7 @@ def test_health_reports_configured_flags_without_values(monkeypatch):
     assert body["status"] == "ok"
     assert body["postgres_configured"] is True and body["elasticsearch_configured"] is True
     # 규칙 기반 스포크는 언제나 붙는다. 검색은 `elasticsearch` 패키지가 있을 때만 —
-    # 없으면 조용히 501 로 남는 것이 설계다(`_project/decisions/023`).
+    # 없으면 조용히 501 로 남는 것이 설계다(`_project/decisions/024`).
     assert body["spokes"][:2] == ["masking", "closure_gate"]
     dumped = str(body)
     assert "secret-pw" not in dumped and "db.internal" not in dumped and "es.internal" not in dumped
@@ -40,7 +40,7 @@ def test_health_when_nothing_configured(monkeypatch):
 
 @pytest.mark.skipif(not AI_RETRIEVAL_AVAILABLE, reason="elasticsearch 패키지 없음 — 검색 스포크가 안 꽂힌다")
 def test_ES가_설정되면_검색_스포크가_꽂힌다(monkeypatch):
-    """`decisions/023` — 합성 루트가 `ai/` 구현을 요청 경로에 꽂는다."""
+    """`decisions/024` — 합성 루트가 `ai/` 구현을 요청 경로에 꽂는다."""
     monkeypatch.setenv("ELASTICSEARCH_URL", "http://es.internal:9200")
     with TestClient(app) as client:
         assert "retrieval" in client.get("/health").json()["spokes"]
