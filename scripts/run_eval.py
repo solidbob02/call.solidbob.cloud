@@ -101,8 +101,18 @@ def build_domain_router(kind: str, retriever, *, model_dir: Path):
     return SearchDomainRouter(retriever)
 
 
-def build_ports(client, *, index: str, domain_router: str, model_dir: Path) -> Ports:
+def build_ports(
+    client,
+    *,
+    index: str,
+    domain_router: str = "auto",
+    model_dir: Path = DEFAULT_CLASSIFIER_DIR,
+) -> Ports:
     """구현된 스포크만 꽂는다. 나머지는 None — 하네스가 "미구현"으로 보고한다.
+
+    B-0 인자 둘은 CLI 기본값과 같은 값을 기본으로 갖는다. `main()` 은 항상 명시적으로
+    넘기고, 배선만 보는 테스트(`ai/tests/test_eval_wiring.py`)는 `build_ports(None, index=...)`
+    로 부른다 — 둘을 필수로 두면 그 테스트가 시그니처 때문에 깨진다.
 
     `masking`·`closure_gate` 는 `server/apps/` 에 산다. 규칙 기반 판정이라 요청 경로에서
     매번 실행되기 때문이다(`server/CLAUDE.md` §0). **여기서 꽂는 것이 계약 위반이 아닌 이유**:
