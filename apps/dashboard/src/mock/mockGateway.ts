@@ -1,4 +1,11 @@
-import type { DemoDomain, TranscriptEvent } from "../types/contract";
+import type {
+  CallWrapUp,
+  DemoDomain,
+  ManualSearchRequest,
+  RecommendationBatch,
+  RecommendationCard,
+  TranscriptEvent,
+} from "../types/contract";
 import type { GatewayClient, GatewayListener } from "../lib/ws/types";
 import { getScenario } from "./scenarios";
 
@@ -7,6 +14,10 @@ const CLOSURE_AFTER_UTTERANCE_MS = 800;
 /** 발화 사이 간격을 이만큼 줄인다. 실측이 아님. */
 const GAP_SHAVE_MS = 2000;
 const MIN_GAP_MS = 1500;
+/** 수동 검색 응답까지의 지연. 실측이 아니라 로딩 상태를 보여주기 위한 값이다. */
+const MANUAL_SEARCH_MS = 800;
+/** 통화 후 처리 응답까지의 지연. 역시 실측이 아니다. */
+const WRAP_UP_MS = 600;
 
 /**
  * domain 으로 시나리오 하나를 골라 재생한다.
@@ -58,6 +69,44 @@ export class MockGatewayClient implements GatewayClient {
     this.timers = [];
   }
 
+  /**
+   * 검색 엔진이 아직 없어서, 이 시나리오가 가진 카드 중 질의어와 겹치는 것을
+   * 골라 돌려준다. 겹치는 것이 없으면 빈 배열이다 — 아무거나 채워 보내면
+   * 화면이 근거 없는 카드를 그리게 된다(§2.3 B-6).
+   */
+  manualSearch(request: ManualSearchRequest): Promise<RecommendationBatch> {
+    // schedule() 은 disconnect 후 콜백을 버리므로 여기서는 쓰지 않는다.
+    // 버려지면 promise 가 영영 안 풀려 화면이 "검색 중" 에 갇힌다.
+    return new Promise((resolve) => {
+      window.setTimeout(() => {
+        const pool = getScenario(this.domain).cardBatches.flatMap(
+          (batch) => batch.cards,
+        );
+        const matched = bestMatch(pool, request.query);
+        resolve({
+          call_id: request.call_id,
+          // 수동 검색은 트리거가 없다. 지연도 실측이 아니다.
+          trigger_at_ms: 0,
+          cards:
+            matched === null
+              ? []
+              : [{ ...matched, source_type: "manual" as const }],
+          internal_latency_ms: MANUAL_SEARCH_MS,
+          e2e_latency_ms: MANUAL_SEARCH_MS,
+        });
+      }, MANUAL_SEARCH_MS);
+    });
+  }
+
+  /** 요약·분류 모델이 없어 시나리오에 적어둔 문장을 그대로 돌려준다. */
+  wrapUp(callId: string): Promise<CallWrapUp> {
+    return new Promise((resolve) => {
+      window.setTimeout(() => {
+        resolve({ call_id: callId, ...getScenario(this.domain).wrapUp });
+      }, WRAP_UP_MS);
+    });
+  }
+
   private schedule(delayMs: number, fn: () => void): void {
     const id = window.setTimeout(() => {
       if (!this.aborted) {
@@ -66,6 +115,36 @@ export class MockGatewayClient implements GatewayClient {
     }, delayMs);
     this.timers.push(id);
   }
+}
+
+/**
+ * 질의어 토큰이 카드 본문에 몇 개나 들어 있는지로 고른다. 실제 검색이 아니라
+ * 데모용 근사치다 — 리랭킹·임베딩은 `ai/apps/retrieval` 의 몫이다.
+ */
+function bestMatch(
+  pool: RecommendationCard[],
+  query: string,
+): RecommendationCard | null {
+  const tokens = query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((token) => token.length > 0);
+  if (tokens.length === 0) {
+    return null;
+  }
+
+  let best: RecommendationCard | null = null;
+  let bestScore = 0;
+  for (const card of pool) {
+    const haystack =
+      `${card.title} ${card.summary} ${card.source.doc_id} ${card.source.title}`.toLowerCase();
+    const score = tokens.filter((token) => haystack.includes(token)).length;
+    if (score > bestScore) {
+      best = card;
+      bestScore = score;
+    }
+  }
+  return best;
 }
 
 function playbackClock(

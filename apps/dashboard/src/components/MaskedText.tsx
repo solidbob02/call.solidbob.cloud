@@ -1,43 +1,45 @@
 import type { ReactElement } from "react";
 import type { MaskedSpan } from "../types/contract";
-import { sliceByCodepoints } from "../lib/text/codepoints";
+import { buildTextRuns, type CharRange } from "../lib/text/highlight";
 
 interface MaskedTextProps {
   text: string;
   masked: MaskedSpan[];
+  hits?: CharRange[];
+  activeHit?: CharRange | null;
 }
 
-export function MaskedText({ text, masked }: MaskedTextProps): ReactElement {
-  const chars = Array.from(text);
-  if (masked.length === 0) {
+export function MaskedText({
+  text,
+  masked,
+  hits = [],
+  activeHit = null,
+}: MaskedTextProps): ReactElement {
+  if (masked.length === 0 && hits.length === 0) {
     return <span>{text}</span>;
   }
 
-  const ranges = [...masked].sort((a, b) => a.span[0] - b.span[0]);
-  const parts: ReactElement[] = [];
-  let cursor = 0;
+  const runs = buildTextRuns(text, masked, hits, activeHit);
 
-  ranges.forEach((mask, index) => {
-    const start = Math.max(0, mask.span[0]);
-    const end = Math.min(chars.length, mask.span[1]);
-    if (start > cursor) {
-      parts.push(
-        <span key={`t-${index}`}>{sliceByCodepoints(text, cursor, start)}</span>,
-      );
-    }
-    if (end > start) {
-      parts.push(
-        <mark key={`m-${index}`} className="masked-span">
-          {sliceByCodepoints(text, start, end)}
-        </mark>,
-      );
-    }
-    cursor = Math.max(cursor, end);
-  });
-
-  if (cursor < chars.length) {
-    parts.push(<span key="tail">{sliceByCodepoints(text, cursor, chars.length)}</span>);
-  }
-
-  return <>{parts}</>;
+  return (
+    <>
+      {runs.map((run, index) => {
+        if (!run.masked && !run.hit) {
+          return <span key={index}>{run.text}</span>;
+        }
+        const classes = [
+          run.masked ? "masked-span" : "",
+          run.hit ? "search-hit" : "",
+          run.active ? "is-active" : "",
+        ]
+          .filter((name) => name.length > 0)
+          .join(" ");
+        return (
+          <mark key={index} className={classes}>
+            {run.text}
+          </mark>
+        );
+      })}
+    </>
+  );
 }

@@ -6,15 +6,18 @@ import type { DemoDomain } from "../types/contract";
 
 interface AppHeaderProps {
   onReplay: () => void;
+  onEndCall: () => void;
 }
 
-export function AppHeader({ onReplay }: AppHeaderProps): ReactElement {
+export function AppHeader({ onReplay, onEndCall }: AppHeaderProps): ReactElement {
   const mode = useCallStore((state) => state.mode);
   const connected = useCallStore((state) => state.connected);
   const callId = useCallStore((state) => state.callId);
   const error = useCallStore((state) => state.error);
   const demoDomain = useCallStore((state) => state.demoDomain);
   const setDemoDomain = useCallStore((state) => state.setDemoDomain);
+  const phase = useCallStore((state) => state.phase);
+  const hasCall = useCallStore((state) => state.utterances.length > 0);
 
   function onDomainChange(event: ChangeEvent<HTMLSelectElement>): void {
     setDemoDomain(event.target.value as DemoDomain);
@@ -45,13 +48,24 @@ export function AppHeader({ onReplay }: AppHeaderProps): ReactElement {
             </select>
           </label>
         ) : null}
+        {phase === "live" ? (
+          <button
+            type="button"
+            className="btn-outline"
+            onClick={onEndCall}
+            disabled={!hasCall}
+            title={hasCall ? undefined : "아직 통화 내용이 없습니다"}
+          >
+            통화 종료
+          </button>
+        ) : null}
         <span className="call-id">{callId ?? "대기"}</span>
         <span className={`conn-badge ${connected ? "on" : "off"}`}>
           {connected ? <span className="conn-dot" aria-hidden="true" /> : null}
           {connected ? "연결됨" : "끊김"}
         </span>
         {isCoreApiConfigured() ? <span className="status">REST</span> : null}
-        {mode === "mock" ? (
+        {mode === "mock" && phase === "live" ? (
           <button type="button" className="btn-replay" onClick={onReplay}>
             <svg
               className="btn-replay-icon"
