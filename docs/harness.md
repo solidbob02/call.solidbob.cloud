@@ -42,7 +42,7 @@ cd server && PYTHONPATH=apps lint-imports --config .importlinter
 |---|---|---|
 | `clean-architecture` | layers | 허브·전 스포크에서 `adapter > app > domain`. 계층이 없는 앱은 괄호로 허용 |
 | `spoke-independence` | independence | 스포크끼리 직접 import 금지. 파이프라인 배선은 허브 포트 경유 |
-| `framework-isolation` | forbidden | `*.app`·`*.domain` → `fastapi sqlalchemy pymysql elasticsearch transformers torch sentence_transformers google` 금지 |
+| `framework-isolation` | forbidden | `*.app`·`*.domain` → `fastapi sqlalchemy psycopg elasticsearch transformers torch sentence_transformers google` 금지 |
 | `domain-purity` | forbidden | `*.domain` → `pydantic` 금지 (순수 파이썬) |
 | `hub-isolation` | forbidden | `hub` → 스포크 import 금지 |
 

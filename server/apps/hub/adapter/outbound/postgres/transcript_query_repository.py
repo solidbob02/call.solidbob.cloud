@@ -1,5 +1,5 @@
 # Requirement: A-1, SEC-1
-"""TranscriptQueryPort 의 MySQL 구현.
+"""TranscriptQueryPort 의 PostgreSQL 구현.
 
 `segment_id` 오름차순으로 준다 — 발화 순서다. 정렬을 허브로 올리면 인덱스를 못 쓰고
 페이지 경계에서 순서가 어긋난다.
@@ -15,24 +15,24 @@ from hub.app.ports.output.transcript_query_port import TranscriptQueryPort
 from .connection import ConnectionFactory
 
 _LIST = """
-SELECT s.`segment_id`, s.`speaker`, s.`text`, s.`is_final`, s.`utterance_end_ms`
-FROM `transcript_segment` s
-WHERE s.`call_id` = %s
-ORDER BY s.`segment_id`
+SELECT s."segment_id", s."speaker", s."text", s."is_final", s."utterance_end_ms"
+FROM "transcript_segment" s
+WHERE s."call_id" = %s
+ORDER BY s."segment_id"
 LIMIT %s OFFSET %s
 """
 
-_COUNT = "SELECT COUNT(*) FROM `transcript_segment` WHERE `call_id` = %s"
+_COUNT = 'SELECT COUNT(*) FROM "transcript_segment" WHERE "call_id" = %s'
 
 _SPANS = """
-SELECT `segment_id`, `pattern`, `span_start`, `span_end`
-FROM `masking_event`
-WHERE `segment_id` IN ({placeholders})
-ORDER BY `segment_id`, `span_start`
+SELECT "segment_id", "pattern", "span_start", "span_end"
+FROM "masking_event"
+WHERE "segment_id" IN ({placeholders})
+ORDER BY "segment_id", "span_start"
 """
 
 
-class MySqlTranscriptQueryRepository(TranscriptQueryPort):
+class PostgresTranscriptQueryRepository(TranscriptQueryPort):
     def __init__(self, connect: ConnectionFactory) -> None:
         self._connect = connect
 

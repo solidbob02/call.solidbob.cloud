@@ -64,7 +64,7 @@ forbidden_modules =
 # -----------------------------------------------------------------------------
 # 계약 3) 프레임워크 격리 — app·domain 계층은 웹/DB/검색엔진을 모른다
 # -----------------------------------------------------------------------------
-# HTTP(fastapi)·DB(sqlalchemy/pymysql)·검색(elasticsearch)·STT(google)는 adapter 계층의 관심사다.
+# HTTP(fastapi)·DB(sqlalchemy/psycopg)·검색(elasticsearch)·STT(google)는 adapter 계층의 관심사다.
 # (pydantic 은 app/dtos 에서 실용적으로 허용, domain 에서는 금지 — 계약 4.)
 [importlinter:contract:framework-isolation]
 name = 프레임워크 격리 (app·domain → fastapi/sqlalchemy/elasticsearch import 금지)
@@ -75,8 +75,7 @@ source_modules =
 forbidden_modules =
     fastapi
     sqlalchemy
-    pymysql
-    aiomysql
+    psycopg
     elasticsearch
     google
 

@@ -1,5 +1,6 @@
 # Requirement: SEC-1, SEC-2
-# 로컬 개발용 MySQL. 팀원 누구나 같은 명령으로 같은 상태를 만든다.
+# 로컬 개발용 PostgreSQL. 팀원 누구나 같은 명령으로 같은 상태를 만든다.
+# 2026-08-27 MySQL 에서 전환 — `_project/decisions/016-DB-PostgreSQL-전환.md`
 #
 #   cd infra && docker compose up -d      # 최초 기동 시 db/schema.sql 이 자동 적용된다
 #   docker compose ps                     # 상태 확인
@@ -10,35 +11,31 @@
 #    운영은 AWS 쪽 시크릿으로 주입한다.
 
 services:
-  mysql:
-    image: mysql:8.4
-    container_name: callguard-mysql
+  postgres:
+    image: postgres:17
+    container_name: callguard-postgres
     restart: unless-stopped
     # 팀원마다 다른 값을 쓰고 싶으면 infra/.env 를 만든다 (gitignore 대상).
     # 아무것도 없으면 아래 기본값으로 뜬다 — 로컬 전용이라 공유해도 되는 값이다.
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-callguard-root-dev}
-      MYSQL_DATABASE: ${MYSQL_DB_NAME:-callguard}
-      MYSQL_USER: ${MYSQL_USER:-callguard}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-callguard-dev}
+      POSTGRES_DB: ${POSTGRES_DB_NAME:-callguard}
+      POSTGRES_USER: ${POSTGRES_USER:-callguard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-callguard-dev}
+      # 한글이 들어간다. 7.3절이 마스킹 구간을 문자 오프셋으로 정했으므로 DB 도 문자 기준이어야 한다.
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
       TZ: Asia/Seoul
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
-    # 한글 데이터가 들어간다 — utf8mb4 를 명시한다.
-    # span 오프셋을 문자 기준으로 쓰기로 한 것(7.3절)과 짝이 맞아야 한다.
-    command:
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_0900_ai_ci
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - mysql-data:/var/lib/mysql
+      - postgres-data:/var/lib/postgresql/data
       # 최초 기동(빈 볼륨)일 때만 실행된다. 스키마를 고쳤으면 down -v 후 다시 up 한다.
       - ../db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-callguard} -d ${POSTGRES_DB_NAME:-callguard}"]
       interval: 5s
       timeout: 5s
       retries: 20
-      start_period: 30s
+      start_period: 20s
 
 volumes:
-  mysql-data:
+  postgres-data:

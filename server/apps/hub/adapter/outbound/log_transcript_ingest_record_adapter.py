@@ -1,5 +1,5 @@
 # Requirement: SEC-1
-"""임시 로그 구현. 마스킹 후 이벤트만 받으므로 로그에 원문이 실릴 경로가 없다. 3주차에 MySQL 어댑터로 교체."""
+"""임시 로그 구현. 마스킹 후 이벤트만 받으므로 로그에 원문이 실릴 경로가 없다. 3주차에 PostgreSQL 어댑터로 교체."""
 
 from __future__ import annotations
 

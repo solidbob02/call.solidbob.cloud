@@ -69,7 +69,7 @@ source_modules =
 forbidden_modules =
     fastapi
     sqlalchemy
-    pymysql
+    psycopg
     elasticsearch
     torch
     transformers

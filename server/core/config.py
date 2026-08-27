@@ -26,12 +26,12 @@ def _env_int(name: str, default: int | None = None) -> int | None:
 
 @dataclass(frozen=True)
 class Settings:
-    # --- MySQL (call · transcript_segment · recommendation · closure · eval_result …) ---
-    mysql_host: str | None
-    mysql_port: int
-    mysql_db_name: str | None
-    mysql_user: str | None
-    mysql_password: str | None
+    # --- PostgreSQL (call · transcript_segment · recommendation · closure · eval_result …) ---
+    postgres_host: str | None
+    postgres_port: int
+    postgres_db_name: str | None
+    postgres_user: str | None
+    postgres_password: str | None
     database_url: str | None
 
     # --- Elasticsearch (B-2 하이브리드 검색) ---
@@ -42,9 +42,9 @@ class Settings:
     huggingface_token: str | None
 
     @property
-    def mysql_configured(self) -> bool:
+    def postgres_configured(self) -> bool:
         return bool(self.database_url) or all(
-            (self.mysql_host, self.mysql_db_name, self.mysql_user, self.mysql_password)
+            (self.postgres_host, self.postgres_db_name, self.postgres_user, self.postgres_password)
         )
 
     @property
@@ -56,11 +56,11 @@ def load_settings() -> Settings:
     """호출 시점의 환경을 읽는다. 앱 기동 시 한 번 부르고 DI 로 넘긴다 — 모듈 전역에 캐시하지 않는다
     (테스트에서 환경을 바꿔가며 부를 수 있어야 한다)."""
     return Settings(
-        mysql_host=_env("MYSQL_HOST"),
-        mysql_port=_env_int("MYSQL_PORT", 3306) or 3306,
-        mysql_db_name=_env("MYSQL_DB_NAME"),
-        mysql_user=_env("MYSQL_USER"),
-        mysql_password=_env("MYSQL_PASSWORD"),
+        postgres_host=_env("POSTGRES_HOST"),
+        postgres_port=_env_int("POSTGRES_PORT", 5432) or 5432,
+        postgres_db_name=_env("POSTGRES_DB_NAME"),
+        postgres_user=_env("POSTGRES_USER"),
+        postgres_password=_env("POSTGRES_PASSWORD"),
         database_url=_env("DATABASE_URL"),
         elasticsearch_url=_env("ELASTICSEARCH_URL"),
         elasticsearch_api_key=_env("ELASTICSEARCH_API_KEY"),

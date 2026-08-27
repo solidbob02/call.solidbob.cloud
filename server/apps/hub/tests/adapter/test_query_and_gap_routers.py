@@ -1,5 +1,5 @@
 # Requirement: A-1, D-4, SEC-1, QUA-1
-"""HTTP 표면: MySQL 미설정이면 501, 설정되면 계약 형태로 응답."""
+"""HTTP 표면: PostgreSQL 미설정이면 501, 설정되면 계약 형태로 응답."""
 
 from fastapi.testclient import TestClient
 
@@ -25,7 +25,7 @@ class _Gap(KnowledgeGapPort):
         return 77
 
 
-def test_전사조회_MySQL_미설정이면_501이다():
+def test_전사조회_PostgreSQL_미설정이면_501이다():
     """빈 목록을 주면 '발화가 없는 통화'로 읽혀 DB 미설정과 구분되지 않는다."""
     with TestClient(app) as client:
         r = client.get("/hub/calls/c_001/transcript")
@@ -56,7 +56,7 @@ def test_전사조회_limit_범위를_벗어나면_422다():
         app.dependency_overrides.clear()
 
 
-def test_공백신고_MySQL_미설정이면_501이다():
+def test_공백신고_PostgreSQL_미설정이면_501이다():
     """접수했다고 응답한 뒤 아무 데도 안 남으면 D-4 목적과 정반대다."""
     with TestClient(app) as client:
         r = client.post("/hub/knowledge-gaps", json={"module": "B", "description": "못 찾음"})
@@ -96,7 +96,7 @@ class _Feedback(CardFeedbackPort):
         return 501234
 
 
-def test_카드피드백_MySQL_미설정이면_501이다():
+def test_카드피드백_PostgreSQL_미설정이면_501이다():
     with TestClient(app) as client:
         r = client.post("/hub/cards/42/feedback", json={"action": "adopted"})
     assert r.status_code == 501

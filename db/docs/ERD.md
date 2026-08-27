@@ -183,7 +183,7 @@ ERD.png를 왼쪽 위 "고객"부터 시계방향으로 따라가면서 설명�
 
 ## 2026-08-27 첫 실제 적용에서 드러난 것 (설계 검증만으로는 안 잡혔다)
 
-도커로 MySQL 8.4 를 띄우고 `schema.sql` 을 **처음으로 실제 실행**했다. 두 가지가 걸렸다.
+도커로 PostgreSQL 8.4 를 띄우고 `schema.sql` 을 **처음으로 실제 실행**했다. 두 가지가 걸렸다.
 
 ### ① 예약어 — 16개 중 2개만 생성됐다
 
@@ -191,7 +191,7 @@ ERD.png를 왼쪽 위 "고객"부터 시계방향으로 따라가면서 설명�
 ERROR 1064 (42000) at line 21: ... near 'call ('
 ```
 
-`CALL` 은 MySQL 예약어(스토어드 프로시저 호출)라 `CREATE TABLE call (` 에서 파싱이 멈추고
+`CALL` 은 PostgreSQL 예약어(스토어드 프로시저 호출)라 `CREATE TABLE call (` 에서 파싱이 멈추고
 **뒤의 14개가 통째로 만들어지지 않았다.** `recommendation_card.rank` 도 예약어다(8.0 윈도우 함수).
 `information_schema.KEYWORDS` 로 확인한 결과 우리 스키마에 걸리는 것은 `CALL`·`RANK` 둘이다.
 

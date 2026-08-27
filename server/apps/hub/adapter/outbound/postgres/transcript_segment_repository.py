@@ -1,5 +1,5 @@
 # Requirement: 7.3절 전사 이벤트, C-5, SEC-1
-"""TranscriptIngestRecordPort 의 MySQL 구현. LogTranscriptIngestRecordAdapter 를 대체한다.
+"""TranscriptIngestRecordPort 의 PostgreSQL 구현. LogTranscriptIngestRecordAdapter 를 대체한다.
 
 **두 가지를 지킨다.**
 
@@ -22,27 +22,27 @@ from hub.app.ports.output.transcript_ingest_record_port import TranscriptIngestR
 
 from .connection import ConnectionFactory
 
-# 식별자를 백틱으로 감싼다 — `call`·`rank` 처럼 예약어인 이름이 있다(2026-08-27 스키마 수정과 같은 이유).
-# VALUES(col) 은 MySQL 8.0 에서 폐기 예정이라 별칭(AS new)을 쓴다.
+# 식별자를 큰따옴표로 감싼다 — `call`·`rank` 처럼 예약어인 이름이 있다.
+# UPSERT 는 PostgreSQL 의 ON CONFLICT 다 (MySQL 의 ON DUPLICATE KEY UPDATE 대응).
 _UPSERT_SEGMENT = """
-INSERT INTO `transcript_segment`
-    (`segment_id`, `call_id`, `speaker`, `text`, `is_final`, `utterance_end_ms`, `created_at`)
-VALUES (%s, %s, %s, %s, %s, %s, %s) AS new
-ON DUPLICATE KEY UPDATE
-    `text` = new.`text`,
-    `is_final` = new.`is_final`,
-    `utterance_end_ms` = new.`utterance_end_ms`
+INSERT INTO "transcript_segment"
+    ("segment_id", "call_id", "speaker", "text", "is_final", "utterance_end_ms", "created_at")
+VALUES (%s, %s, %s, %s, %s, %s, %s)
+ON CONFLICT ("segment_id") DO UPDATE SET
+    "text" = EXCLUDED."text",
+    "is_final" = EXCLUDED."is_final",
+    "utterance_end_ms" = EXCLUDED."utterance_end_ms"
 """
 
-_DELETE_SPANS = "DELETE FROM `masking_event` WHERE `segment_id` = %s"
+_DELETE_SPANS = 'DELETE FROM "masking_event" WHERE "segment_id" = %s'
 
 _INSERT_SPAN = """
-INSERT INTO `masking_event` (`segment_id`, `pattern`, `span_start`, `span_end`, `created_at`)
+INSERT INTO "masking_event" ("segment_id", "pattern", "span_start", "span_end", "created_at")
 VALUES (%s, %s, %s, %s, %s)
 """
 
 
-class MySqlTranscriptSegmentRepository(TranscriptIngestRecordPort):
+class PostgresTranscriptSegmentRepository(TranscriptIngestRecordPort):
     def __init__(self, connect: ConnectionFactory) -> None:
         self._connect = connect
 

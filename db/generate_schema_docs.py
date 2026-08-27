@@ -1,5 +1,5 @@
-# Requirement: 아키텍처(MySQL 스키마), ERD 문서화
-"""CallGuard MySQL 스키마를 한 군데(TABLES)에 정의하고, 여기서
+# Requirement: 아키텍처(PostgreSQL 스키마), ERD 문서화
+"""CallGuard PostgreSQL 스키마를 한 군데(TABLES)에 정의하고, 여기서
 schema.sql(DDL)과 docs/erd.dot(ERD 소스)을 같이 생성한다. 스키마를 고칠 땐 이
 파일만 고치고 다시 실행하면 SQL과 ERD가 항상 같은 정의를 가리키게 된다.
 
@@ -287,30 +287,67 @@ TABLES: list[Table] = [
 
 
 def q(identifier: str) -> str:
-    """식별자를 백틱으로 감싼다. **MySQL 예약어 때문에 필요하다** — 2026-08-27 확인:
-    테이블 `call`, 컬럼 `rank` 가 예약어라 감싸지 않으면 `CREATE TABLE call (` 에서
-    `ERROR 1064` 로 스키마 적용이 통째로 멈춘다(16개 중 2개만 만들어졌다).
+    """식별자를 큰따옴표로 감싼다(PostgreSQL 표준). **예약어 때문에 필요하다** — 2026-08-27 확인:
+    테이블 `call`, 컬럼 `rank` 가 예약어라 감싸지 않으면 CREATE TABLE 이 실패한다.
+    MySQL 시절 백틱으로 하던 것과 같은 이유이고, 인용 문자만 바뀌었다
+    (`_project/decisions/016-DB-PostgreSQL-전환.md`).
     예약어 목록은 버전마다 늘어나므로 개별 예외를 두지 않고 전부 감싼다."""
-    return f"`{identifier}`"
+    return f'"{identifier}"'
+
+
+def pg_type(sql_type: str, auto_increment: bool) -> tuple[str, str]:
+    """MySQL 표기로 적힌 TABLES 정의를 PostgreSQL 타입으로 옮긴다.
+
+    두 번째 반환값은 컬럼 뒤에 붙일 제약(ENUM → CHECK). PostgreSQL 에는 인라인 ENUM 이 없고,
+    `CREATE TYPE` 을 쓰면 스키마 재적용 때 타입이 먼저 남아 충돌하므로 **CHECK 로 표현한다.**
+    """
+    t = sql_type.strip()
+    if auto_increment:
+        return "BIGINT GENERATED ALWAYS AS IDENTITY", ""
+    if t.upper().startswith("ENUM("):
+        values = t[t.index("(") + 1 : t.rindex(")")]
+        return "VARCHAR(30)", f"CHECK (%s IN ({values}))"
+    return {
+        "TINYINT": "SMALLINT",
+        "DATETIME": "TIMESTAMPTZ",
+        "BOOLEAN": "BOOLEAN",
+        "TEXT": "TEXT",
+        "FLOAT": "REAL",
+    }.get(t.upper(), t), ""
 
 
 def to_sql(tables: list[Table]) -> str:
+    """PostgreSQL DDL 을 만든다 (2026-08-27 MySQL 에서 전환 — decisions/016).
+
+    MySQL 과 다른 점 셋:
+      - 컬럼 주석을 인라인으로 못 단다 → 테이블 뒤에 `COMMENT ON COLUMN` 을 따로 낸다
+      - `ENUM(...)` 이 없다 → `CHECK (col IN (...))` 로 표현한다 (CREATE TYPE 은 재적용 때 충돌한다)
+      - `AUTO_INCREMENT` 가 없다 → `GENERATED ALWAYS AS IDENTITY`
+    """
     lines = [
-        "-- CallGuard MySQL 스키마 — db/generate_schema_docs.py에서 자동 생성.",
+        "-- CallGuard PostgreSQL 스키마 — db/generate_schema_docs.py에서 자동 생성.",
         "-- 이 파일을 직접 고치지 말고 generate_schema_docs.py의 TABLES를 고친 뒤 다시 생성할 것.",
         "",
     ]
     for t in tables:
         lines.append(f"-- {t.comment}")
         lines.append(f"CREATE TABLE {q(t.name)} (")
-        col_lines = []
-        fk_lines = []
+        col_lines: list[str] = []
+        fk_lines: list[str] = []
+        check_lines: list[str] = []
+        comment_lines: list[str] = []
         pk_col = None
         for c in t.columns:
+            col_type, check_tpl = pg_type(c.sql_type, c.auto_increment)
             null_sql = "NOT NULL" if not c.nullable else "NULL"
-            comment_sql = f" COMMENT '{c.note}'" if c.note else ""
-            auto_sql = " AUTO_INCREMENT" if c.auto_increment else ""
-            col_lines.append(f"    {q(c.name)} {c.sql_type} {null_sql}{auto_sql}{comment_sql}")
+            col_lines.append(f"    {q(c.name)} {col_type} {null_sql}")
+            if check_tpl:
+                check_lines.append(f"    {check_tpl % q(c.name)}")
+            if c.note:
+                note = c.note.replace("'", "''")
+                comment_lines.append(
+                    f"COMMENT ON COLUMN {q(t.name)}.{q(c.name)} IS '{note}';"
+                )
             if c.key == "PK":
                 pk_col = c.name
             if c.key == "FK" and c.fk_ref:
@@ -320,9 +357,11 @@ def to_sql(tables: list[Table]) -> str:
                 )
         if pk_col:
             col_lines.append(f"    PRIMARY KEY ({q(pk_col)})")
+        col_lines.extend(check_lines)
         col_lines.extend(fk_lines)
         lines.append(",\n".join(col_lines))
         lines.append(");")
+        lines.extend(comment_lines)
         lines.append("")
     return "\n".join(lines)
 

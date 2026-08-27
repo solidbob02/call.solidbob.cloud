@@ -18,9 +18,11 @@ fastapi==0.141.1
 uvicorn==0.52.4
 pydantic==2.13.4
 
-# --- MySQL (SEC-1 저장 경로) — 포트가 async 라 async 드라이버를 쓴다.
-#     adapter/outbound/mysql/ 에서만 import 한다 (.importlinter 계약 3).
-aiomysql==0.3.2
+# --- PostgreSQL (SEC-1 저장 경로) — 포트가 async 라 async 드라이버를 쓴다.
+#     adapter/outbound/postgres/ 에서만 import 한다 (.importlinter 계약 3).
+#     psycopg3 를 쓰는 이유: %s 플레이스홀더가 그대로라 SQL 이 방언 전환에 덜 흔들린다
+#     (asyncpg 는 $1 형식이라 전 쿼리를 고쳐야 한다). 2026-08-27 전환 — decisions/016
+psycopg[binary]==3.2.10
 
 # --- STT (A-1) — 게이트웨이가 보낸 오디오를 처리하는 경로 ---
 google-cloud-speech==2.40.0

@@ -5,6 +5,13 @@ permalink: /progress/
 ---
 
 ### 2026-08-27
+- **관계형 DB 를 MySQL → PostgreSQL 로 전환**(`_project/decisions/016`). 사용자 지시. **검토 시에는 MySQL 유지를 권고**했다 — 기획서가 MySQL 로 지정했고, PostgreSQL 의 대표 강점인 pgvector 가 이 프로젝트에서는 **Elasticsearch `dense_vector` 와 중복**이며, 이미 동작하는 상태였기 때문이다. 사용자가 재확인해 확정했고 이 판단 근거는 되돌릴 때를 위해 결정 기록에 남겼다
+- **기획서(`_project/plan.md`)를 직접 수정했다** — 원래 "수정하지 않는 사본"이었으나 사용자 지시로 규칙이 바뀌었다. 파일 상단에 수정 이력을 남기고 `CLAUDE.md` §3 규칙도 함께 갱신했다. `rev4-보완지시서.md` 에도 11번 항목으로 덮어썼다
+- **방언 차이가 스키마 전반에 걸렸다** — 이름만 바꾸는 작업이 아니었다. 백틱→큰따옴표 · `AUTO_INCREMENT`→`GENERATED ALWAYS AS IDENTITY` · `ENUM`→`CHECK` · `TINYINT`→`SMALLINT` · `DATETIME`→`TIMESTAMPTZ` · **인라인 `COMMENT` 가 없어 `COMMENT ON COLUMN` 을 따로 생성** · `ON DUPLICATE KEY UPDATE`→`ON CONFLICT DO UPDATE` · `lastrowid` 가 없어 `RETURNING` 으로 교체
+- **`CALL`·`RANK` 예약어 문제는 PostgreSQL 에서도 그대로**다 — 인용 문자만 백틱에서 큰따옴표로 바뀌었다. 식별자 인용은 계속 필요하다
+- 드라이버는 `aiomysql` → **`psycopg[binary]`** 로 갔다. `%s` 플레이스홀더가 그대로라 SQL 이 방언 전환에 덜 흔들린다(`asyncpg` 는 `$1` 형식이라 전 쿼리를 고쳐야 한다). psycopg 의 `connect()` 가 코루틴이라 `asynccontextmanager` 로 감쌌다
+- **PostgreSQL 17 에 17개 테이블이 에러 0건으로 적용**되고, 실제 DB 로 **SEC-1(원문 미보관) integration 테스트가 통과**한다. `server` 155개 · `ai` 53개 통과, 계약 4+3종 KEPT, 링크 66페이지 0건
+- 손댄 범위: 기획서·보완지시서·`CLAUDE.md` · 스키마 생성기 · `infra/`(compose·README) · `.env.example` · `server/`(config·리포지토리 4종·프로바이더 4종·계약·테스트) · 공개 문서 12개
 - **C-5 개인정보 마스킹 구현 — 담당 이관 후 착수**(`w3-masking-c5`). 정성윤 님 부재 중이고 **티켓도 코드도 없는 착수 전 상태**여서 장민석이 넘겨받았다(`_project/decisions/015`). `MaskingPort` 가 501 에서 실제 구현으로 바뀌면서 **파이프라인 전체를 막던 단일 지점이 풀렸다**. `pytest` **155개 통과**(125→155), 계약 **4종** KEPT
 - [2.4절 탐지 파이프라인](/docs/02/) 순서 그대로 — ① 구분자 제거 → ② 한글 수사 변환 → ③ 패턴 매칭(P1~P5) → ④ 마스킹. **①이 ②보다 앞**인 것도 명세대로다([V3 실측](/docs/05/)상 구분자 부재·띄어쓰기 붕괴가 지배적 실패 모드)
 - **⚠ 구현 중 실제로 터진 것 — 한글 수사가 일상어를 먹었다.** `"01012345678이고"` 에서 조사 **"이"가 숫자 2로 바뀌어** 번호 구간이 뒤 글자까지 번졌다(`"이사"`·`"사과"`도 같은 문제). → **연속 3자 이상일 때만 낭독형으로 본다**. `"공일공일이삼사오육칠팔"` 은 잡히고 `"이고"` 는 안 잡힌다. 명세가 ②를 "보조"라고 한 이유가 이것이다

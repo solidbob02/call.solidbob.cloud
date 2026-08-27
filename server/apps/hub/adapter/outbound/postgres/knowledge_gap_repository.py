@@ -1,5 +1,5 @@
 # Requirement: D-4
-"""KnowledgeGapPort 의 MySQL 구현. `status` 는 접수 시점에 항상 `open` 이다 —
+"""KnowledgeGapPort 의 PostgreSQL 구현. `status` 는 접수 시점에 항상 `open` 이다 —
 닫는 것은 지식베이스를 보강한 뒤의 일이라 여기서 정하지 않는다."""
 
 from __future__ import annotations
@@ -12,13 +12,14 @@ from hub.app.ports.output.knowledge_gap_port import KnowledgeGapPort
 from .connection import ConnectionFactory
 
 _INSERT = """
-INSERT INTO `knowledge_gap`
-    (`module`, `description`, `call_id`, `segment_id`, `closure_id`, `created_at`, `status`)
+INSERT INTO "knowledge_gap"
+    ("module", "description", "call_id", "segment_id", "closure_id", "created_at", "status")
 VALUES (%s, %s, %s, %s, %s, %s, 'open')
+RETURNING "id"
 """
 
 
-class MySqlKnowledgeGapRepository(KnowledgeGapPort):
+class PostgresKnowledgeGapRepository(KnowledgeGapPort):
     def __init__(self, connect: ConnectionFactory) -> None:
         self._connect = connect
 
@@ -36,6 +37,7 @@ class MySqlKnowledgeGapRepository(KnowledgeGapPort):
                         datetime.now(timezone.utc),
                     ),
                 )
-                gap_id = cur.lastrowid
+                row = await cur.fetchone()
+                gap_id = row[0]  # PostgreSQL 에는 lastrowid 가 없다 — RETURNING 으로 받는다
             await conn.commit()
         return int(gap_id)

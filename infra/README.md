@@ -5,13 +5,13 @@
 > ⚠ 운영(AWS) 인프라는 정성윤 담당이다([7.1절](/docs/07/)). 이 폴더는 **로컬 개발용**이고,
 > 여기 있는 값으로 운영을 띄우지 않는다.
 
-## MySQL
+## PostgreSQL
 
 ```bash
 cd infra
 docker compose up -d          # 최초 기동 시 ../db/schema.sql 이 자동 적용된다
 docker compose ps             # 상태 확인 (healthy 가 될 때까지 30초쯤 걸린다)
-docker compose logs -f mysql  # 기동 로그
+docker compose logs -f postgres  # 기동 로그
 docker compose down           # 정지 — 데이터는 남는다
 docker compose down -v        # 정지 + 데이터 삭제 — 스키마를 다시 적용할 때
 ```
@@ -21,15 +21,15 @@ docker compose down -v        # 정지 + 데이터 삭제 — 스키마를 다�
 컨테이너가 뜨면 저장소 루트 `.env` 에 아래를 채운다. **`.env` 는 커밋되지 않는다**(SEC-2).
 
 ```
-MYSQL_HOST=127.0.0.1
-MYSQL_PORT=3306
-MYSQL_DB_NAME=callguard
-MYSQL_USER=callguard
-MYSQL_PASSWORD=callguard-dev
-DATABASE_URL=mysql://callguard:callguard-dev@127.0.0.1:3306/callguard
+POSTGRES_HOST=127.0.0.1
+POSTGRES_PORT=5432
+POSTGRES_DB_NAME=callguard
+POSTGRES_USER=callguard
+POSTGRES_PASSWORD=callguard-dev
+DATABASE_URL=postgres://callguard:callguard-dev@127.0.0.1:5432/callguard
 ```
 
-이 값들이 있어야 `server/` 의 전사 저장이 로그 어댑터 대신 **MySQL 리포지토리**로 떨어진다
+이 값들이 있어야 `server/` 의 전사 저장이 로그 어댑터 대신 **PostgreSQL 리포지토리**로 떨어진다
 (`hub/dependencies/transcript_record_provider.py` 가 `mysql_configured` 를 본다).
 
 ### 값을 바꾸고 싶으면
@@ -37,8 +37,8 @@ DATABASE_URL=mysql://callguard:callguard-dev@127.0.0.1:3306/callguard
 `infra/.env` 를 만든다(gitignore 대상). compose 가 그걸 먼저 읽는다.
 
 ```
-MYSQL_PORT=3307          # 다른 MySQL 이 3306 을 쓰고 있을 때
-MYSQL_PASSWORD=...
+POSTGRES_PORT=5433          # 다른 PostgreSQL 이 5432 를 쓰고 있을 때
+POSTGRES_PASSWORD=...
 ```
 
 ## 스키마를 고쳤을 때
@@ -55,7 +55,7 @@ docker compose down -v && docker compose up -d
 ## 검증
 
 ```bash
-docker compose exec mysql mysql -ucallguard -pcallguard-dev callguard -e "SHOW TABLES;"
+docker compose exec postgres psql -U callguard -d callguard -c '\dt'
 cd ../server && ../.venv/bin/python -m pytest -m integration
 ```
 

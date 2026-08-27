@@ -1,5 +1,5 @@
 # Requirement: 7.3절 전사 이벤트, C-5, SEC-1, QUA-1
-"""가짜 커넥션으로 리포지토리를 검증한다 — 실제 MySQL 없이 SEC-1 과 interim 규칙을 고정한다.
+"""가짜 커넥션으로 리포지토리를 검증한다 — 실제 PostgreSQL 없이 SEC-1 과 interim 규칙을 고정한다.
 
 진짜 DB 를 쓰는 검증은 @pytest.mark.integration 으로 따로 둔다(기본 실행에서 빠진다).
 """
@@ -7,7 +7,7 @@
 import asyncio
 from contextlib import asynccontextmanager
 
-from hub.adapter.outbound.mysql.transcript_segment_repository import MySqlTranscriptSegmentRepository
+from hub.adapter.outbound.postgres.transcript_segment_repository import PostgresTranscriptSegmentRepository
 from hub.app.dtos import MaskedSpan, TranscriptEvent
 
 RAW = "제 번호는 01012345678 입니다"
@@ -51,7 +51,7 @@ def _factory(log: list, holder: list):
 
 def _record(event: TranscriptEvent):
     log, holder = [], []
-    repo = MySqlTranscriptSegmentRepository(_factory(log, holder))
+    repo = PostgresTranscriptSegmentRepository(_factory(log, holder))
     asyncio.run(repo.record(event))
     return log, holder
 
@@ -89,7 +89,7 @@ def test_마스킹된_텍스트만_넘긴다():
 def test_마스킹_구간을_다시_넣기_전에_지운다():
     """같은 segment 를 다시 받으면 이전 구간이 남아 새 마스킹과 섞인다."""
     log, _ = _record(_final())
-    delete = [row for row in log if "DELETE FROM `masking_event`" in row[1]]
+    delete = [row for row in log if 'DELETE FROM "masking_event"' in row[1]]
     assert len(delete) == 1
     assert delete[0][2] == (31,)
 
@@ -106,7 +106,7 @@ def test_구간은_문자_오프셋_그대로_저장한다():
     assert spans[0][1:4] == ("P4", 6, 17)
 
 
-# ── 실제 MySQL 이 필요한 검증 (기본 실행에서 제외 — pytest.ini addopts) ────────────────
+# ── 실제 PostgreSQL 이 필요한 검증 (기본 실행에서 제외 — pytest.ini addopts) ────────────────
 #
 #    cd infra && docker compose up -d
 #    cd ../server && ../.venv/bin/python -m pytest -m integration
@@ -137,11 +137,11 @@ def test_실제_DB에_마스킹본만_저장되고_원문이_없다():
     """SEC-1 최종 확인 — 스키마 리뷰가 아니라 실제 저장 결과로 본다."""
     import asyncio
 
-    from hub.adapter.outbound.mysql.connection import build_connection_factory
+    from hub.adapter.outbound.postgres.connection import build_connection_factory
 
     settings = _settings()
-    if not settings.mysql_configured:
-        pytest.skip("MySQL 설정 없음 — infra/README.md 참고")
+    if not settings.postgres_configured:
+        pytest.skip("PostgreSQL 설정 없음 — infra/README.md 참고")
 
     connect = build_connection_factory(settings)
     call_id = "it_sec1_001"
@@ -153,15 +153,15 @@ def test_실제_DB에_마스킹본만_저장되고_원문이_없다():
             async with conn.cursor() as cur:
                 await cur.execute("DELETE FROM masking_event WHERE segment_id=%s", (segment_id,))
                 await cur.execute("DELETE FROM transcript_segment WHERE segment_id=%s", (segment_id,))
-                await cur.execute("DELETE FROM `call` WHERE call_id=%s", (call_id,))
+                await cur.execute('DELETE FROM "call" WHERE call_id=%s', (call_id,))
                 await cur.execute(
-                    "INSERT INTO `call` (call_id, domain, started_at, channel_count, stt_engine, status)"
+                    'INSERT INTO "call" (call_id, domain, started_at, channel_count, stt_engine, status)'
                     " VALUES (%s,'shopping',NOW(),1,'google-stt','closed')",
                     (call_id,),
                 )
             await conn.commit()
 
-        repo = MySqlTranscriptSegmentRepository(connect)
+        repo = PostgresTranscriptSegmentRepository(connect)
         await repo.record(TranscriptEvent(call_id=call_id, segment_id=segment_id, speaker="customer",
                                           text=MASKED, is_final=True, utterance_end_ms=2600,
                                           masked=(MaskedSpan(type="P4", span=(6, 17)),)))

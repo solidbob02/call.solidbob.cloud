@@ -1,5 +1,5 @@
 # Requirement: E-1
-"""CardFeedbackPort 의 MySQL 구현. append-only — UPDATE 하지 않는다."""
+"""CardFeedbackPort 의 PostgreSQL 구현. append-only — UPDATE 하지 않는다."""
 
 from __future__ import annotations
 
@@ -11,12 +11,13 @@ from hub.app.ports.output.card_feedback_port import CardFeedbackPort
 from .connection import ConnectionFactory
 
 _INSERT = """
-INSERT INTO `card_feedback` (`card_id`, `action`, `created_at`)
+INSERT INTO "card_feedback" ("card_id", "action", "created_at")
 VALUES (%s, %s, %s)
+RETURNING "id"
 """
 
 
-class MySqlCardFeedbackRepository(CardFeedbackPort):
+class PostgresCardFeedbackRepository(CardFeedbackPort):
     def __init__(self, connect: ConnectionFactory) -> None:
         self._connect = connect
 
@@ -26,6 +27,7 @@ class MySqlCardFeedbackRepository(CardFeedbackPort):
                 await cur.execute(
                     _INSERT, (feedback.card_id, feedback.action, datetime.now(timezone.utc))
                 )
-                feedback_id = cur.lastrowid
+                row = await cur.fetchone()
+                feedback_id = row[0]  # PostgreSQL 에는 lastrowid 가 없다
             await conn.commit()
         return int(feedback_id)

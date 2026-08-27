@@ -67,7 +67,7 @@ def health(request: Request) -> dict:
     settings: Settings = request.app.state.settings
     return {
         "status": "ok",
-        "mysql_configured": settings.mysql_configured,
+        "postgres_configured": settings.postgres_configured,
         "elasticsearch_configured": settings.elasticsearch_configured,
         "spokes": list(SPOKES),
     }
