@@ -12,7 +12,7 @@ requirement:
 depends_on:
   - "w2-mysql-persistence"
 paths:
-  - "server/apps/hub/adapter/inbound/api/v1/*"
+  - "server/apps/hub/adapter/inbound/api/v1/transcript_query_router.py"
 ---
 
 상담원이 지나간 발화를 다시 보는 경로. Genesys Agent Copilot 도 같은 이유로 전사를 남긴다 —

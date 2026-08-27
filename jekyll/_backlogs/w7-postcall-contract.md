@@ -13,8 +13,8 @@ requirement:
 depends_on:
   - "w2-mysql-persistence"
 paths:
-  - "server/apps/hub/app/ports/output/*"
-  - "server/apps/hub/app/dtos/*"
+  - "server/apps/hub/app/ports/output/postcall_port.py"
+  - "server/apps/hub/app/dtos/call_summary_dto.py"
 ---
 
 [2.5절 D](/docs/02/)(D-1 요약 · D-2 유형 분류 · D-3 후속조치 추출)는 기능 명세에 있는데

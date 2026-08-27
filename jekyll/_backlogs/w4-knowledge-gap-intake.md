@@ -11,7 +11,7 @@ requirement:
 depends_on:
   - "w2-mysql-persistence"
 paths:
-  - "server/apps/hub/adapter/inbound/api/v1/*"
+  - "server/apps/hub/adapter/inbound/api/v1/knowledge_gap_router.py"
 ---
 
 [D-4 지식베이스 공백 리포트](/docs/02/)는 지금 **시스템이 검색 실패를 추정**하는 구조다.

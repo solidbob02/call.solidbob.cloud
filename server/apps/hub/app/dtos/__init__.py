@@ -11,6 +11,7 @@ from .compliance_finding_dto import ComplianceFinding
 from .domain_classification_dto import DomainClassification
 from .myself_dto import MyselfQuery, MyselfResult
 from .recommendation_card_dto import Card, RecommendationCards, Source
+from .recommendation_dto import RecommendCommand, RecommendResult
 from .retrieved_doc_dto import RetrievedDoc
 from .search_dto import SearchQuery, SearchResult
 from .transcript_dto import MaskedSpan, Speaker, TranscriptEvent
@@ -26,6 +27,8 @@ __all__ = [
     "MaskedSpan",
     "MyselfQuery",
     "MyselfResult",
+    "RecommendCommand",
+    "RecommendResult",
     "RecommendationCards",
     "RetrievedDoc",
     "SearchQuery",

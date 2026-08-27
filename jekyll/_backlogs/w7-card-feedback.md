@@ -11,7 +11,7 @@ requirement:
 depends_on:
   - "w2-mysql-persistence"
 paths:
-  - "server/apps/hub/adapter/inbound/api/v1/*"
+  - "server/apps/hub/adapter/inbound/api/v1/card_feedback_router.py"
 ---
 
 상담원이 추천 카드를 실제로 썼는지 기록한다. 골든셋 기반 Recall@5 와 별개로

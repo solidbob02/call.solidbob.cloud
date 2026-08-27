@@ -23,6 +23,7 @@ from fastapi import FastAPI, Request  # noqa: E402
 
 from core.config import Settings, load_settings  # noqa: E402
 from hub.adapter.inbound.api.v1.myself_router import myself_router  # noqa: E402
+from hub.adapter.inbound.api.v1.recommendation_router import recommendation_router  # noqa: E402
 from hub.adapter.inbound.api.v1.search_router import search_router  # noqa: E402
 from hub.adapter.inbound.api.v1.transcript_ingest_router import transcript_ingest_router  # noqa: E402
 
@@ -43,6 +44,7 @@ app = FastAPI(
 )
 
 app.include_router(myself_router)
+app.include_router(recommendation_router)
 app.include_router(search_router)
 app.include_router(transcript_ingest_router)
 
