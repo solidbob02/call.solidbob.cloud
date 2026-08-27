@@ -277,21 +277,19 @@ function AdoptToggle({
   onToggle: () => void;
   compact?: boolean;
 }): ReactElement {
-  const label = adopted ? "사용함 — 눌러서 해제" : "이 카드 사용함";
-
   return (
     <button
       type="button"
       className={`adopt-toggle${adopted ? " on" : ""}${compact ? " compact" : ""}`}
       aria-pressed={adopted}
-      aria-label={compact ? label : undefined}
-      title={compact ? label : undefined}
+      aria-label={adopted ? "사용함" : "사용 표시"}
+      title={adopted ? "사용함" : "사용 표시"}
       onClick={onToggle}
     >
       <span className="adopt-box" aria-hidden="true">
         <TickIcon />
       </span>
-      {compact ? null : <span>{adopted ? "사용함" : "이 카드 사용함"}</span>}
+      {compact ? null : <span>{adopted ? "사용함" : "사용 표시"}</span>}
     </button>
   );
 }
