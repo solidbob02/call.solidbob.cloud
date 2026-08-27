@@ -31,9 +31,10 @@ def test_domain_routing_wiring_with_fake_port():
     items = load_golden_set()
     report = run_eval(items, Ports(domain_routing=_EchoDomainRouting()))
     result = report["domain_routing"]
-    # 골든셋 10건 전부 domain 필드는 있지만, F-2 케이스(GS-008~010)는 발화 텍스트가
-    # 없고 closure_intent만 있어 분류 대상에서 빠진다 — 텍스트가 있는 7건만 채점된다.
-    assert result["n"] == 7
+    # 2026-08-27 채점 대상이 좁아졌다: **B(검색) 항목만** 센다.
+    # C·C-5 항목의 발화에는 도메인 단서가 없어(마스킹·컴플라이언스 시나리오) 그걸 섞어 재면
+    # 측정할 수 없는 것을 측정한 셈이 된다 — harness.py 주석 참고.
+    assert result["n"] == 3  # v1-10 의 B 항목 (GS-001~003)
     assert 0.0 <= result["accuracy"] <= 1.0
 
 

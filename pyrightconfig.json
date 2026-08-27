@@ -1,0 +1,8 @@
+{
+  "//": "IDE(Pylance/Pyright)용 경로 설정. 실행에는 쓰이지 않는다 — 있으나 없으나 테스트·CI 는 같다.",
+  "//why": "hub·retrieval·evaluation 은 apps/ 를 최상위로 놓고 import 한다. 그 경로를 올려주는 곳이 pytest.ini(pythonpath)·.importlinter(PYTHONPATH)·server/main.py(sys.path) 세 곳인데, 편집기는 그 셋을 읽지 않아 import 를 못 찾는다고 표시한다. 네 번째 동기화 지점이 되므로 위 셋을 고칠 때 여기도 본다.",
+  "extraPaths": ["ai/apps", "server/apps", "server"],
+  "exclude": ["**/__pycache__", "**/node_modules", ".venv", "jekyll/_site", "data"],
+  "typeCheckingMode": "basic",
+  "reportMissingImports": "warning"
+}
