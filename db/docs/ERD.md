@@ -181,6 +181,42 @@ ERD.png를 왼쪽 위 "고객"부터 시계방향으로 따라가면서 설명�
 일반 기능이라 `customer` 테이블로 계속 지원한다. 17개 → **16개** 테이블로 줄었다(`plan`
 제거, 순수 추가는 없음).
 
+## 2026-08-27 첫 실제 적용에서 드러난 것 (설계 검증만으로는 안 잡혔다)
+
+도커로 MySQL 8.4 를 띄우고 `schema.sql` 을 **처음으로 실제 실행**했다. 두 가지가 걸렸다.
+
+### ① 예약어 — 16개 중 2개만 생성됐다
+
+```
+ERROR 1064 (42000) at line 21: ... near 'call ('
+```
+
+`CALL` 은 MySQL 예약어(스토어드 프로시저 호출)라 `CREATE TABLE call (` 에서 파싱이 멈추고
+**뒤의 14개가 통째로 만들어지지 않았다.** `recommendation_card.rank` 도 예약어다(8.0 윈도우 함수).
+`information_schema.KEYWORDS` 로 확인한 결과 우리 스키마에 걸리는 것은 `CALL`·`RANK` 둘이다.
+
+→ `generate_schema_docs.py` 의 `to_sql()` 이 테이블·컬럼·FK 식별자를 **전부 백틱으로 감싸게** 했다.
+예약어 목록은 버전마다 늘어나므로 개별 예외를 두지 않았다.
+
+### ② 서로게이트 PK 에 AUTO_INCREMENT 가 없었다
+
+```
+(1364, "Field 'id' doesn't have a default value")
+```
+
+숫자 PK 11개 **전부** AUTO_INCREMENT 가 없어 INSERT 마다 ID 를 직접 넣어야 했다.
+그런데 애플리케이션에 ID 를 만드는 코드가 어디에도 없다 — 설계 누락이다.
+
+→ `Column` 에 `auto_increment` 를 추가하고 서로게이트 PK **10개**에 켰다.
+**`transcript_segment.segment_id` 만 예외**다 — [7.3절](/docs/07/) 계약상 게이트웨이가 정해서
+보내는 값이라(`transcript_segment.segment_id` 와 1:1) DB 가 채우면 안 된다.
+
+> 두 결함 다 **ERD·정규화 검토로는 드러날 수 없었다.** 테이블 구성·관계·정규형은 전부 맞았고,
+> 실행해봐야 나오는 종류였다. 앞으로 스키마를 고치면 `cd infra && docker compose down -v && up -d` 로
+> **실제 적용까지 확인**한다.
+
+---
+
 ## 팀 교차검증 체크리스트
 
 - [ ] `customer_id`를 실제로 해시/난수로 만들 것인지, 실명 연동이 필요한지 (정성윤·인프라 결정)

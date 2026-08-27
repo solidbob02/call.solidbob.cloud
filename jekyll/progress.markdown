@@ -5,6 +5,14 @@ permalink: /progress/
 ---
 
 ### 2026-08-27
+- **로컬 MySQL 도커 구성 + 스키마 첫 실제 적용**(`w2-local-mysql` done). `infra/docker-compose.yml` + `README.md` — 팀원 누구나 `cd infra && docker compose up -d` 로 같은 상태를 만든다. 최초 기동 시 `db/schema.sql` 이 자동 적용된다. 조회 API 3건([w3](/backlog/w3-transcript-query-api/)·[w4](/backlog/w4-knowledge-gap-intake/)·[w7](/backlog/w7-card-feedback/))이 전부 여기서 막혀 있었다
+- **⚠ 적용해보니 스키마 결함 2건이 드러났다 — ERD·정규화 검토로는 잡을 수 없던 것들이다**
+  - **예약어**: `CALL` 이 MySQL 예약어라 `CREATE TABLE call (` 에서 파싱이 멈추고 **16개 중 2개만 생성**됐다. `recommendation_card.rank` 도 예약어(8.0 윈도우 함수). → 생성기가 식별자를 전부 백틱으로 감싸게 고쳤다
+  - **AUTO_INCREMENT 누락**: 숫자 PK **11개 전부** 없어서 `Field 'id' doesn't have a default value` 로 INSERT 가 막혔다. 애플리케이션에 ID 생성 코드도 없다. → 서로게이트 PK 10개에 켰고, **`transcript_segment.segment_id` 만 예외**(7.3절 계약상 게이트웨이가 정하는 값)
+- **테이블 구성 자체는 설계와 100% 일치했다** — 16개 테이블·컬럼 구성·순서·FK 16개 전부 `schema.sql` 과 대조해 차이 0건. 정규화(3NF)와 의도적 역정규화 2건도 설계대로다. **결함은 구조가 아니라 실행 가능성 쪽이었다**
+- **SEC-1 을 실제 DB 로 검증했다** — 그동안 "스키마 리뷰로 검증"이라고만 돼 있던 항목이다. integration 테스트가 실제 MySQL 에 저장한 뒤 원문(`01012345678`)이 없음을 확인하고, interim 이 저장되지 않는 것(7.3절)도 함께 본다. `pytest` 87개 + `pytest -m integration` 1개 통과
+- 부수: `VALUES(col)` 이 MySQL 8.0 에서 폐기 예정이라 UPSERT 를 별칭(`AS new`) 문법으로 교체
+- ⚠ `db/` 와 `infra/` 는 각각 류준 님·정성윤 님 영역이다. 스키마를 적용하려면 손대야 해서 고쳤고, 근거를 `db/docs/ERD.md` 와 티켓에 남겼다
 - **통화 후 처리(D-1~D-3) 배선 — `POST /hub/calls/{call_id}/close`**(`w7-postcall-contract` done). `PostcallPort` 를 새로 만들었다(기존 9개 포트와 같은 ABC 패턴). 필드명은 `db/schema.sql` 과 맞췄다 — `call.summary_text`·`call.inquiry_type`·`follow_up_action.action_text`. `pytest` **87개 통과**(75→87)
 - **「초안」이라는 사실을 타입에 박았다** — DTO 이름이 `CallSummaryDraft` 이고, **모델이 `confirmed=True` 를 실어 보내도 서버가 `False` 로 덮는다.** D-2 유형 분류는 모델 판정이라 확정으로 취급하지 않는다. 서버가 확정하는 경로가 **아예 없다**(테스트로 고정) — [절대 원칙 9](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md)를 계약 형태로 옮긴 것
 - **요약을 다시 다듬지 않는다** — 손대면 모델 출력과 화면 표시가 달라져 **환각 추적이 끊긴다**. 6주차 환각 건수 비교(150문항 중 5건 이하)가 무의미해진다

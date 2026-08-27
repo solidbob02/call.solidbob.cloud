@@ -22,20 +22,22 @@ from hub.app.ports.output.transcript_ingest_record_port import TranscriptIngestR
 
 from .connection import ConnectionFactory
 
+# 식별자를 백틱으로 감싼다 — `call`·`rank` 처럼 예약어인 이름이 있다(2026-08-27 스키마 수정과 같은 이유).
+# VALUES(col) 은 MySQL 8.0 에서 폐기 예정이라 별칭(AS new)을 쓴다.
 _UPSERT_SEGMENT = """
-INSERT INTO transcript_segment
-    (segment_id, call_id, speaker, text, is_final, utterance_end_ms, created_at)
-VALUES (%s, %s, %s, %s, %s, %s, %s)
+INSERT INTO `transcript_segment`
+    (`segment_id`, `call_id`, `speaker`, `text`, `is_final`, `utterance_end_ms`, `created_at`)
+VALUES (%s, %s, %s, %s, %s, %s, %s) AS new
 ON DUPLICATE KEY UPDATE
-    text = VALUES(text),
-    is_final = VALUES(is_final),
-    utterance_end_ms = VALUES(utterance_end_ms)
+    `text` = new.`text`,
+    `is_final` = new.`is_final`,
+    `utterance_end_ms` = new.`utterance_end_ms`
 """
 
-_DELETE_SPANS = "DELETE FROM masking_event WHERE segment_id = %s"
+_DELETE_SPANS = "DELETE FROM `masking_event` WHERE `segment_id` = %s"
 
 _INSERT_SPAN = """
-INSERT INTO masking_event (segment_id, pattern, span_start, span_end, created_at)
+INSERT INTO `masking_event` (`segment_id`, `pattern`, `span_start`, `span_end`, `created_at`)
 VALUES (%s, %s, %s, %s, %s)
 """
 

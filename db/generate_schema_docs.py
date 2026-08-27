@@ -36,6 +36,11 @@ class Column:
     # 모든 테이블이 서로게이트 PK를 쓰므로 물리적으로 부모 PK가 자식 PK에 포함되는
     # "진짜" 식별 관계는 없다 — 여기서는 개념적 강한 종속(약한 개체) 여부를 표시한다.
     identifying: bool = False
+    # 서로게이트 PK 를 DB 가 채운다(AUTO_INCREMENT). 2026-08-27 추가 — 없으면 INSERT 때마다
+    # "Field 'id' doesn't have a default value" 로 막힌다. 애플리케이션이 ID 를 만드는 코드는
+    # 어디에도 없으므로 DB 가 채우는 것이 맞다.
+    # 예외: transcript_segment.segment_id 는 게이트웨이가 정해서 보내는 계약 값이라(7.3절) 켜지 않는다.
+    auto_increment: bool = False
 
 
 @dataclass
@@ -105,7 +110,7 @@ TABLES: list[Table] = [
         "masking_event", "C-5 마스킹 이벤트 — 세그먼트당 여러 개 가능해 분리 (1NF)",
         cluster="통화",
         columns=[
-            Column("id", "BIGINT", "PK", nullable=False),
+            Column("id", "BIGINT", "PK", nullable=False, auto_increment=True),
             Column("segment_id", "BIGINT", "FK", "transcript_segment.segment_id", nullable=False, identifying=True),
             Column("pattern", "VARCHAR(4)", nullable=False, note="P1~P7"),
             Column("span_start", "INT", nullable=False),
@@ -128,7 +133,7 @@ TABLES: list[Table] = [
         "compliance_flag", "C-1~C-4 위반 탐지 — D-4(놓친 위반 표현 누적)의 원천 데이터",
         cluster="통화",
         columns=[
-            Column("id", "BIGINT", "PK", nullable=False),
+            Column("id", "BIGINT", "PK", nullable=False, auto_increment=True),
             Column("segment_id", "BIGINT", "FK", "transcript_segment.segment_id", nullable=False, identifying=True),
             Column("rule_code", "VARCHAR(4)", "FK", "compliance_rule.rule_code", nullable=False),
             Column("phrase", "VARCHAR(200)", nullable=False),
@@ -154,7 +159,7 @@ TABLES: list[Table] = [
         "recommendation", "추천 트리거 이벤트 — 카드 목록은 recommendation_card로 분리 (1NF)",
         cluster="추천",
         columns=[
-            Column("recommendation_id", "BIGINT", "PK", nullable=False),
+            Column("recommendation_id", "BIGINT", "PK", nullable=False, auto_increment=True),
             Column("call_id", "VARCHAR(40)", "FK", "call.call_id", nullable=False, identifying=True),
             Column("trigger_at_ms", "INT", nullable=False),
             Column("internal_latency_ms", "INT"),
@@ -166,7 +171,7 @@ TABLES: list[Table] = [
         "recommendation_card", "추천 카드 — 트리거 1건이 카드 여러 개를 낼 수 있어 분리 (1NF)",
         cluster="추천",
         columns=[
-            Column("card_id", "BIGINT", "PK", nullable=False),
+            Column("card_id", "BIGINT", "PK", nullable=False, auto_increment=True),
             Column("recommendation_id", "BIGINT", "FK", "recommendation.recommendation_id", nullable=False, identifying=True),
             Column("source_doc_id", "VARCHAR(30)", "FK", "document.document_id", note="B-6: 근거 없으면 NULL"),
             Column("title", "VARCHAR(100)", nullable=False, note="생성 모델 출력 — document.title과 다를 수 있음"),
@@ -181,7 +186,7 @@ TABLES: list[Table] = [
         "다산콜센터·질병관리본부는 안내형 업무라 이 테이블에 행이 생기지 않는다",
         cluster="종결",
         columns=[
-            Column("closure_id", "BIGINT", "PK", nullable=False, note="append-only: UPDATE 없이 INSERT만 (F-4)"),
+            Column("closure_id", "BIGINT", "PK", nullable=False, auto_increment=True, note="append-only: UPDATE 없이 INSERT만 (F-4)"),
             Column("call_id", "VARCHAR(40)", "FK", "call.call_id", nullable=False, identifying=True),
             Column("closure_type", "ENUM('상품해지','보상','반품','교환')", nullable=False,
                    note="상품해지·보상=금융보험, 반품·교환=쇼핑"),
@@ -205,7 +210,7 @@ TABLES: list[Table] = [
         "follow_up_action", "D-3 후속조치 항목 — 통화 1건에 여러 개 가능해 분리 (1NF)",
         cluster="후속처리",
         columns=[
-            Column("id", "BIGINT", "PK", nullable=False),
+            Column("id", "BIGINT", "PK", nullable=False, auto_increment=True),
             Column("call_id", "VARCHAR(40)", "FK", "call.call_id", nullable=False, identifying=True),
             Column("action_text", "VARCHAR(200)", nullable=False),
             Column("status", "VARCHAR(20)", nullable=False),
@@ -216,7 +221,7 @@ TABLES: list[Table] = [
         "knowledge_gap", "D-4 공백 리포트 — B/C/F 세 모듈의 실패 사례를 한 곳에 누적",
         cluster="후속처리",
         columns=[
-            Column("id", "BIGINT", "PK", nullable=False),
+            Column("id", "BIGINT", "PK", nullable=False, auto_increment=True),
             Column("module", "ENUM('B','C','F')", nullable=False),
             Column("description", "VARCHAR(300)", nullable=False),
             Column("call_id", "VARCHAR(40)", "FK", "call.call_id"),
@@ -230,7 +235,7 @@ TABLES: list[Table] = [
         "eval_run", "평가 실행 배치 — 6.2절 '여러 번 실행한 값 중 최저치 고정'을 위해 실행 단위로 분리",
         cluster="평가",
         columns=[
-            Column("run_id", "BIGINT", "PK", nullable=False),
+            Column("run_id", "BIGINT", "PK", nullable=False, auto_increment=True),
             Column("golden_set_version", "VARCHAR(10)", nullable=False),
             Column("git_commit", "VARCHAR(40)"),
             Column("error_rate", "FLOAT", nullable=False, note="4.2절 STT 오류 주입률 0.00~0.20, 팀 교차검증 반영"),
@@ -242,7 +247,7 @@ TABLES: list[Table] = [
         "eval_result", "평가 결과 상세 — 실행 1건이 지표 여러 개를 내므로 분리 (1NF)",
         cluster="평가",
         columns=[
-            Column("id", "BIGINT", "PK", nullable=False),
+            Column("id", "BIGINT", "PK", nullable=False, auto_increment=True),
             Column("run_id", "BIGINT", "FK", "eval_run.run_id", nullable=False, identifying=True),
             Column("module", "VARCHAR(10)", nullable=False, note="B/C/C-5/F-2 등"),
             Column("metric_name", "VARCHAR(40)", nullable=False),
@@ -254,7 +259,7 @@ TABLES: list[Table] = [
         "resource_center", "G-2 지역 자원 연계 — 조건부(여유 시) 모듈, 스키마만 선반영",
         cluster="G-2(조건부)",
         columns=[
-            Column("center_id", "BIGINT", "PK", nullable=False),
+            Column("center_id", "BIGINT", "PK", nullable=False, auto_increment=True),
             Column("name", "VARCHAR(100)", nullable=False),
             Column("category", "ENUM('정신건강복지센터','자살예방센터')", nullable=False),
             Column("address", "VARCHAR(200)", nullable=False),
@@ -267,6 +272,14 @@ TABLES: list[Table] = [
 ]
 
 
+def q(identifier: str) -> str:
+    """식별자를 백틱으로 감싼다. **MySQL 예약어 때문에 필요하다** — 2026-08-27 확인:
+    테이블 `call`, 컬럼 `rank` 가 예약어라 감싸지 않으면 `CREATE TABLE call (` 에서
+    `ERROR 1064` 로 스키마 적용이 통째로 멈춘다(16개 중 2개만 만들어졌다).
+    예약어 목록은 버전마다 늘어나므로 개별 예외를 두지 않고 전부 감싼다."""
+    return f"`{identifier}`"
+
+
 def to_sql(tables: list[Table]) -> str:
     lines = [
         "-- CallGuard MySQL 스키마 — db/generate_schema_docs.py에서 자동 생성.",
@@ -275,23 +288,24 @@ def to_sql(tables: list[Table]) -> str:
     ]
     for t in tables:
         lines.append(f"-- {t.comment}")
-        lines.append(f"CREATE TABLE {t.name} (")
+        lines.append(f"CREATE TABLE {q(t.name)} (")
         col_lines = []
         fk_lines = []
         pk_col = None
         for c in t.columns:
             null_sql = "NOT NULL" if not c.nullable else "NULL"
             comment_sql = f" COMMENT '{c.note}'" if c.note else ""
-            col_lines.append(f"    {c.name} {c.sql_type} {null_sql}{comment_sql}")
+            auto_sql = " AUTO_INCREMENT" if c.auto_increment else ""
+            col_lines.append(f"    {q(c.name)} {c.sql_type} {null_sql}{auto_sql}{comment_sql}")
             if c.key == "PK":
                 pk_col = c.name
             if c.key == "FK" and c.fk_ref:
                 ref_table, ref_col = c.fk_ref.split(".")
                 fk_lines.append(
-                    f"    FOREIGN KEY ({c.name}) REFERENCES {ref_table}({ref_col})"
+                    f"    FOREIGN KEY ({q(c.name)}) REFERENCES {q(ref_table)}({q(ref_col)})"
                 )
         if pk_col:
-            col_lines.append(f"    PRIMARY KEY ({pk_col})")
+            col_lines.append(f"    PRIMARY KEY ({q(pk_col)})")
         col_lines.extend(fk_lines)
         lines.append(",\n".join(col_lines))
         lines.append(");")

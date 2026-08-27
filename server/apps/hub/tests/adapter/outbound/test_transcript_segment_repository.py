@@ -89,7 +89,7 @@ def test_마스킹된_텍스트만_넘긴다():
 def test_마스킹_구간을_다시_넣기_전에_지운다():
     """같은 segment 를 다시 받으면 이전 구간이 남아 새 마스킹과 섞인다."""
     log, _ = _record(_final())
-    delete = [row for row in log if "DELETE FROM masking_event" in row[1]]
+    delete = [row for row in log if "DELETE FROM `masking_event`" in row[1]]
     assert len(delete) == 1
     assert delete[0][2] == (31,)
 
@@ -107,15 +107,82 @@ def test_구간은_문자_오프셋_그대로_저장한다():
 
 
 # ── 실제 MySQL 이 필요한 검증 (기본 실행에서 제외 — pytest.ini addopts) ────────────────
+#
+#    cd infra && docker compose up -d
+#    cd ../server && ../.venv/bin/python -m pytest -m integration
+
+import os  # noqa: E402
+import pathlib  # noqa: E402
 
 import pytest  # noqa: E402
 
+RAW_PHONE = "01012345678"
+
+
+def _settings():
+    """저장소 루트 .env 를 읽는다. 값이 없으면 스킵한다 — 없는 DB 를 만들어내지 않는다."""
+    env_path = pathlib.Path(__file__).resolve().parents[6] / ".env"
+    if env_path.exists():
+        for line in env_path.read_text(encoding="utf-8").splitlines():
+            if "=" in line and not line.startswith("#"):
+                k, _, v = line.partition("=")
+                os.environ.setdefault(k.strip(), v.strip())
+    from core.config import load_settings
+
+    return load_settings()
+
 
 @pytest.mark.integration
-def test_실제_DB에_원문이_남지_않는다():
-    """SEC-1 최종 확인 — 스키마 리뷰가 아니라 실제 저장 결과로 본다.
+def test_실제_DB에_마스킹본만_저장되고_원문이_없다():
+    """SEC-1 최종 확인 — 스키마 리뷰가 아니라 실제 저장 결과로 본다."""
+    import asyncio
 
-    전제: MySQL 이 떠 있고 db/schema.sql 이 적용돼 있어야 한다(2026-08-27 기준 마이그레이션 미착수).
-    실행: cd server && pytest -m integration
-    """
-    pytest.skip("MySQL 마이그레이션 미착수 — db/schema.sql 적용 후 활성화한다")
+    from hub.adapter.outbound.mysql.connection import build_connection_factory
+
+    settings = _settings()
+    if not settings.mysql_configured:
+        pytest.skip("MySQL 설정 없음 — infra/README.md 참고")
+
+    connect = build_connection_factory(settings)
+    call_id = "it_sec1_001"
+    segment_id = 990001
+
+    async def scenario():
+        # FK 때문에 call 이 먼저 있어야 한다
+        async with connect() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("DELETE FROM masking_event WHERE segment_id=%s", (segment_id,))
+                await cur.execute("DELETE FROM transcript_segment WHERE segment_id=%s", (segment_id,))
+                await cur.execute("DELETE FROM `call` WHERE call_id=%s", (call_id,))
+                await cur.execute(
+                    "INSERT INTO `call` (call_id, domain, started_at, channel_count, stt_engine, status)"
+                    " VALUES (%s,'shopping',NOW(),1,'google-stt','closed')",
+                    (call_id,),
+                )
+            await conn.commit()
+
+        repo = MySqlTranscriptSegmentRepository(connect)
+        await repo.record(TranscriptEvent(call_id=call_id, segment_id=segment_id, speaker="customer",
+                                          text=MASKED, is_final=True, utterance_end_ms=2600,
+                                          masked=(MaskedSpan(type="P4", span=(6, 17)),)))
+        # interim 은 저장되지 않아야 한다
+        await repo.record(TranscriptEvent(call_id=call_id, segment_id=segment_id + 1, speaker="customer",
+                                          text="중간 결과", is_final=False))
+
+        async with connect() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("SELECT text FROM transcript_segment WHERE segment_id=%s", (segment_id,))
+                stored = await cur.fetchone()
+                await cur.execute("SELECT COUNT(*) FROM transcript_segment WHERE segment_id=%s", (segment_id + 1,))
+                interim_rows = (await cur.fetchone())[0]
+                await cur.execute("SELECT pattern, span_start, span_end FROM masking_event WHERE segment_id=%s",
+                                  (segment_id,))
+                spans = await cur.fetchall()
+        return stored[0], interim_rows, spans
+
+    stored_text, interim_rows, spans = asyncio.run(scenario())
+
+    assert stored_text == MASKED
+    assert RAW_PHONE not in stored_text  # SEC-1 — 원문이 남지 않는다
+    assert interim_rows == 0  # 7.3절 — interim 은 저장하지 않는다
+    assert spans == (("P4", 6, 17),) or list(spans) == [("P4", 6, 17)]
