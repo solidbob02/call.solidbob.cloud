@@ -1,5 +1,9 @@
 # Requirement: C-5
-"""탐지 파이프라인 ③ — 패턴 매칭. P1~P5 는 정규식, P6·P7(인명·상세주소)은 NER 이라 여기 없다.
+"""탐지 파이프라인 ③ — 패턴 매칭. P1~P5 는 숫자 정규식, P6·P7 은 문맥·토큰 규칙이다.
+
+P6(인명)·P7(상세주소)은 [2.4절](/docs/02/)이 NER 로 정했지만 모델은 `ai/` 몫이라
+(계약 2 가 `server/` 의 `transformers` import 를 막는다) **규칙으로 바닥을 깔았다.**
+각 모듈의 docstring 이 무엇을 못 잡는지 적어 두었다 — NER 이 붙으면 폴백으로 남는다.
 
 **지표 우선순위를 코드에 고정한다** ([2.4절](/docs/02/)):
 
@@ -17,6 +21,8 @@ from __future__ import annotations
 import re
 
 from ..value_objects.pii_pattern import PiiSpan
+from .address_detector import detect_addresses
+from .name_detector import detect_names
 from .number_normalizer import sino_to_digits, strip_separators
 
 # P5 인증번호는 문맥이 있을 때만 잡는다 — 4~6자리 숫자는 금액·개수와 구분이 안 된다.
@@ -74,5 +80,10 @@ def _resolve_overlaps(spans: list[PiiSpan]) -> list[PiiSpan]:
 
 
 def detect(text: str) -> list[PiiSpan]:
-    """P1~P5 를 찾는다. 결과는 원문 오프셋 기준이고 시작 위치 순으로 정렬된다."""
-    return _resolve_overlaps(_detect_numeric(text) + _detect_auth_code(text))
+    """P1~P7 을 찾는다. 결과는 원문 오프셋 기준이고 시작 위치 순으로 정렬된다."""
+    return _resolve_overlaps(
+        _detect_numeric(text)
+        + _detect_auth_code(text)
+        + detect_names(text)
+        + detect_addresses(text)
+    )

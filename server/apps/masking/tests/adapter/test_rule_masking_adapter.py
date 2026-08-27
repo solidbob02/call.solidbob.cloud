@@ -3,6 +3,7 @@
 
 from hub.app.ports.output.masking_port import MaskingPort
 from masking.adapter.outbound.rule_masking_adapter import (
+    PARTIAL_PATTERNS,
     SUPPORTED_PATTERNS,
     UNSUPPORTED_PATTERNS,
     RuleMaskingAdapter,
@@ -21,9 +22,22 @@ def test_허브_DTO_형태로_돌려준다():
 
 
 def test_처리하는_패턴을_숨기지_않는다():
-    """P6·P7 은 NER 이 필요해 아직 없다. 평가 하네스가 '무엇을 못 잡는지' 알아야 한다."""
-    assert SUPPORTED_PATTERNS == ("P1", "P2", "P3", "P4", "P5")
-    assert UNSUPPORTED_PATTERNS == ("P6", "P7")
+    """2.4절 목록 7개에 전부 경로가 있다. 하나라도 빠지면 절대 규칙을 못 지킨다."""
+    assert SUPPORTED_PATTERNS == ("P1", "P2", "P3", "P4", "P5", "P6", "P7")
+    assert UNSUPPORTED_PATTERNS == ()
+
+
+def test_규칙으로만_잡는_패턴을_구분해서_드러낸다():
+    """P6·P7 은 명세상 NER 인데 규칙으로 깔았다. 평가 하네스가 수치를 해석하려면
+    '어떤 방식으로 잡았는지'를 알아야 한다 — 완전 지원과 뭉뚱그리지 않는다."""
+    assert PARTIAL_PATTERNS == ("P6", "P7")
+    assert set(PARTIAL_PATTERNS) <= set(SUPPORTED_PATTERNS)
+
+
+def test_P6_P7_도_어댑터_경로로_나온다():
+    masked, spans = RuleMaskingAdapter().mask("제 이름은 김민준이고 주소는 서울시 강남구 테헤란로 123번지예요")
+    assert {s.type for s in spans} == {"P6", "P7"}
+    assert "김민준" not in masked and "강남구" not in masked
 
 
 def test_개인정보가_없으면_빈_구간이다():
