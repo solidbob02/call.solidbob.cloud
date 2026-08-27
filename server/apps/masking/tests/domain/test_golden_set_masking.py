@@ -5,7 +5,13 @@
 입력을 보지만, 이 테스트는 **팀이 정답을 붙인 실제 발화**를 본다 — 골든셋이 커지면
 (50 → 150건) 자동으로 커버리지가 늘어난다.
 
-채점은 규칙 기반이다(절대 원칙 1) — 정답 구간의 모든 문자가 마스킹됐는지만 본다.
+채점은 규칙 기반이다(절대 원칙 1) — **정답 구간이 가려졌는지**와 **패턴 라벨이 맞는지**를
+둘 다 본다.
+
+⚠ 2026-08-27: 처음엔 글자만 봤다가 `ai/` 평가 하네스와 결과가 갈렸다. 하네스는
+`pii.pattern in predicted_patterns` 로 **라벨**을 보는데 이 테스트는 글자만 봐서
+`GS-030`(계좌번호를 P1 로 잘못 라벨)을 놓쳤다. **내 테스트가 하네스보다 약했다.**
+채점 기준이 갈리면 어느 쪽 수치를 믿어야 할지 알 수 없으므로 하네스에 맞춘다.
 """
 
 import json
@@ -58,3 +64,15 @@ def test_원문이_결과에_남지_않는다(case_id, utterance, expected):
     """SEC-1 — 마스킹 결과에 원본 값이 그대로 들어 있으면 안 된다."""
     masked, _ = mask_text(utterance)
     assert expected["raw_span"] not in masked, f"{case_id}: 원문이 그대로 남았다"
+
+
+@pytest.mark.parametrize("case_id, utterance, expected", CASES)
+def test_패턴_라벨이_정답과_같다(case_id, utterance, expected):
+    """글자가 가려져도 라벨이 틀리면 **화면·리포트가 거짓말한다** — 계좌번호를
+    "주민등록번호"로 표시한다. 평가 하네스도 라벨로 채점하므로 기준을 맞춘다."""
+    _, spans = mask_text(utterance)
+    predicted = {s.pattern for s in spans}
+    assert expected["pattern"] in predicted, (
+        f"{case_id}: 라벨이 다르다 — 기대 {expected['pattern']} / 실제 {sorted(predicted)}\n"
+        f"  발화: {utterance}"
+    )

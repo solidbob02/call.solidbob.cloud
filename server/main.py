@@ -25,6 +25,9 @@ from core.config import Settings, load_settings  # noqa: E402
 from hub.adapter.inbound.api.v1.card_feedback_router import card_feedback_router  # noqa: E402
 from hub.adapter.inbound.api.v1.closure_router import closure_router  # noqa: E402
 from hub.adapter.inbound.api.v1.compliance_router import compliance_router  # noqa: E402
+from hub.adapter.inbound.api.v1.knowledge_gap_query_router import (  # noqa: E402
+    knowledge_gap_query_router,
+)
 from hub.adapter.inbound.api.v1.knowledge_gap_router import knowledge_gap_router  # noqa: E402
 from hub.adapter.inbound.api.v1.myself_router import myself_router  # noqa: E402
 from hub.adapter.inbound.api.v1.postcall_router import postcall_router  # noqa: E402
@@ -52,6 +55,7 @@ app = FastAPI(
 app.include_router(card_feedback_router)
 app.include_router(closure_router)
 app.include_router(compliance_router)
+app.include_router(knowledge_gap_query_router)
 app.include_router(knowledge_gap_router)
 app.include_router(myself_router)
 app.include_router(postcall_router)
