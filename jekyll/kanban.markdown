@@ -33,7 +33,8 @@ permalink: /kanban/
   .role-ai{ background:rgba(245,166,35,.12); color:#F5A623; }
   .role-app{ background:rgba(255,230,168,.10); color:#FFE6A8; }
   .kanban .col.empty-hint{ color:#4d5568; font-size:0.8rem; }
-  .kanban .card .reqs{ display:flex; flex-wrap:wrap; gap:0.25rem; margin-top:0.4rem; }
+  .kanban .card .badges{ display:flex; flex-wrap:wrap; align-items:center; gap:0.3rem; margin-bottom:0.4rem; }
+  .kanban .card .badges .role{ margin-bottom:0; }
   .req{ font-family:'IBM Plex Mono',monospace; font-size:0.6rem; letter-spacing:.03em; font-weight:600; padding:0.1rem 0.4rem; border-radius:3px; white-space:nowrap; border:1px solid currentColor; }
   .req-A{ background:rgba(126,214,199,.12); color:#7ED6C7; }
   .req-B{ background:rgba(245,166,35,.12); color:#F5A623; }
@@ -44,10 +45,6 @@ permalink: /kanban/
   .req-G{ background:rgba(150,168,180,.12); color:#96A8B4; }
   .req-Q{ background:rgba(121,131,155,.14); color:#9AA3B8; }
   .req-S{ background:rgba(121,131,155,.14); color:#9AA3B8; }
-  .kb-cover{ margin:0 0 2rem; }
-  .kb-cover table{ width:100%; }
-  .kb-cover td:first-child{ white-space:nowrap; width:1%; }
-  .kb-cover .none{ color:#79839B; }
   .kb-nav-item .role{ display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:0.65rem; letter-spacing:.04em; font-weight:600; padding:0.15rem 0.5rem; border-radius:999px; white-space:nowrap; border:1px solid currentColor; }
   @keyframes kb-fade{ from{ opacity:0; } to{ opacity:1; } }
   @media (max-width:640px){
@@ -61,46 +58,6 @@ permalink: /kanban/
 
 담당자별 백로그입니다. **티켓 1건 = 파일 1개**(`jekyll/_backlogs/`)이므로 네 사람이 동시에 자기 티켓을 고쳐도 병합 충돌이 나지 않습니다.
 주차별 목표는 [8주 마일스톤](/docs/08/), 일자별 기록은 [개발 로그](/progress/), 아직 정하지 못한 것은 [미결 항목](/open-items/)에 있습니다.
-
-## 기능 ID 커버리지
-
-기획서의 [기능 ID](/docs/02/)를 티켓에 그대로 단다 — 코드 파일 상단의 `# Requirement: <ID>` 주석과 **같은 ID**라
-백로그에서 코드까지 한 줄로 이어진다. 티켓이 0건인 기능은 아직 아무도 손대지 않은 것이다.
-
-{% assign req_ids = "A-1,A-2,B-0,B-1,B-2,B-3,B-4,B-5,B-6,C-1,C-2,C-3,C-4,C-5,D-1,D-2,D-3,D-4,E-1,E-2,E-4,F-2,G-2,SEC-1,SEC-2,QUA-1,QUA-2,COST-1" | split: "," %}
-
-<div class="kb-cover" markdown="0">
-<table>
-<thead><tr><th>기능 ID</th><th>정의</th><th>티켓</th></tr></thead>
-<tbody>
-{% for rid in req_ids %}
-  {% assign hits = "" | split: "" %}
-  {% for t in site.backlogs %}
-    {% if t.requirement contains rid %}{% assign hits = hits | push: t %}{% endif %}
-  {% endfor %}
-  {% assign fam = rid | slice: 0 %}
-  <tr>
-    <td><span class="req req-{{ fam }}">{{ rid }}</span></td>
-    <td>{% case rid %}
-      {% when "A-1" %}스트리밍 STT{% when "A-2" %}화자 분리
-      {% when "B-0" %}도메인 라우팅{% when "B-1" %}트리거 판정{% when "B-2" %}하이브리드 검색{% when "B-3" %}리랭킹
-      {% when "B-4" %}카드 요약 생성{% when "B-5" %}카드 표시{% when "B-6" %}출처 표시·근거 부족 처리
-      {% when "C-1" %}확정적 보장 표현{% when "C-2" %}불필요한 민감정보 요구{% when "C-3" %}고지 누락{% when "C-4" %}대체 표현 제시
-      {% when "C-5" %}개인정보 실시간 마스킹 <strong>(코어)</strong>
-      {% when "D-1" %}상담 요약{% when "D-2" %}유형 분류{% when "D-3" %}후속조치 추출{% when "D-4" %}지식베이스 공백 리포트
-      {% when "E-1" %}골든셋 채점{% when "E-2" %}지연 분포{% when "E-4" %}리포트
-      {% when "F-2" %}종결 요건 검증 <em>(조건부)</em>{% when "G-2" %}지역 자원 연계 <em>(여유 시)</em>
-      {% when "SEC-1" %}개인정보 원본 미보관{% when "SEC-2" %}자격증명 분리
-      {% when "QUA-1" %}요구 ID별 자동화 테스트{% when "QUA-2" %}골든셋 회귀 자동화{% when "COST-1" %}STT 사용량 이중 캡
-    {% endcase %}</td>
-    <td>{% if hits.size == 0 %}<span class="none">— 티켓 없음</span>{% else %}{% for h in hits %}<a href="{{ h.url | relative_url }}">{{ h.title | truncate: 28 }}</a>{% unless forloop.last %} · {% endunless %}{% endfor %}{% endif %}</td>
-  </tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-
----
 
 {% assign statuses = "todo,in-progress,done" | split: "," %}
 {% assign team = "정성윤,류준,장민석,조서희" | split: "," %}
@@ -163,9 +120,49 @@ permalink: /kanban/
             {% endcase %}
             {% for item in column %}
             <div class="card">
-              <span class="role role-{{ item.role }}">{% case item.role %}{% when "infra" %}인프라{% when "ai" %}백엔드·AI{% when "app" %}프론트엔드{% else %}{{ item.role }}{% endcase %}</span><br>
+              <div class="badges">
+                <span class="role role-{{ item.role }}">{% case item.role %}{% when "infra" %}인프라{% when "ai" %}백엔드·AI{% when "app" %}프론트엔드{% else %}{{ item.role }}{% endcase %}</span>
+                {% assign feats = "" | split: "" %}
+                {% for r in item.requirement %}
+                  {% assign fam = r | slice: 0 %}
+                  {% case r %}
+                    {% when "A-1" %}{% assign nm = "실시간 자막" %}
+                    {% when "A-2" %}{% assign nm = "화자 분리" %}
+                    {% when "B-0" %}{% assign nm = "도메인 판별" %}
+                    {% when "B-1" %}{% assign nm = "추천 시점" %}
+                    {% when "B-2" %}{% assign nm = "문서 검색" %}
+                    {% when "B-3" %}{% assign nm = "문서 검색" %}
+                    {% when "B-4" %}{% assign nm = "추천 카드" %}
+                    {% when "B-5" %}{% assign nm = "추천 카드" %}
+                    {% when "B-6" %}{% assign nm = "카드 출처" %}
+                    {% when "C-1" %}{% assign nm = "실시간 경고" %}
+                    {% when "C-2" %}{% assign nm = "실시간 경고" %}
+                    {% when "C-3" %}{% assign nm = "실시간 경고" %}
+                    {% when "C-4" %}{% assign nm = "대체 표현" %}
+                    {% when "C-5" %}{% assign nm = "개인정보 마스킹" %}
+                    {% when "D-1" %}{% assign nm = "통화 후 요약" %}
+                    {% when "D-2" %}{% assign nm = "통화 후 요약" %}
+                    {% when "D-3" %}{% assign nm = "후속조치" %}
+                    {% when "D-4" %}{% assign nm = "공백 리포트" %}
+                    {% when "E-1" %}{% assign nm = "평가 하네스" %}
+                    {% when "E-2" %}{% assign nm = "평가 하네스" %}
+                    {% when "E-4" %}{% assign nm = "평가 하네스" %}
+                    {% when "F-2" %}{% assign nm = "종결 요건" %}
+                    {% when "G-2" %}{% assign nm = "자원 연계" %}
+                    {% when "SEC-1" %}{% assign nm = "원본 미보관" %}
+                    {% when "SEC-2" %}{% assign nm = "자격증명 분리" %}
+                    {% when "QUA-1" %}{% assign nm = "테스트 자동화" %}
+                    {% when "QUA-2" %}{% assign nm = "골든셋 회귀" %}
+                    {% when "COST-1" %}{% assign nm = "STT 비용 가드" %}
+                    {% else %}{% assign nm = r %}
+                  {% endcase %}
+                  {% capture pair %}{{ fam }}|{{ nm }}{% endcapture %}
+                  {% assign feats = feats | push: pair %}
+                {% endfor %}
+                {% assign feats = feats | uniq %}
+                {% for f in feats %}{% assign parts = f | split: "|" %}<span class="req req-{{ parts[0] }}" title="기능 ID: {{ item.requirement | join: ', ' }}">{{ parts[1] }}</span>{% endfor %}
+              </div>
               <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
-              {% if item.requirement %}<div class="reqs">{% for r in item.requirement %}{% assign fam = r | slice: 0 %}<span class="req req-{{ fam }}" title="기능 ID {{ r }}">{{ r }}</span>{% endfor %}</div>{% endif %}
             </div>
             {% endfor %}
             {% if column.size == 0 %}<div class="empty-hint">없음</div>{% endif %}
@@ -209,7 +206,7 @@ paths:                    # (선택) 이 티켓 소관 파일 — 붙여두면 �
   - "apps/dashboard/*"
 depends_on:               # (선택) 앞 단계 티켓. 일부러 나눈 단계는 중복 경고에서 빠집니다
   - "w2-baseline"
-requirement:              # (선택) 이 티켓이 만드는 기능 ID — 위 커버리지 표에 집계됩니다
+requirement:              # (선택) 이 티켓이 만드는 기능 ID — 카드에 기능 이름 배지로 붙습니다
   - "B-2"
 ---
 
@@ -221,7 +218,15 @@ requirement:              # (선택) 이 티켓이 만드는 기능 ID — 위 �
 
 `requirement` 는 기획서의 [기능 ID](/docs/02/)를 그대로 씁니다 — 새 접두어를 만들지 않습니다.
 같은 ID를 코드 파일 상단에도 `# Requirement: B-2` 로 답니다. **두 곳이 같은 ID라 백로그에서 코드까지
-추적이 이어집니다.** 배포·저장소 정리처럼 기능 ID 대상이 아닌 티켓은 비워 둡니다.
+추적이 이어집니다.**
+
+보드에는 ID 가 아니라 **기능 이름**(「실시간 자막」·「문서 검색」·「추천 카드」…)으로 뜹니다.
+프론트엔드가 카드만 보고 **어느 화면을 짜야 하는지** 바로 알 수 있게 하기 위해서입니다 —
+`A-1`·`SEC-1` 같은 코드는 화면을 만드는 쪽에서 읽히지 않습니다. ID→이름 대응은 `kanban.markdown`
+안의 `case` 블록에 있고, 같은 이름으로 겹치면 배지 하나로 합칩니다(`D-1`+`D-2` → 「통화 후 요약」).
+정확한 ID 는 배지에 마우스를 올리면 보입니다.
+
+배포·저장소 정리처럼 기능 ID 대상이 아닌 티켓은 비워 둡니다.
 
 세션을 끝낼 때 `python3 scripts/check_session_end.py` 를 돌리면 상태가 실제와 어긋난 티켓과
 중복 티켓을 알려줍니다. 진행 기록을 빠뜨리면 `Stop` 훅이 세션을 끝내지 못하게 막습니다.
