@@ -50,7 +50,7 @@ ai/
   apps/
     retrieval/          B-1~B-3 검색
       domain/           청킹 규칙 · 랭킹 산식 — 순수 파이썬
-      adapter/outbound/ 지식베이스 로더 · (예정) ES 클라이언트 · 모델 로더
+      adapter/outbound/ 지식베이스 로더 · ES 색인(es_index.py) · (예정) 모델 로더
       tests/
     evaluation/         E-1~E-4 평가 하네스
       golden_set.py     골든셋 로더

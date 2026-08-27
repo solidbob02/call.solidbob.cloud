@@ -70,7 +70,19 @@
 | `manual/` | 응대 매뉴얼 | `FIN-MANUAL-3.1`, `HLT-MANUAL-1.1` | B 검색 대상 + C-4 대체 표현 출처(1.4) + F-2 근거(해당 도메인만) |
 | `policy/` | 내부 처리 규정 | `FIN-POLICY-CLOSE-1`, `SHOP-POLICY-RETURN-1`, `DASAN-POLICY-1`(미적용 선언) | **F-2 게이트가 직접 참조** |
 
-ES는 도메인별 별도 인덱스 또는 같은 인덱스의 `domain` 필드 — 어느 쪽인지 미결(`knowledge-base/README.md`, 아키텍처 3절 갱신 대기).
+ES 는 **단일 인덱스 `callguard-kb-single` + `domain` 필터**로 간다(2026-08-27, `_project/decisions/017`).
+조항이 102개뿐이라 도메인별로 나누면 인덱스당 20~34건이 되어 BM25 IDF 가 불안정해지고,
+얻는 이점(도메인별 독립 재적재)은 전체 재적재가 1초도 안 걸리는 지금 있으나 마나다.
+⚠ 이건 **판단이지 실측이 아니다** — 점수를 내려면 검색 구현체가 있어야 하는데 아직 없다.
+
+**도메인이 늘면 도메인별 인덱스로 전환한다.** 볼륨 증가만으로는 바꾸지 않는다(청크가 1000배
+늘어도 40MB 다). 전환 조건은 ① 도메인이 4개를 넘어 크게 늘어남(필터 선택도가 떨어져 filtered
+HNSW recall 이 무너진다) ② 단일 인덱스가 샤드 2개 이상 필요(BM25 점수는 **샤드 단위**라 그때
+"전역 IDF" 장점이 사라진다) ③ 전체 재색인이 오래 걸림 ④ 도메인별 보존기간·권한 분리.
+전환 방법은 **alias 를 앞에 세우는 것** — 쓰기는 도메인별 인덱스, 읽기는 `callguard-kb` alias.
+코드는 이미 양쪽을 지원한다: `ai/apps/retrieval/adapter/outbound/es_index.py`,
+`scripts/index_knowledge_base.py --to-es [--layout per-domain]`.
+⚠ 양쪽을 동시에 적재해 두면 `callguard-kb-*` 와일드카드가 같은 조항을 두 번 센다.
 
 ---
 
