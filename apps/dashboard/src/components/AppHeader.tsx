@@ -56,6 +56,19 @@ export function AppHeader({ onReplay, onEndCall }: AppHeaderProps): ReactElement
             disabled={!hasCall}
             title={hasCall ? undefined : "아직 통화 내용이 없습니다"}
           >
+            <svg
+              className="btn-outline-icon"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="6.25" y="6.25" width="11.5" height="11.5" rx="1.5" />
+            </svg>
             통화 종료
           </button>
         ) : null}

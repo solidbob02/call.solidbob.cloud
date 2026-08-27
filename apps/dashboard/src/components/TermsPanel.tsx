@@ -127,6 +127,7 @@ function ManualSearchBar({
         >
           <SearchIcon />
           관련 문서를 못 찾으셨나요?
+          <ChevronRightIcon />
         </button>
       </div>
     );
@@ -232,14 +233,7 @@ function TermCard({
             {category}
           </p>
           {manual ? <span className="card-flag">수동 검색</span> : null}
-          {/* 종결 카드는 하단이 이미 꽉 차 있어 토글을 배지 옆에 둔다. */}
-          {closure !== null ? (
-            <AdoptToggle compact adopted={adopted} onToggle={onAdopt} />
-          ) : adopted ? (
-            <span className="adopt-mark" title="이 카드를 사용했습니다">
-              <TickIcon />
-            </span>
-          ) : null}
+          <AdoptToggle adopted={adopted} onToggle={onAdopt} />
         </div>
         <h3>{item.card.title}</h3>
         <p className="card-summary">{item.card.summary}</p>
@@ -256,9 +250,7 @@ function TermCard({
               settleClosure(closure.closure_type);
             }}
           />
-        ) : (
-          <AdoptToggle adopted={adopted} onToggle={onAdopt} />
-        )}
+        ) : null}
       </div>
     </article>
   );
@@ -271,25 +263,23 @@ function TermCard({
 function AdoptToggle({
   adopted,
   onToggle,
-  compact = false,
 }: {
   adopted: boolean;
   onToggle: () => void;
-  compact?: boolean;
 }): ReactElement {
   return (
     <button
       type="button"
-      className={`adopt-toggle${adopted ? " on" : ""}${compact ? " compact" : ""}`}
+      className={`adopt-toggle${adopted ? " on" : ""}`}
       aria-pressed={adopted}
-      aria-label={adopted ? "사용함" : "사용 표시"}
-      title={adopted ? "사용함" : "사용 표시"}
+      aria-label="사용 표시"
+      title="사용 표시"
       onClick={onToggle}
     >
       <span className="adopt-box" aria-hidden="true">
-        <TickIcon />
+        {adopted ? <CircleCheckIcon /> : null}
       </span>
-      {compact ? null : <span>{adopted ? "사용함" : "사용 표시"}</span>}
+      <span>사용 표시</span>
     </button>
   );
 }
@@ -355,7 +345,7 @@ function ProgressRing({
 
   return (
     <svg
-      className="progress-ring"
+      className={`progress-ring${met === total && total > 0 ? " is-complete" : ""}`}
       width={size}
       height={size}
       viewBox={`0 0 ${size} ${size}`}
@@ -414,6 +404,46 @@ function SearchIcon(): ReactElement {
   );
 }
 
+function ChevronRightIcon(): ReactElement {
+  return (
+    <svg
+      className="manual-search-chevron"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M9 6 15 12 9 18" />
+    </svg>
+  );
+}
+
+function CircleCheckIcon(): ReactElement {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+    >
+      <circle cx="8" cy="8" r="8" fill="currentColor" />
+      <path
+        d="M4.4 8.15 6.85 10.5 11.6 5.5"
+        fill="none"
+        stroke="#fff"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function FileTextIcon(): ReactElement {
   return (
     <svg
@@ -438,24 +468,6 @@ function FileTextIcon(): ReactElement {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-    </svg>
-  );
-}
-
-function TickIcon(): ReactElement {
-  return (
-    <svg
-      viewBox="0 0 16 16"
-      width="11"
-      height="11"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M3.4 8.2 6.5 11.1 12.6 4.8" />
     </svg>
   );
 }
