@@ -75,3 +75,53 @@ def test_채점_단위는_chunk_id_가_아니라_doc_id_다():
 
     report = run_eval(items, Ports(retrieval=EsBm25Retriever(SplitChunkClient(answer))))
     assert report["retrieval"]["recall_at_k"] > 0
+
+
+# ── C-5 마스킹 · F-2 게이트 배선 (2026-08-27 추가) ───────────────────────────
+#
+# 두 스포크는 `server/apps/` 에 산다. 규칙 기반 판정이라 요청 경로에서 매번 실행되기
+# 때문이다(`server/CLAUDE.md` §0). `scripts/run_eval.py` 가 두 모듈 밖의 합성 루트라
+# 거기서 꽂는다 — 의존 방향(ai → server)에도, 모듈 상호 독립 계약에도 걸리지 않는다.
+
+import importlib.util  # noqa: E402
+
+RUN_EVAL = Path(__file__).resolve().parents[2] / "scripts" / "run_eval.py"
+
+
+def _run_eval_module():
+    """`scripts/run_eval.py` 를 파일 경로로 불러온다 — 패키지가 아니라 스크립트다."""
+    spec = importlib.util.spec_from_file_location("run_eval", RUN_EVAL)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_합성_루트가_마스킹과_F2를_꽂는다():
+    """배선이 끊기면 하네스가 다시 「측정 불가」로 돌아간다 — 그 회귀를 여기서 잡는다."""
+    ports = _run_eval_module().build_ports(None, index="x")   # ES 없이
+    assert ports.masking is not None, "C-5 마스킹이 꽂히지 않았다"
+    assert ports.closure_gate is not None, "F-2 게이트가 꽂히지 않았다"
+
+
+def test_ES가_없어도_마스킹과_F2는_채점된다():
+    """둘 다 외부 의존이 없는 순수 규칙이다 — ES 가 꺼져 있어도 숫자가 나와야 한다.
+    검색만 「측정 불가」로 남는 것이 정상이다."""
+    ports = _run_eval_module().build_ports(None, index="x")
+    report = run_eval(load_golden_set(GOLDEN_SET), ports)
+
+    assert report["retrieval"] == NOT_IMPLEMENTED          # ES 가 없으니 당연하다
+    assert isinstance(report["masking"], dict), "마스킹이 '미구현'으로 보고됐다"
+    assert isinstance(report["closure_gate"], dict), "F-2 가 '미구현'으로 보고됐다"
+    assert report["masking"]["n"] > 0 and report["closure_gate"]["n"] > 0
+
+
+def test_절대_규칙은_건_단위로_보고된다():
+    """[6.2절](/docs/06/) — 평균이 아니라 1건이라도 뚫리면 실패다.
+    하네스가 그 판정을 내주는지(필드가 살아 있는지) 확인한다."""
+    ports = _run_eval_module().build_ports(None, index="x")
+    report = run_eval(load_golden_set(GOLDEN_SET), ports)
+
+    assert report["masking"]["absolute_rule_passed"] is True, (
+        f"C-5 누락 {report['masking']['miss_count']}건 — {report['masking']['missed_items']}")
+    assert report["closure_gate"]["absolute_rule_passed"] is True, (
+        f"F-2 오판정 — {report['closure_gate']['failed_items']}")

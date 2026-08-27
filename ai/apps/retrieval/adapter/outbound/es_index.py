@@ -63,12 +63,36 @@ def index_name_for(chunk: Chunk, layout: Layout) -> str:
     return f"{INDEX_PREFIX}-{chunk.domain}"
 
 
+# 사전에 없어서 nori 가 **명사를 용언으로 오분석**하는 도메인 용어들.
+# 형식: "표제어 조각1 조각2 …" (조각을 안 적으면 통째로 한 토큰)
+#
+# 2026-08-27 실측으로 찾았다 — 조항 제목의 4글자 이상 명사 24개를 `_analyze` 에 넣어
+# 용언 활용 토큰(하·되·았·ᆫ·ᄆ …)이 섞이는 것만 골랐다.
+#
+#   중도해지수수료  → 중도 · 해 · 하 · 아 · 지수 · 수료   ("해지"가 "하+아+지" 로 분해)
+#   생활하수도      → 생활 · 하 · 수도 · ᆯ · 수 · 도     ("하수도"가 "하+수도" 로 분해)
+#   에스컬레이션    → 에스 · 컬 · 커 · ᆯ · 레 · 이 · 션   (외래어, 통째로 깨짐)
+#
+# ⚠ `mixed` 는 멀쩡하다 — "수수료" 는 `수수료·수수·료` 로 원형+조각을 제대로 낸다.
+#   문제는 **mecab-ko-dic 에 없는 말**이라 미등록어 분해로 떨어지는 것이다.
+#   (초안 주석이 "mixed 가 원형을 남긴다"고 일반화해 적었던 것은 틀렸다 —
+#    사전에 복합명사로 등재된 것에만 그렇다.)
+USER_DICTIONARY_RULES = (
+    "중도해지수수료 중도 해지 수수료",
+    "생활하수도 생활 하수도",
+    "에스컬레이션",
+)
+
+
 def build_settings() -> dict[str, Any]:
     """nori 형태소 분석 + 샤드 1개.
 
-    `decompound_mode: mixed` 는 복합명사를 원형과 조각 양쪽으로 남긴다("중도해지수수료" →
-    원형 + 중도/해지/수수료). 상담 발화는 조각으로, 약관 조항은 원형으로 쓰이는 일이 많아
-    한쪽만 남기면 매칭이 끊긴다.
+    `decompound_mode: mixed` 는 **사전에 복합명사로 등재된 말**을 원형과 조각 양쪽으로
+    남긴다("수수료" → 수수료 · 수수 · 료). 상담 발화는 조각으로, 약관 조항은 원형으로
+    쓰이는 일이 많아 한쪽만 남기면 매칭이 끊긴다.
+
+    사전에 **없는** 도메인 용어는 `USER_DICTIONARY_RULES` 로 알려 준다 — 안 그러면 명사가
+    용언으로 오분석돼 `하`·`ᆯ` 같은 흔한 토큰이 섞이고, 그 토큰들이 관계없는 문서와 매칭된다.
 
     ⚠ nori 는 `analysis-nori` 플러그인이다. 기본 이미지에 없으면 인덱스 생성이 실패한다
     (`infra/docker-compose.yml` 주석 참고).
@@ -78,7 +102,11 @@ def build_settings() -> dict[str, Any]:
         "number_of_replicas": 0,  # 단일 노드 로컬/데모. 복제본을 두면 상태가 yellow 로 남는다
         "analysis": {
             "tokenizer": {
-                "kb_nori": {"type": "nori_tokenizer", "decompound_mode": "mixed"},
+                "kb_nori": {
+                    "type": "nori_tokenizer",
+                    "decompound_mode": "mixed",
+                    "user_dictionary_rules": list(USER_DICTIONARY_RULES),
+                },
             },
             "analyzer": {
                 "korean": {

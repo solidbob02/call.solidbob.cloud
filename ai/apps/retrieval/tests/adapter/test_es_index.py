@@ -80,6 +80,13 @@ def test_본문은_nori_로_분석한다():
     assert analysis["analyzer"]["korean"]["tokenizer"] == "kb_nori"
 
 
+def test_사전에_없는_도메인_용어를_사용자_사전에_등록한다():
+    """nori 가 명사를 용언으로 오분석하던 것들. 2026-08-27 `_analyze` 실측으로 찾았다."""
+    rules = es_index.build_settings()["analysis"]["tokenizer"]["kb_nori"]["user_dictionary_rules"]
+    assert "중도해지수수료 중도 해지 수수료" in rules
+    assert any(r.startswith("생활하수도") for r in rules)
+
+
 def test_샤드는_하나로_고정한다():
     """BM25 term statistics 는 샤드 단위다. 샤드 수가 다르면 레이아웃 비교의 교란 변수가 된다."""
     assert es_index.build_settings()["number_of_shards"] == 1
@@ -149,6 +156,29 @@ def test_같은_명령으로_재적재가_재현된다(client, chunks, layout):
     second = es_index.index_chunks(client, chunks, layout)  # recreate 없이 그대로 다시
     assert second == first
     assert _all_ids(client, layout) == ids_first
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    "term, expected_head",
+    [
+        ("중도해지수수료", "중도해지수수료"),
+        ("생활하수도", "생활하수도"),
+        ("에스컬레이션", "에스컬레이션"),
+    ],
+)
+def test_사용자_사전이_실제로_먹는다(client, term, expected_head):
+    """사전이 빠지면 "중도해지수수료" 가 `중도·해·하·아·지수·수료` 로 깨진다.
+
+    `하`·`ᆯ` 같은 흔한 토큰이 섞이면 관계없는 문서와 매칭되고 IDF 도 오염된다.
+    """
+    es_index.create_indices(client, "single", recreate=True)
+    resp = client.indices.analyze(
+        index=es_index.SINGLE_INDEX, analyzer="korean", text=term
+    )
+    tokens = [t["token"] for t in resp["tokens"]]
+    assert tokens[0] == expected_head, f"원형이 남지 않았다: {tokens}"
+    assert not any(len(t) == 1 for t in tokens), f"1글자 오분석 토큰이 있다: {tokens}"
 
 
 @pytest.mark.integration
