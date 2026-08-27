@@ -120,6 +120,16 @@ CREATE TABLE `recommendation_card` (
     FOREIGN KEY (`source_doc_id`) REFERENCES `document`(`document_id`)
 );
 
+-- 카드 채택·무시 기록 (E-1) — 상담원이 추천을 실제로 썼는지. recommendation_card에 컬럼을 더하지 않고 분리한 이유: 피드백은 카드 내용과 다른 사실이고 자체 시각을 갖는다. 카드 하나에 이벤트가 여러 번 붙을 수 있어(채택→취소) 이력이 남아야 한다 — masking_event·compliance_flag와 같은 이벤트 테이블 패턴. ⚠ 상담원 단위로 집계해 점수·순위를 만들지 않는다(부록 A-1) — 카드 품질을 재는 데이터다
+CREATE TABLE `card_feedback` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `card_id` BIGINT NOT NULL,
+    `action` ENUM('adopted','ignored') NOT NULL,
+    `created_at` DATETIME NOT NULL,
+    PRIMARY KEY (`id`),
+    FOREIGN KEY (`card_id`) REFERENCES `recommendation_card`(`card_id`)
+);
+
 -- F-2 종결 판정 — evidence 필드를 역정규화(POLICY 문서 참고)해 하나의 넓은 표로 관리. F-2는 종결형 처리가 있는 금융보험·쇼핑에만 적용된다([1.4절](/docs/01/)) — 다산콜센터·질병관리본부는 안내형 업무라 이 테이블에 행이 생기지 않는다
 CREATE TABLE `closure` (
     `closure_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT 'append-only: UPDATE 없이 INSERT만 (F-4)',

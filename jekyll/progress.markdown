@@ -5,6 +5,9 @@ permalink: /progress/
 ---
 
 ### 2026-08-27
+- **카드 피드백(E-1) 구현 + 스키마 변경**(`w7-card-feedback` done). `POST /hub/cards/{card_id}/feedback`. **`card_feedback` 테이블 신설(16→17개)** — `recommendation_card` 에 컬럼을 더하지 않고 분리했다. 피드백은 카드 내용과 다른 사실이고 자체 시각을 가지며, 카드 하나에 이벤트가 여러 번 붙을 수 있다(채택→취소). `masking_event`·`compliance_flag` 와 같은 **이벤트 테이블 패턴**이고 3NF 에도 맞는다. append-only
+- **⚠ 부록 A-1 — 상담원 식별자를 아예 받지 않는다.** 이 데이터는 **카드 품질**을 재는 것이지 사람을 재는 것이 아니다. `CardFeedback` DTO 와 요청 스키마에 `agent_id` 가 없어 **상담원 단위 집계를 만들 수 없다** — 받지 않으면 만들 수도 없다. 요청에 넣어도 무시되는 것을 테스트로 고정했다
+- **이로써 `server/` 엔드포인트 11개가 전부 배선됐다** — 전사 수신·조회 · 추천 파이프라인 · 컴플라이언스 · 종결 게이트 · 통화 후 처리 · 수동 검색 · 공백 신고 · 카드 피드백. `pytest` **125개 + integration 1개** 통과, 계약 3종 KEPT
 - **조회·수집 API 2건 구현**(`w3-transcript-query-api`·`w4-knowledge-gap-intake` done). MySQL 이 뜨면서 막힘이 풀린 것들이다. `GET /hub/calls/{id}/transcript` · `POST /hub/knowledge-gaps`. `pytest` **114개 통과**(87→114), 계약 3종 KEPT
 - **기록 포트와 조회 포트를 나눴다** — 쓰기는 파이프라인 입구(마스킹 직후), 읽기는 상담원이 화면에서 되돌아볼 때 일어난다. 한 포트에 묶으면 쓰기만 필요한 곳도 조회 구현을 갖게 된다
 - **interim 중복은 조회에서 따로 걸러낼 것이 없었다** — 영속성 계층이 이미 `is_final=true` 만 저장한다([7.3절](/docs/07/)). `total` 은 확정 발화 총수다

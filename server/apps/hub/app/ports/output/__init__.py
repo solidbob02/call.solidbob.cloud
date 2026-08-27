@@ -10,6 +10,7 @@ dependencies/ 에서 결합한다. **이 포트들이 유일한 계약이다** �
 - *RecordPort ← 각 슬라이스 인터랙터
 """
 
+from .card_feedback_port import CardFeedbackPort
 from .closure_gate_port import ClosureGatePort
 from .compliance_port import CompliancePort
 from .domain_routing_port import DomainRoutingPort
@@ -24,6 +25,7 @@ from .transcript_query_port import TranscriptQueryPort
 from .trigger_port import TriggerPort
 
 __all__ = [
+    "CardFeedbackPort",
     "ClosureGatePort",
     "CompliancePort",
     "DomainRoutingPort",

@@ -83,3 +83,53 @@ def test_공백신고_모듈은_B_C_F만_받는다():
         assert r.status_code == 422
     finally:
         app.dependency_overrides.clear()
+
+
+# ── 카드 피드백 (E-1) ─────────────────────────────────────────────────────────
+
+from hub.app.ports.output import CardFeedbackPort  # noqa: E402
+from hub.dependencies.card_feedback_provider import get_card_feedback_port  # noqa: E402
+
+
+class _Feedback(CardFeedbackPort):
+    async def append(self, feedback):
+        return 501234
+
+
+def test_카드피드백_MySQL_미설정이면_501이다():
+    with TestClient(app) as client:
+        r = client.post("/hub/cards/42/feedback", json={"action": "adopted"})
+    assert r.status_code == 501
+
+
+def test_카드피드백이_접수되면_201이다():
+    app.dependency_overrides[get_card_feedback_port] = lambda: _Feedback()
+    try:
+        with TestClient(app) as client:
+            r = client.post("/hub/cards/42/feedback", json={"action": "adopted"})
+        assert r.status_code == 201
+        assert r.json() == {"feedback_id": 501234, "card_id": 42, "action": "adopted"}
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_카드피드백_요청에_상담원_필드를_넣어도_무시된다():
+    """부록 A-1 — 스키마에 agent_id 가 없어 상담원 단위 집계를 만들 수 없다."""
+    app.dependency_overrides[get_card_feedback_port] = lambda: _Feedback()
+    try:
+        with TestClient(app) as client:
+            r = client.post("/hub/cards/42/feedback", json={"action": "adopted", "agent_id": "a_01"})
+        assert r.status_code == 201
+        assert "agent_id" not in r.json()
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_카드피드백_action은_두_값만_받는다():
+    app.dependency_overrides[get_card_feedback_port] = lambda: _Feedback()
+    try:
+        with TestClient(app) as client:
+            r = client.post("/hub/cards/42/feedback", json={"action": "maybe"})
+        assert r.status_code == 422
+    finally:
+        app.dependency_overrides.clear()
