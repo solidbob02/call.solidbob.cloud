@@ -52,12 +52,22 @@ ai/
       domain/           청킹 규칙 · 랭킹 산식 — 순수 파이썬
       adapter/outbound/ 지식베이스 로더 · ES 색인(es_index.py) · (예정) 모델 로더
       tests/
+    training/           B-0 도메인 분류기 학습·추론
+      domain/services/  AI Hub 표기 ↔ 도메인 코드 매핑 — 순수
+      adapter/outbound/ 데이터 로더 · KcELECTRA 파인튜닝 · 추론 어댑터
+      tests/
     evaluation/         E-1~E-4 평가 하네스
       golden_set.py     골든셋 로더
       harness.py        hub 포트를 소비해 각 모듈을 채점
       metrics/          retrieval · trigger · masking · compliance · closure_gate · domain_routing · latency
       tests/
+  provider.py           **합성 루트** — server/main.py 가 스포크를 꽂는 지점
+  tests/                합성 루트 전용 (모듈끼리 못 보는 것을 여기서 교차 검증)
 ```
+
+**`provider.py`·`tests/` 가 `apps/` 밖에 있는 이유**: `retrieval`·`training`·`evaluation` 은
+서로를 import 할 수 없다(`.importlinter` 계약 2 — **테스트도 계약 대상이다**). 두 모듈을
+동시에 아는 코드는 계약 밖에 둔다. `server/main.py`·`server/tests/` 와 같은 자리다.
 
 **예정 모듈** — 실제로 만들 때 `.importlinter` 의 `root_packages` 와 계약 1·2 목록에 추가한다.
 
@@ -65,8 +75,9 @@ ai/
 |---|---|---|
 | `generation` | 근거 기반 카드 생성 · 출처 표시 | B-4~B-6 |
 | `compliance` | 컴플라이언스 탐지 분류기 | C-1~C-4 |
-| `training` | 도메인 분류기(B-0) 등 모델 학습 | B-0 |
 | `orchestration` | 랭그래프 파이프라인 | — |
+
+`training` 은 2026-08-27 에 만들어졌다(B-0 분류기).
 
 ---
 

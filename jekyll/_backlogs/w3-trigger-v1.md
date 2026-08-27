@@ -58,7 +58,7 @@ paths:
 - [x] `should_fire` / `fire_at_ms` — 순수 규칙, `domain/services/trigger.py`
 - [x] `IsFinalTrigger` — `TriggerPort` 구현, `adapter/outbound/`
 - [x] 테스트 19건 (규칙 11 + 포트 8)
-- [x] `server/main.py` 에서 한 줄로 꽂을 수 있는 팩토리(`retrieval.provider.build_trigger_provider`)
+- [x] `server/main.py` 에서 한 줄로 꽂을 수 있는 팩토리(`ai/provider.py` — 2026-08-27 `retrieval/` 밖으로 옮겼다)
 - [ ] **`server/main.py` 실제 배선은 장민석 님 몫** — 아래 안내 참고
 
 ## 장민석 님께 — 배선 방법
@@ -68,9 +68,10 @@ paths:
 
 ```python
 # server/main.py
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "ai" / "apps"))
+AI = Path(__file__).resolve().parent.parent / "ai"
+sys.path[:0] = [str(AI / "apps"), str(AI)]   # 앞은 retrieval·training, 뒤는 provider.py
 
-from retrieval.provider import build_retrieval_provider, build_trigger_provider
+from provider import build_retrieval_provider, build_trigger_provider
 from hub.dependencies.retrieval_provider import get_retrieval_port
 from hub.dependencies.trigger_provider import get_trigger_port
 

@@ -73,8 +73,17 @@ def run_eval(items: list[GoldenItem], ports: Ports) -> dict:
     report: dict = {}
 
     # B-0: 도메인 라우팅 (자동 분류) — 정답 도메인이 있고 분류할 발화 텍스트가 있는 항목만 채점
+    # B-0 은 **통화 초반 고객 발화로 도메인을 판정**하는 것이다(`decisions/007`).
+    # 그래서 B(검색) 항목만 채점한다 — C·C-5 항목의 발화는 마스킹·컴플라이언스 시나리오라
+    # 도메인 단서가 **아예 없다**("본인 확인을 위해서 주민등록번호를 불러주시겠어요?" 가
+    # 어느 도메인인지 텍스트만 보고는 알 수 없다. 그 항목의 domain 은 "어느 시나리오에
+    # 속하는가"를 적은 메타데이터이지 발화에서 추론할 대상이 아니다).
+    #
+    # 2026-08-27 실측으로 발견했다. 34건 전체로 재면 검색 v1 0.647 / 분류기 0.588 인데,
+    # B 14건만 보면 0.857 / 0.786 이다 — 나머지 20건에서 둘 다 0.45~0.50(사실상 찍기)이라
+    # **측정할 수 없는 것을 섞어 재고 있었다**(절대 원칙 10).
     domain_items = [
-        it for it in items if it.domain is not None and (it.customer_utterance or it.agent_utterance)
+        it for it in items if it.module == "B" and it.domain is not None and it.customer_utterance
     ]
     if ports.domain_routing is None:
         report["domain_routing"] = NOT_IMPLEMENTED

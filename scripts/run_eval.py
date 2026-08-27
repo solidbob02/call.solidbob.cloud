@@ -38,6 +38,8 @@ from retrieval.adapter.outbound.es_bm25_retriever import EsBm25Retriever  # noqa
 from retrieval.adapter.outbound.es_index import SINGLE_INDEX  # noqa: E402
 from retrieval.adapter.outbound.search_domain_router import SearchDomainRouter  # noqa: E402
 
+DEFAULT_CLASSIFIER_DIR = ROOT / "models" / "domain-classifier"
+
 
 def _es_client(url: str | None):
     """ES 클라이언트. 없으면 None 을 돌려주고 검색은 "미구현"으로 보고된다.
@@ -59,7 +61,29 @@ def _es_client(url: str | None):
     return client
 
 
-def build_ports(client, *, index: str) -> Ports:
+def build_domain_router(kind: str, retriever, *, model_dir: Path):
+    """B-0 라우터를 고른다. `decisions/007` 의 ①(분류기) / ②(검색 폴백)에 대응한다.
+
+    `auto` — 학습된 분류기가 있으면 ①, 없으면 ②. 모델 산출물은 gitignore 라 사람마다
+    있고 없고가 갈리는데, 없다고 채점이 멈추면 안 되고 **어느 쪽으로 쟀는지는 드러나야 한다.**
+    """
+    if kind == "none":
+        return None
+    if kind in ("model", "auto") and model_dir.is_dir():
+        from training.adapter.outbound.model_domain_router import ModelDomainRouter
+
+        print(f"B-0: 분류기 사용 — {model_dir}")
+        return ModelDomainRouter(model_dir)
+    if kind == "model":
+        raise SystemExit(
+            f"분류기가 없다: {model_dir}\n"
+            "  .venv/bin/python scripts/train_domain_classifier.py 로 먼저 학습한다"
+        )
+    print("B-0: 검색 기반 v1 사용 (분류기 없음)")
+    return SearchDomainRouter(retriever)
+
+
+def build_ports(client, *, index: str, domain_router: str, model_dir: Path) -> Ports:
     """구현된 스포크만 꽂는다. 나머지는 None — 하네스가 "미구현"으로 보고한다."""
     if client is None:
         return Ports()
@@ -67,10 +91,7 @@ def build_ports(client, *, index: str) -> Ports:
     retriever = EsBm25Retriever(client, index=index)
     return Ports(
         retrieval=retriever,
-        # B-0 v1 — 분류 모델이 아니라 검색 결과의 도메인 분포로 판정한다.
-        # 학습 데이터가 없어서다(골든셋은 평가 세트다 — 학습에 쓰면 그 라벨로 다시 못 잰다).
-        # decisions/007 이 폴백으로 설계한 경로를 1차로 쓰는 것이다. 자세한 건 모듈 docstring.
-        domain_routing=SearchDomainRouter(retriever),
+        domain_routing=build_domain_router(domain_router, retriever, model_dir=model_dir),
         # ⚠ trigger 는 **구현이 있는데도 일부러 꽂지 않는다**(IsFinalTrigger, B-1).
         #   TranscriptEvent 에 이벤트 도착 시각이 없어서 발동 시각을 "발화 종료 + STT 지연
         #   상수(346ms)"로 모형화하고 있다. 그대로 채점하면 지연 분포가 상수 하나로 수렴해
@@ -88,6 +109,13 @@ def main() -> int:
     ap.add_argument("--golden-set", type=Path, default=None, help="기본: golden-set/v1-10.json")
     ap.add_argument("--index", default=SINGLE_INDEX)
     ap.add_argument("--runs", type=int, default=1, help="N 번 돌려 최저치를 함께 낸다 (절대 원칙 4)")
+    ap.add_argument(
+        "--domain-router",
+        choices=("auto", "model", "search", "none"),
+        default="auto",
+        help="B-0 판정 방식. auto: 학습된 분류기가 있으면 그것, 없으면 검색 기반 v1",
+    )
+    ap.add_argument("--classifier", type=Path, default=DEFAULT_CLASSIFIER_DIR)
     args = ap.parse_args()
 
     golden_path = args.golden_set or (ROOT / "golden-set" / "v1-10.json")
@@ -96,7 +124,10 @@ def main() -> int:
     if client is None:
         print("⚠ ELASTICSEARCH_URL 이 없다 — 검색은 '측정 불가'로 보고된다.\n")
 
-    reports = [run_eval(items, build_ports(client, index=args.index)) for _ in range(args.runs)]
+    ports = build_ports(
+        client, index=args.index, domain_router=args.domain_router, model_dir=args.classifier
+    )
+    reports = [run_eval(items, ports) for _ in range(args.runs)]
     print_report(reports[0], golden_set_path=golden_path)
 
     if args.runs > 1:

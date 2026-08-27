@@ -5,8 +5,8 @@
 배포하기 위한 경계다). 그 경계 밖에 있는 유일한 곳이 **합성 루트 `server/main.py`** 이고,
 거기서 아래 팩토리를 불러 `dependency_overrides` 에 꽂는다.
 
-    # server/main.py
-    from retrieval.provider import build_retrieval_provider, build_trigger_provider
+    # server/main.py — sys.path 에 ai/apps 와 ai 를 함께 올린다
+    from provider import build_retrieval_provider, build_trigger_provider
     from hub.dependencies.retrieval_provider import get_retrieval_port
     from hub.dependencies.trigger_provider import get_trigger_port
 
@@ -23,8 +23,13 @@
     # 켜면 틀린 도메인으로 검색이 좁아진다 — 켤지는 팀 판단이다.
     # app.dependency_overrides[get_domain_routing_port] = build_domain_routing_provider(...)
 
-`sys.path` 에 `ai/apps` 를 올려야 `retrieval` 이 최상위 패키지로 보인다 — `main.py` 가 이미
-`server/apps` 에 대해 하는 일과 같다.
+`sys.path` 에 **`ai/apps` 와 `ai` 둘 다** 올린다 — 앞의 것은 `retrieval`·`training` 을 최상위
+패키지로 보이게 하고, 뒤의 것은 이 파일 자체를 `provider` 로 import 하기 위해서다.
+`main.py` 가 이미 `server/apps` 에 대해 하는 일과 같다.
+
+**이 파일이 `apps/` 밖에 있는 이유**: `retrieval`(검색 기반 B-0)과 `training`(모델 기반 B-0)을
+동시에 알아야 하는데, 두 모듈이 서로를 import 하면 `.importlinter` 계약 2 가 깨진다.
+합성은 계약 밖에서 한다 — `ai/tests/` 와 같은 자리다.
 
 **설정은 인자로 받는다.** 여기서 `os.environ` 을 읽지 않는다 — `ai/` 에는 config 모듈이 없고,
 서버의 설정은 `server/core/config.py` 한 곳에서만 읽는다는 규칙(`server/CLAUDE.md` 3번)을
@@ -90,6 +95,19 @@ def build_domain_routing_provider(
     `SearchDomainRouter` docstring 과 `w1-domain-routing` 티켓을 읽는다.
     """
     port = SearchDomainRouter(EsBm25Retriever(client or build_es_client(url, api_key), index=index))
+    return lambda: port
+
+
+def build_model_domain_routing_provider(
+    model_dir: str = "models/domain-classifier",
+) -> Callable[[], DomainRoutingPort]:
+    """`decisions/007` 설계 ① — 파인튜닝한 KcELECTRA 분류기.
+
+    모델은 **처음 판정할 때** 올라간다(생성자에서는 경로만 확인). 기동을 느리게 하지 않는다.
+    """
+    from training.adapter.outbound.model_domain_router import ModelDomainRouter
+
+    port = ModelDomainRouter(model_dir)
     return lambda: port
 
 

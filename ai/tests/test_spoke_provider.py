@@ -1,9 +1,9 @@
 # Requirement: B-1, B-2
 """스포크 프로바이더 팩토리 — `server/main.py` 가 쓰는 배선 지점.
 
-**여기가 `apps/` 밖인 이유**: 이 팩토리는 `ai/` 와 `server/` 를 동시에 아는 합성 지점이고,
-그런 코드는 계약(module-independence·서브도메인 방향) 밖에 있어야 한다. `server/tests/` 가
-`main.py` 에 대해 하는 역할과 같다.
+**여기가 `apps/` 밖인 이유**: 팩토리(`ai/provider.py`)가 `retrieval`·`training` 을 동시에 아는
+합성 지점이고, 그런 코드는 계약(module-independence) 밖에 있어야 한다. 팩토리 자체도 같은
+이유로 2026-08-27 에 `retrieval/` 밖으로 옮겼다. `server/tests/` 가 `main.py` 에 대해 하는 역할과 같다.
 
 실제 ES 없이 돈다 — 팩토리에 가짜 클라이언트를 넣어 **배선만** 확인한다.
 """
@@ -16,7 +16,7 @@ import pytest
 
 from hub.app.ports.output.retrieval_port import RetrievalPort
 from hub.app.ports.output.trigger_port import TriggerPort
-from retrieval.provider import (
+from provider import (
     build_es_client,
     build_retrieval_provider,
     build_trigger_provider,
@@ -100,7 +100,7 @@ def test_도메인_라우팅_프로바이더가_포트를_돌려준다():
     """⚠ v1 정확도 0.647 (목표 ≥0.95). 켤지는 팀 판단 — 배선 자체만 확인한다."""
     from hub.app.ports.output.domain_routing_port import DomainRoutingPort
 
-    from retrieval.provider import build_domain_routing_provider
+    from provider import build_domain_routing_provider
 
     provider = build_domain_routing_provider("http://localhost:9200", client=FakeClient())
     assert isinstance(provider(), DomainRoutingPort)
@@ -108,7 +108,7 @@ def test_도메인_라우팅_프로바이더가_포트를_돌려준다():
 
 
 def test_도메인_라우팅이_실제로_판정한다():
-    from retrieval.provider import build_domain_routing_provider
+    from provider import build_domain_routing_provider
 
     provider = build_domain_routing_provider("x", client=FakeClient())
     assert asyncio.run(provider().classify("반품 배송비")).domain == "shopping"
