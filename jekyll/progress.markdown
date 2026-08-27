@@ -5,6 +5,11 @@ permalink: /progress/
 ---
 
 ### 2026-08-27
+- **통화 후 처리(D-1~D-3) 배선 — `POST /hub/calls/{call_id}/close`**(`w7-postcall-contract` done). `PostcallPort` 를 새로 만들었다(기존 9개 포트와 같은 ABC 패턴). 필드명은 `db/schema.sql` 과 맞췄다 — `call.summary_text`·`call.inquiry_type`·`follow_up_action.action_text`. `pytest` **87개 통과**(75→87)
+- **「초안」이라는 사실을 타입에 박았다** — DTO 이름이 `CallSummaryDraft` 이고, **모델이 `confirmed=True` 를 실어 보내도 서버가 `False` 로 덮는다.** D-2 유형 분류는 모델 판정이라 확정으로 취급하지 않는다. 서버가 확정하는 경로가 **아예 없다**(테스트로 고정) — [절대 원칙 9](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md)를 계약 형태로 옮긴 것
+- **요약을 다시 다듬지 않는다** — 손대면 모델 출력과 화면 표시가 달라져 **환각 추적이 끊긴다**. 6주차 환각 건수 비교(150문항 중 5건 이하)가 무의미해진다
+- 부수: `HTTP_422_UNPROCESSABLE_ENTITY` 가 폐기 예정이라는 경고를 발견해 라우터 4곳을 `HTTP_422_UNPROCESSABLE_CONTENT` 로 교체
+- **이로써 `server/` 파이프라인이 전부 배선됐다** — 전사 수신(C-5) · 추천(B-0~B-6) · 컴플라이언스(C-1~C-4) · 종결 게이트(F-2) · 통화 후 처리(D-1~D-3) · 수동 검색. 스포크가 하나도 없어도 **엔드포인트 8개가 계약대로 응답**하고, 미구현은 501 로 정직하게 보고한다
 - **컴플라이언스(C-1~C-4)·F-2 종결 게이트 경로 배선** — 두 포트 다 **있는데 부르는 곳이 없었다**. 기능 배지를 달면서 C-1~C-4 티켓이 0건인 것이 드러나 만들었다(필수 블록). `POST /hub/compliance-checks` · `POST /hub/closure-checks`. `pytest` **75개 통과**(54→75), 계약 3종 KEPT
 - **컴플라이언스는 추천(B)과 별개 경로로 뒀다** — 검색은 **고객 발화**에, 이쪽은 **상담원 발화**에 반응한다. 한 인터랙터에 묶으면 화자로 분기하는 `if` 가 생기고 두 지표(적절 발동률/재현율)가 섞인다. 커맨드가 `agent_utterance` 만 받는 것도 같은 이유 — 고객이 한 말을 위반으로 잡으면 화면에 **고객을 탓하는 경고**가 뜬다
 - **부록 A-1 을 구조로 막았다** — 컴플라이언스 응답 필드가 `call_id`·`segment_id`·`findings` **셋뿐**이다. 등급·점수·"안전" 필드를 아예 두지 않아 화면이 그런 표현을 만들 재료가 없다. 테스트로도 고정했다. 발견 0건은 **"잡힌 것이 없음"**이지 "안전함"이 아니다

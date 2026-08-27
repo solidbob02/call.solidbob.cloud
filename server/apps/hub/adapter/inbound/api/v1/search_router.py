@@ -25,7 +25,7 @@ async def search(
     try:
         result = await use_case.search(SearchQuery(utterance=body.utterance, top_k=body.top_k))
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
 
     return SearchResponse(
         query=result.query,

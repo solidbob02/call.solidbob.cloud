@@ -16,6 +16,7 @@ from .domain_routing_port import DomainRoutingPort
 from .generation_port import GenerationPort
 from .masking_port import MaskingPort
 from .myself_record_port import MyselfRecordPort
+from .postcall_port import PostcallPort
 from .retrieval_port import RetrievalPort
 from .transcript_ingest_record_port import TranscriptIngestRecordPort
 from .trigger_port import TriggerPort
@@ -27,6 +28,7 @@ __all__ = [
     "GenerationPort",
     "MaskingPort",
     "MyselfRecordPort",
+    "PostcallPort",
     "RetrievalPort",
     "TranscriptIngestRecordPort",
     "TriggerPort",
