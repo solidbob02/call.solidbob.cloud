@@ -27,6 +27,7 @@ POSTGRES_DB_NAME=callguard
 POSTGRES_USER=callguard
 POSTGRES_PASSWORD=callguard-dev
 DATABASE_URL=postgres://callguard:callguard-dev@127.0.0.1:5432/callguard
+ELASTICSEARCH_URL=http://localhost:9200
 ```
 
 이 값들이 있어야 `server/` 의 전사 저장이 로그 어댑터 대신 **PostgreSQL 리포지토리**로 떨어진다
@@ -39,7 +40,13 @@ DATABASE_URL=postgres://callguard:callguard-dev@127.0.0.1:5432/callguard
 ```
 POSTGRES_PORT=5433          # 다른 PostgreSQL 이 5432 를 쓰고 있을 때
 POSTGRES_PASSWORD=...
+ELASTICSEARCH_PORT=9201     # 다른 ES 가 9200 을 쓰고 있을 때
+ES_JAVA_OPTS=-Xms1g -Xmx1g  # 힙. 기본 512m 는 노트북에서 함께 도는 것을 고려한 값이다
+ES_VERSION=9.5.1            # ⚠ 바꾸면 ai/requirements.txt 의 클라이언트 핀도 같이 바꾼다
 ```
+
+compose 가 읽는 변수는 위 다섯 개(+`POSTGRES_DB_NAME`·`POSTGRES_USER`)가 전부다.
+`ES_VERSION` 은 이미지 빌드 인자라 바꾼 뒤 `docker compose build elasticsearch` 가 필요하다.
 
 ## Elasticsearch
 
