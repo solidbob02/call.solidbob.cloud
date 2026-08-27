@@ -1,8 +1,8 @@
 {
   "version": "v1",
   "created": "2026-08-26",
-  "size": 50,
-  "note": "2주차 골든셋 50건. 4개 도메인(금융보험·다산콜센터·쇼핑·질병관리본부) 기준. F-2는 F-2 적용 도메인(금융보험·쇼핑)에서만 존재한다. 1주차 10건(v1-10.json)을 그대로 포함하고 40건을 새로 추가했다. 3주차 150건 확장 예정(데이터 확보 계획 5.3절).",
+  "size": 56,
+  "note": "2주차 골든셋 50건. 4개 도메인(금융보험·다산콜센터·쇼핑·질병관리본부) 기준. F-2는 F-2 적용 도메인(금융보험·쇼핑)에서만 존재한다. 1주차 10건(v1-10.json)을 그대로 포함하고 40건을 새로 추가했다. 3주차 150건 확장 예정(데이터 확보 계획 5.3절). 2026-08-27 장민석: 과잉 마스킹률(6.1절 참고 기록)이 음성 케이스 0건이라 NaN 이었다. 가리면 안 되는 케이스 6건(GS-051~056)을 추가했다 — 기존 항목은 손대지 않았다.",
   "items": [
     {
       "id": "GS-001",
@@ -1010,6 +1010,132 @@
       "pii_patterns": [],
       "compliance_violation": null,
       "notes": "교환 가능 여부만 확인하고 재고 확인 없이 종결 시도 → 차단."
+    },
+    {
+      "id": "GS-051",
+      "module": "C-5",
+      "domain": "dasan",
+      "speaker": "customer",
+      "customer_utterance": "이름을 바꾸고 싶어요 어떻게 하나요",
+      "utterance_end_ms": 3100,
+      "trigger_examples": [],
+      "expected_doc_ids": [],
+      "distractor_doc_ids": [],
+      "compliance_violation": null,
+      "pii_patterns": [
+        {
+          "pattern": "P6",
+          "raw_span": "",
+          "masked_expected": false
+        }
+      ],
+      "f2_case": null,
+      "notes": "음성 케이스(P6) — 목적격 '이름을 X' 는 이름을 밝히는 말이 아니라 대상으로 하는 말이다. 2026-08-27 구현 중 '바꾸고'를 이름으로 잡던 실제 버그."
+    },
+    {
+      "id": "GS-052",
+      "module": "C-5",
+      "domain": "shopping",
+      "speaker": "customer",
+      "customer_utterance": "전국 어디로 보내도 되나요",
+      "utterance_end_ms": 3100,
+      "trigger_examples": [],
+      "expected_doc_ids": [],
+      "distractor_doc_ids": [],
+      "compliance_violation": null,
+      "pii_patterns": [
+        {
+          "pattern": "P7",
+          "raw_span": "",
+          "masked_expected": false
+        }
+      ],
+      "f2_case": null,
+      "notes": "음성 케이스(P7) — '-도'로 끝나는 어미가 행정구역으로 잡히던 실제 버그(2026-08-27). 광역단체를 닫힌 목록으로 바꿔 해결."
+    },
+    {
+      "id": "GS-053",
+      "module": "C-5",
+      "domain": "shopping",
+      "speaker": "customer",
+      "customer_utterance": "환불금액이 35000원 맞나요",
+      "utterance_end_ms": 3100,
+      "trigger_examples": [],
+      "expected_doc_ids": [],
+      "distractor_doc_ids": [],
+      "compliance_violation": null,
+      "pii_patterns": [
+        {
+          "pattern": "P5",
+          "raw_span": "",
+          "masked_expected": false
+        }
+      ],
+      "f2_case": null,
+      "notes": "음성 케이스(P5) — 금액이다. 문맥 없는 4~6자리를 전부 가리면 자막이 못 쓰게 된다(2.4절)."
+    },
+    {
+      "id": "GS-054",
+      "module": "C-5",
+      "domain": "finance",
+      "speaker": "customer",
+      "customer_utterance": "2026년 3월에 가입했는데 조회가 안 돼요",
+      "utterance_end_ms": 3100,
+      "trigger_examples": [],
+      "expected_doc_ids": [],
+      "distractor_doc_ids": [],
+      "compliance_violation": null,
+      "pii_patterns": [
+        {
+          "pattern": "P5",
+          "raw_span": "",
+          "masked_expected": false
+        }
+      ],
+      "f2_case": null,
+      "notes": "음성 케이스(P5) — 연도다. 위와 같은 이유."
+    },
+    {
+      "id": "GS-055",
+      "module": "C-5",
+      "domain": "health",
+      "speaker": "customer",
+      "customer_utterance": "운동 하려고 등록했는데 취소되나요",
+      "utterance_end_ms": 3100,
+      "trigger_examples": [],
+      "expected_doc_ids": [],
+      "distractor_doc_ids": [],
+      "compliance_violation": null,
+      "pii_patterns": [
+        {
+          "pattern": "P7",
+          "raw_span": "",
+          "masked_expected": false
+        }
+      ],
+      "f2_case": null,
+      "notes": "음성 케이스(P7) — '운동'이 법정동 접미(-동)와 겹친다. 어절 하나로는 주소가 아니다."
+    },
+    {
+      "id": "GS-056",
+      "module": "C-5",
+      "domain": "dasan",
+      "speaker": "customer",
+      "customer_utterance": "그 김민준 씨가 어제 신고한 건 확인 부탁드려요",
+      "utterance_end_ms": 3100,
+      "trigger_examples": [],
+      "expected_doc_ids": [],
+      "distractor_doc_ids": [],
+      "compliance_violation": null,
+      "pii_patterns": [
+        {
+          "pattern": "P6",
+          "raw_span": "",
+          "masked_expected": false
+        }
+      ],
+      "f2_case": null,
+      "notes": "⚠ 규칙의 한계를 고정하는 음성 케이스(P6) — 문맥 없는 인명은 규칙으로 못 잡는다. NER 이 붙으면 이 항목을 masked_expected: true 로 뒤집는다."
     }
   ]
 }

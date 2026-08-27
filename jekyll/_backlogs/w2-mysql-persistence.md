@@ -2,7 +2,7 @@
 title: "MySQL 영속성 계층 — 로그 어댑터를 리포지토리로 교체"
 assignee: "장민석"
 role: "ai"
-status: "in-progress"
+status: "done"
 sprint: 2
 priority: 1
 date: 2026-08-26
@@ -89,3 +89,21 @@ MySQL 설정이 없으면 로그 어댑터로 떨어진다. DB 없이 도는 경
 [7.3절](/docs/07/) 전사 이벤트 예시는 `"segment_id": "seg_0031"` 로 **문자열**인데,
 `transcript_segment.segment_id` 는 **BIGINT** 이고 `TranscriptIngestRequest.segment_id` 도 `int` 다.
 코드와 DB 는 서로 맞고 **계약 예시만 어긋난다** — 예시를 고칠지 타입을 바꿀지 팀이 정해야 한다.
+
+---
+
+## ✅ 완료 (2026-08-27, 장민석)
+
+착수 당시엔 MySQL 이었고 실제 DB 없이 가짜 커넥션으로만 검증한 상태였다. 그 뒤:
+
+- **MySQL → PostgreSQL 전환**(`_project/decisions/018`) — 드라이버도 `aiomysql` → `psycopg[binary]`
+- **실제 DB 로 SEC-1 검증** — 스키마 리뷰가 아니라 저장 결과로 원문 부재를 확인
+- 리포지토리 4종이 실제 PostgreSQL 17 에서 동작(`pytest -m integration`)
+
+**티켓 이름의 `mysql` 은 착수 시점의 사실이라 고치지 않는다**(절대 원칙 8).
+후속 작업은 각각 별도 티켓으로 갈렸다 — [w3](/backlog/w3-transcript-query-api/) ·
+[w4](/backlog/w4-knowledge-gap-intake/) · [w7](/backlog/w7-card-feedback/).
+
+> ⚠ 착수 때 발견한 **`segment_id` 계약 불일치**(7.3절 예시는 문자열, DB 는 BIGINT)는
+> 아직 팀 결정이 안 났다. 그 사이 프론트가 문자열로 구현을 진행했다 —
+> [미결 항목](/open-items/)에 프론트 계약 드리프트로 다시 올려 뒀다.
