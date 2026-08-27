@@ -44,6 +44,13 @@ collections:
   backlogs:
     output: true
     permalink: /backlog/:name/
+  # 개발 로그 — 항목 1건 = 파일 1개. 백로그와 같은 이유다.
+  # 하나의 progress.markdown 에 네 명이 전부 "맨 위"로 삽입하던 구조라 브랜치마다
+  # 같은 자리에서 충돌했다(2026-08-25~26 이 파일 커밋 37건 중 16건이 충돌 처리였다).
+  # 파일명에 작성자가 들어가므로 이제 서로의 파일이 겹치지 않는다.
+  # 개별 페이지는 만들지 않는다(output: false) — 렌더링은 /progress/ 가 담당한다.
+  logs:
+    output: false
 
 defaults:
   - scope:

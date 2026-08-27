@@ -9,6 +9,10 @@
     한 건도 남지 않았다(같은 기간 다른 팀원은 5건 남겼다). 사람 의지에 기대는 대신
     확인 장치를 붙인다.
 
+    2026-08-27 부터 로그는 progress.markdown 한 파일이 아니라 jekyll/_logs/ 아래
+    "항목 1건 = 파일 1개" 다. 네 명이 모두 같은 파일의 맨 위에 삽입하느라 브랜치마다
+    같은 자리에서 충돌했기 때문이다. 여기서는 파일명의 날짜만 읽는다.
+
 왜 실패시키지 않는가
     로그 누락은 코드 결함이 아니다. 이걸로 CI 를 빨갛게 만들면 코드 머지까지 막히고,
     급할 때 "일단 아무 줄이나 적고 통과시키는" 회피가 생긴다. 그러면 기록의 질이
@@ -27,18 +31,18 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-PROGRESS = Path(__file__).resolve().parent.parent / "jekyll" / "progress.markdown"
-DATE_HEADING = re.compile(r"^###\s+(\d{4}-\d{2}-\d{2})")
+LOGS = Path(__file__).resolve().parent.parent / "jekyll" / "_logs"
+# 로그 파일명: YYYY-MM-DD-NN-사람.md  (항목 1건 = 파일 1개, 2026-08-27 부터)
+LOG_NAME = re.compile(r"^(\d{4}-\d{2}-\d{2})-\d+-[a-z]+\.md$")
 
 # 기록할 내용이 없는 커밋 — 이것만 있는 날은 경고하지 않는다
 IGNORED_SUBJECT = re.compile(r"^(Merge |merge:|Revert )")
 
 
 def logged_dates() -> set[str]:
-    if not PROGRESS.exists():
+    if not LOGS.is_dir():
         return set()
-    text = PROGRESS.read_text(encoding="utf-8")
-    return {m.group(1) for line in text.splitlines() if (m := DATE_HEADING.match(line))}
+    return {m.group(1) for p in LOGS.glob("*.md") if (m := LOG_NAME.match(p.name))}
 
 
 def commit_dates(days: int) -> dict[str, list[tuple[str, str]]]:
@@ -78,7 +82,7 @@ def main() -> int:
         print("진행 기록 누락: 없음")
         return 0
 
-    print(f"\n⚠ 진행 기록이 없는 날 {len(missing)}일 — jekyll/progress.markdown 에 항목을 남겨 주세요")
+    print(f"\n⚠ 진행 기록이 없는 날 {len(missing)}일 — jekyll/_logs/ 에 파일을 하나 남겨 주세요")
     for date in sorted(missing, reverse=True):
         entries = missing[date]
         authors = ", ".join(sorted({a for a, _ in entries}))
@@ -88,7 +92,8 @@ def main() -> int:
         if len(entries) > 4:
             print(f"    … 외 {len(entries) - 4}건")
 
-    print("\n형식:  ### YYYY-MM-DD  아래에 '무엇을 했는지' 와 '남은 것' 을 적습니다 (최신이 맨 위)")
+    print("\n형식:  jekyll/_logs/YYYY-MM-DD-NN-사람.md  (항목 1건 = 파일 1개)\n"
+          "       front matter 에 date · author · person · seq, 본문에 '무엇을 했는지' 와 '남은 것'")
     return 1 if args.strict else 0
 
 
