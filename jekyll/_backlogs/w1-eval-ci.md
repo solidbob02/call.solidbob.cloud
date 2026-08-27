@@ -6,6 +6,9 @@ status: "done"
 sprint: 1
 priority: 10
 date: 2026-08-25
+requirement:
+  - "QUA-1"
+  - "QUA-2"
 paths:
   - ".github/workflows/*"
   - "scripts/check_*.py"

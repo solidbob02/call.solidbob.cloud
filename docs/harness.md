@@ -50,7 +50,7 @@ lint-imports 가 "모듈 없음"으로 실패한다. 지금은 `server`: `hub`·
 |---|---|---|
 | 클린 아키텍처 계층 | layers | 허브·전 스포크에서 `adapter > app > domain`. 계층이 없는 앱은 괄호로 허용 |
 | **서브도메인 방향** | forbidden | `server` → `ai` import 금지. 함께 들어오는 `torch`·`transformers`·`langchain`·`langgraph` 도 금지 — 서버 컨테이너에 그것들이 있으면 방향이 이미 무너진 것이다 |
-| 프레임워크 격리 | forbidden | `*.app`·`*.domain` → `fastapi`·`sqlalchemy`·`elasticsearch` 등 금지 |
+| 프레임워크 격리 | forbidden | `*.app`·`*.domain` → `fastapi`·`sqlalchemy`·`psycopg`·`elasticsearch` 등 금지 |
 
 **`ai/.importlinter`** — 품질을 만들고 재는 쪽
 

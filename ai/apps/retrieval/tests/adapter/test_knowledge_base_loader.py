@@ -31,14 +31,19 @@ def test_같은_입력이면_같은_순서로_나온다(chunks):
     assert [c.chunk_id for c in load_chunks(KB_ROOT)] == [c.chunk_id for c in chunks]
 
 
-def test_골든셋이_참조하는_문서_ID가_전부_실린다(chunks):
-    """골든셋 채점(Recall@5)의 전제 — 정답 문서가 색인에 없으면 영원히 못 맞힌다."""
+@pytest.mark.parametrize("version", ["v1-10.json", "v1-50.json"])
+def test_골든셋이_참조하는_문서_ID가_전부_실린다(chunks, version):
+    """골든셋 채점(Recall@5)의 전제 — 정답 문서가 색인에 없으면 영원히 못 맞힌다.
+
+    2026-08-27: v1-10 만 보고 있어서 v1-50 을 추가했다. 지금은 v1-50 의 14개 ID 도 전부
+    실려 있지만, 골든셋이 커질 때 깨진 참조를 잡아 주는 것은 이 테스트뿐이다.
+    """
     import json
 
-    golden = json.loads((KB_ROOT.parent / "golden-set" / "v1-10.json").read_text(encoding="utf-8"))
+    golden = json.loads((KB_ROOT.parent / "golden-set" / version).read_text(encoding="utf-8"))
     items = golden["items"] if isinstance(golden, dict) else golden
     expected = {d for it in items for d in (it.get("expected_doc_ids") or [])}
-    assert expected, "골든셋에 정답 문서 ID가 없다"
+    assert expected, f"{version} 에 정답 문서 ID가 없다"
     assert expected <= {c.doc_id for c in chunks}
 
 

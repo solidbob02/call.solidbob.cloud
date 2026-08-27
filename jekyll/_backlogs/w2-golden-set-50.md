@@ -6,6 +6,8 @@ status: "in-progress"
 sprint: 2
 priority: 4
 date: 2026-08-26
+requirement:
+  - "QUA-2"
 ---
 
 1주차 10건은 2026-08-26 에 4개 도메인 기준으로 **재작성을 마쳤다**(`w1-golden-set-10` 참고).

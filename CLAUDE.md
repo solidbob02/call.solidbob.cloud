@@ -10,7 +10,7 @@
 
 ```
 1. CLAUDE.md                  ← 지금 이 파일 (규칙)
-2. jekyll/progress.markdown   ← 팀 전체가 보는 진행 기록. 최신 항목이 맨 위
+2. jekyll/_logs/              ← 팀 전체가 보는 진행 기록. 항목 1건 = 파일 1개. /progress/ 가 렌더링
 3. _project/STATE.md          ← 세션 인수인계용 현재 상태 (비공개)
 4. jekyll/open-items.markdown ← 아직 정하지 못한 것
 ```
@@ -25,7 +25,7 @@
 ## 0.5. 세션 종료 루틴 (작업이 있었던 모든 세션, 예외 없음)
 
 ```
-1. jekyll/progress.markdown   ← 오늘 한 일을 항목으로 남겼는가?
+1. jekyll/_logs/              ← 오늘 한 일을 파일 하나로 남겼는가?
 2. jekyll/_backlogs/          ← 손댄 티켓의 status 를 옮겼는가? 새로 시작한 일의 티켓을 만들었는가?
 3. _project/STATE.md          ← 다음 세션이 이어받을 상태를 갱신했는가?
 4. jekyll/open-items.markdown ← 이번에 정하지 못하고 남긴 것을 적었는가?
@@ -34,9 +34,9 @@
 **커밋·푸시·PR 로 세션이 끝나지 않는다. 위 4개를 확인해야 끝난다.**
 
 - 기록을 PR 본문이나 커밋 메시지에만 쓰지 않는다. PR 은 머지되면 닫히고, 팀이 보는 것은 `/progress/` 페이지다.
-  같은 내용을 두 곳에 쓰는 게 아까우면 **`progress.markdown` 을 먼저 쓰고 PR 본문에 옮긴다** — 반대 방향은 유실된다.
+  같은 내용을 두 곳에 쓰는 게 아까우면 **`_logs/` 를 먼저 쓰고 PR 본문에 옮긴다** — 반대 방향은 유실된다.
 - 확인만 하고 아무것도 바꾸지 않은 세션(질문 답변·조사)은 기록하지 않아도 된다. 파일을 하나라도 고쳤으면 남긴다.
-- **`Stop` 훅이 이 루틴을 강제한다.** 파일을 고쳤는데 `progress.markdown` 을 건드리지 않았으면
+- **`Stop` 훅이 이 루틴을 강제한다.** 파일을 고쳤는데 `jekyll/_logs/` 에 기록을 남기지 않았으면
   세션이 끝나지 않는다(`scripts/check_session_end.py --hook`, exit 2). 같이 도는 경고 2종:
   티켓 status 정합성(②)·중복 티켓(③). 판정이 틀렸다면 `CALLGUARD_SKIP_SESSION_CHECK=1` 로 통과시킨다.
 - **`session-log` 스킬**(`.claude/skills/session-log/`)이 절차를 안내한다. 훅이 막았을 때 이걸 따른다.
@@ -73,7 +73,7 @@
 
 | 문서 | 위치 |
 |---|---|
-| 기획서 rev.4 (3인 팀 버전) 사본 | `_project/plan.md` |
+| 기획서 rev.4 (3인 팀 버전) | `_project/plan.md` — 2026-08-27부터 직접 수정한다(수정 이력을 상단에 남긴다) |
 | rev.4 보완지시서 — 위에 얹히는 패치. **충돌 시 보완지시서가 우선** | `_project/rev4-보완지시서.md` |
 | rev.4.1 — rev.4 + 보완지시서 병합본 (공개 사본, 도메인 4종 전환 이전 판) | `docs/plan-rev4.1.md` |
 | rev.4 대안(5인 트랙 버전) | `_project/plan-rev4-alt-5인안.md` |
@@ -122,7 +122,9 @@
 ```
 CLAUDE.md                이 파일. 규칙과 프로젝트 정의
 _project/                ⚠ 비공개. 지킬 루트 밖이라 사이트에 올라가지 않음
-  plan.md                기획서 rev.4 사본 (수정하지 않는다)
+  plan.md                기획서 rev.4. 원래 '수정하지 않는 사본'이었으나 2026-08-27 사용자
+                         지시로 직접 수정 가능해졌다(DB 를 PostgreSQL 로 바꾼 것이 첫 사례,
+                         decisions/018). 고칠 때는 파일 상단에 수정 이력을 남긴다
   rev4-보완지시서.md      rev.4 위에 얹히는 패치
   STATE.md               세션 인수인계용 현재 상태
   decisions/             결정 기록 (ADR)
@@ -146,7 +148,8 @@ scripts/ data/           유틸리티 / 데이터 (원본은 .gitignore)
 jekyll/                  지킬 사이트 루트 — 지킬 명령은 전부 이 안에서 실행
   index.markdown         표지 (layout: cover)
   toc.markdown           목차
-  progress.markdown      진행 기록 (팀 공개)
+  _logs/                 진행 기록 — 항목 1건 = 파일 1개 (`YYYY-MM-DD-NN-사람.md`)
+  progress.markdown      /progress/ — `_logs/` 를 작성자별 사이드바로 렌더링
   open-items.markdown    미결 항목
   docs/NN-슬러그.markdown 본문 페이지 (permalink /docs/NN/)
   sprints/NN-슬러그.markdown 스프린트 로그 (permalink /sprints/NN/)
@@ -174,17 +177,35 @@ permalink: /<경로>/
 - `_posts/`, `about.markdown` 등 지킬 기본 스캐폴딩은 만들지 않는다. 생기면 지운다 — 이 사이트는 블로그가 아니다.
 - 그림 등 정적 자산은 `jekyll/assets/` 아래에 둔다 (ERD 이미지는 `db/generate_schema_docs.py`가 자동 복사).
 
-### 진행 기록
+### 진행 기록 (충돌 방지)
 
-`jekyll/progress.markdown`에 **최신 항목이 위로** 오도록 누적한다. 날짜는 `YYYY-MM-DD`.
+**항목 1건 = 파일 1개.** `jekyll/_logs/` 아래 개별 마크다운으로 만든다.
+파일명은 `YYYY-MM-DD-{seq}-{person}.md` — 예: `2026-08-27-01-ryujun.md`.
+`/progress/` 페이지가 컬렉션을 읽어 작성자별 사이드바(전체 / 정성윤 / 류준 / 장민석 / 조서희)로 렌더링한다.
 
-```markdown
-### 2026-08-25
-- 무엇을 했는지 한 줄 요약
-- 다음에 할 일
+```yaml
+---
+date: 2026-08-27
+author: "류준"          # 정성윤 | 류준 | 장민석 | 조서희
+person: ryujun          # seongyun | ryujun | minseok | seohee
+seq: 1                  # 같은 날 안에서의 순서. **자기 것만** 센다
+---
+
+- **무엇을 했는지** — 왜 그렇게 했는지, 무엇을 확인했는지
+- 남은 것: 다음 세션이 이어받을 것
 ```
 
-작업이 있었던 세션은 여기에 반드시 한 항목을 남긴다. 한 번 쓴 항목은 고치지 않는다.
+- 작업이 있었던 세션은 반드시 파일을 하나 남긴다. **한 번 쓴 파일은 고치지 않는다** — 틀린 것은 새 파일로 정정한다.
+- **`seq` 는 자기 것만 센다.** 남과 겹쳐도 된다 — 파일명에 작성자가 들어가 서로 다른 파일이 되므로
+  브랜치를 합칠 때 충돌이 나지 않는다. 두 자리로 쓴다(정렬이 경로 기준이라 `9` 는 `10` 뒤로 간다).
+- **남의 로그 파일은 건드리지 않는다.**
+
+> **왜 파일로 갈랐나 (2026-08-27).** 전에는 `progress.markdown` 한 파일에 네 명이 전부
+> "맨 위"로 삽입했다. Git 3-way 병합은 양쪽이 **같은 위치에 서로 다른 내용을 넣으면**
+> 번호가 겹치지 않아도 무조건 충돌로 넘긴다(아래로 붙여도 같다). 실제로 2026-08-25~26
+> 이 파일 커밋 37건 중 **16건이 충돌 처리**였다. §4 백로그가 "티켓 1건 = 파일 1개"로
+> 이미 푼 문제인데 진행 기록에만 적용돼 있지 않았다. 근거: `_project/decisions/016`.
+> 옛 항목 66건은 `_logs/` 로 그대로 옮겼다 — 내용은 손대지 않았고, 작성자는 git 이력에서 찾았다.
 
 ### 백로그 · 칸반 (충돌 방지)
 
@@ -220,10 +241,18 @@ paths:                    # (선택) 이 티켓 소관 파일. 세션 종료 검
 - **`paths:` 는 선택이지만 붙여두면 잊는 걸 막아준다.** 그 경로의 파일을 고쳤는데 티켓이 아직
   `todo` 면 세션 종료 검사가 경고한다. 슬러그가 겹치는 티켓(`w1-db-schema` ↔ `w2-db-schema-domain`)도 함께 경고한다.
 - 단계를 일부러 나눈 티켓(예: `w2-baseline` 측정 → `w2-baseline-gate` CI 게이트)은 뒤 티켓에
-  `depends_on: ["w2-baseline"]` 을 적는다. 중복 경고에서 빠지고, 무엇이 무엇을 기다리는지도 남는다.
+  `depends_on` 을 적는다. 중복 경고에서 빠지고, 무엇이 무엇을 기다리는지도 남는다.
+  **반드시 블록 형식으로 쓴다** — `check_session_end.py` 의 front matter 파서는 PyYAML 없이
+  도느라 인라인 리스트(`depends_on: ["w2-baseline"]`)를 문자열로 읽는다. 그러면 조용히
+  무시돼 경고가 계속 뜬다(2026-08-27 실제로 겪었다).
+
+  ```yaml
+  depends_on:
+    - "w2-baseline"
+  ```
 - 상태를 옮길 때는 **자기 티켓의 `status` 한 줄만** 고친다. 남의 티켓 파일은 건드리지 않는다.
 - 본문에는 무엇을 / 왜 / 완료 조건을 적는다. 근거가 있으면 문서 링크를 건다.
-- 주차별 목표는 `jekyll/docs/08-마일스톤.markdown`, 일자별 기록은 `progress.markdown`이 담당한다. 같은 내용을 세 곳에 적지 않는다.
+- 주차별 목표는 `jekyll/docs/08-마일스톤.markdown`, 일자별 기록은 `jekyll/_logs/`가 담당한다. 같은 내용을 세 곳에 적지 않는다.
 
 ### 미결 항목
 

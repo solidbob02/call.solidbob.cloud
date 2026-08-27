@@ -29,9 +29,19 @@
 | `manual/` | 응대 매뉴얼 | B(검색) 대상. F-2 근거로도 쓰임(해당 도메인만) |
 | `policy/` | 내부 처리 규정 | **F-2 게이트가 직접 참조**하는 처리유형별 필수 확인 항목 정의 (F-2 미적용 도메인은 미적용 사유와 대체 검증 수단을 명시) |
 
-네 도메인 × 세 문서 = 12개 문서가 **도메인별로 별도 Elasticsearch 인덱스(또는 같은
-인덱스의 `domain` 필드)**에 적재된다. 상담 중에는 통화가 어느 도메인인지 먼저 라우팅한
-뒤 해당 도메인 인덱스에서만 검색한다([아키텍처](/docs/03/) 갱신 필요 — 후속 티켓).
+네 도메인 × 세 문서 = 12개 문서(조항 102개)가 Elasticsearch 에 적재된다. 상담 중에는
+통화가 어느 도메인인지 먼저 라우팅한 뒤 그 도메인으로 좁혀 검색한다.
+
+**인덱스 하나(`callguard-kb-single`)에 전부 넣고 `domain` 필드로 필터한다**
+(2026-08-27, `_project/decisions/017`). 조항이 102개뿐이라 도메인별로 나눌 이유가 없다.
+
+```bash
+export ELASTICSEARCH_URL=http://localhost:9200      # cd infra && docker compose up -d
+.venv/bin/python scripts/index_knowledge_base.py --to-es --recreate
+```
+
+**도메인이 크게 늘면 도메인별 인덱스로 전환한다**(`--layout per-domain`). 볼륨 증가만으로는
+바꾸지 않는다 — 전환 조건과 방법(alias 를 앞에 세운다)은 `decisions/017` 에 있다.
 
 ## ID 체계
 

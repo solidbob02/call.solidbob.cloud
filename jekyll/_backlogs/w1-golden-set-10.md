@@ -6,6 +6,8 @@ status: "done"
 sprint: 1
 priority: 8
 date: 2026-08-25
+requirement:
+  - "QUA-2"
 ---
 
 `golden-set/v1-10.json` — B(3) / C-1·C-2(2) / C-5(2) / F-2(3) 분포.

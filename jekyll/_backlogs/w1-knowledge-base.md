@@ -6,6 +6,8 @@ status: "done"
 sprint: 1
 priority: 7
 date: 2026-08-25
+requirement:
+  - "B-2"
 ---
 
 `knowledge-base/`에 이용약관(TERM)·응대매뉴얼(MANUAL)·내부처리규정(POLICY) 작성. 조항마다 ID 부여(`TERM-3.2` 등).

@@ -88,7 +88,7 @@ apps/<spoke>/
 ├── adapter/
 │   ├── inbound/api/schemas/ # pydantic 요청/응답 스키마 (HTTP 표면이 있는 앱만)
 │   ├── inbound/api/v1/      # FastAPI 라우터 — 스키마 ↔ DTO 변환은 여기서만
-│   └── outbound/            # log_*_adapter.py · es/ mysql/ hf/ stt/ — 외부 시스템 구현체
+│   └── outbound/            # log_*_adapter.py · es/ postgres/ hf/ stt/ — 외부 시스템 구현체
 ├── dependencies/            # FastAPI DI 프로바이더 (포트 ↔ 구현체 결합은 여기서만)
 └── tests/
     ├── app/use_cases/       # 인터랙터 — 스텁 포트로
@@ -121,7 +121,7 @@ app/dtos/<이름>_dto.py                           # Query/Command · Result (fr
 app/ports/input/<이름>_use_case.py               # UseCase ABC
 app/ports/output/<이름>_record_port.py           # 활동 기록 아웃바운드 포트 (인터랙터가 실제 사용)
 app/use_cases/<이름>_interactor.py               # 대장 — 포트를 실제로 호출
-adapter/outbound/log_<이름>_record_adapter.py    # 임시 로그 구현 (영속 필요 시 mysql/ 로 교체)
+adapter/outbound/log_<이름>_record_adapter.py    # 임시 로그 구현 (영속 필요 시 postgres/ 로 교체)
 dependencies/<이름>_provider.py                  # DI
 tests/app/use_cases/test_<이름>_interactor.py    # 스텁 포트로 검증
 
@@ -172,7 +172,7 @@ DDD 쪽 대응: 바운디드 컨텍스트 = 스포크, 유비쿼터스 언어 = 
 - 환경변수는 `.env.example`에 **키 이름만** 등록하고(`SEC-2`), `os.environ`을 읽는 곳은 `core/config.py` 하나뿐이다. 스포크에서 `os.getenv`·`load_dotenv`를 새로 쓰지 않는다.
 - 마스킹 전 원문은 `hub`의 `TranscriptIngestCommand` → `transcript_ingest_interactor`가 `MaskingPort.mask()`를 부르기 전까지만 존재한다. 기록 포트·로그·DB·다른 스포크로 나가는 모든 문자열은 마스킹 후 `TranscriptEvent`다 (`SEC-1`). 원문을 받는 포트 시그니처를 만들지 않는다.
 - 목표 수치를 코드에 하드코딩하지 않는다. 임계값은 `apps/evaluation/metrics/*.py`의 상수(`ON_TIME_WINDOW_MS` 등)가 정본이고, 기획서 6.1절과 함께 바꾼다.
-- 테스트: 유스케이스는 **스텁 포트**로(mock 프레임워크보다 스텁 구현 선호), 실제 ES·MySQL·STT가 필요한 것은 `@pytest.mark.integration`.
+- 테스트: 유스케이스는 **스텁 포트**로(mock 프레임워크보다 스텁 구현 선호), 실제 ES·PostgreSQL·STT가 필요한 것은 `@pytest.mark.integration`.
 
 ---
 
@@ -180,6 +180,6 @@ DDD 쪽 대응: 바운디드 컨텍스트 = 스포크, 유비쿼터스 언어 = 
 
 - **도메인 라우팅** — 통화가 4개 도메인 중 어디인지 누가·언제 판정하는가(게이트웨이 메타데이터? `retrieval` 첫 발화 분류?). 7.3절 계약에 `domain` 필드가 없다 → v3 필요. 라우팅 정확도는 지표로 편입해야 한다.
 
-- 각 스포크 `adapter/outbound/` 하위 이름(`es`/`mysql`/`hf`/`stt`)은 제안이다. [Task 1] 때 확정하고 이 문서를 고친다.
+- 각 스포크 `adapter/outbound/` 하위 이름(`es`/`postgres`/`hf`/`stt`)은 제안이다. [Task 1] 때 확정하고 이 문서를 고친다.
 - Node 게이트웨이(`services/gateway`)·React 대시보드(`apps/dashboard`)의 계층 규칙은 이 문서 범위 밖이다. TypeScript라 import-linter를 못 쓰므로 스캐폴딩 시 `dependency-cruiser` 또는 `eslint-plugin-boundaries` 중 하나를 고른다 — 미결.
 - 허브가 F-2 게이트를 "요청 시"에만 부르는지, 종결 시도 이벤트를 게이트웨이가 별도 메시지로 보내는지는 7.3절 계약 v2에 없다. 7주차 체크포인트 전에 정한다.

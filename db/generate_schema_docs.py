@@ -1,5 +1,5 @@
-# Requirement: 아키텍처(MySQL 스키마), ERD 문서화
-"""CallGuard MySQL 스키마를 한 군데(TABLES)에 정의하고, 여기서
+# Requirement: 아키텍처(PostgreSQL 스키마), ERD 문서화
+"""CallGuard PostgreSQL 스키마를 한 군데(TABLES)에 정의하고, 여기서
 schema.sql(DDL)과 docs/erd.dot(ERD 소스)을 같이 생성한다. 스키마를 고칠 땐 이
 파일만 고치고 다시 실행하면 SQL과 ERD가 항상 같은 정의를 가리키게 된다.
 
@@ -36,6 +36,11 @@ class Column:
     # 모든 테이블이 서로게이트 PK를 쓰므로 물리적으로 부모 PK가 자식 PK에 포함되는
     # "진짜" 식별 관계는 없다 — 여기서는 개념적 강한 종속(약한 개체) 여부를 표시한다.
     identifying: bool = False
+    # 서로게이트 PK 를 DB 가 채운다(AUTO_INCREMENT). 2026-08-27 추가 — 없으면 INSERT 때마다
+    # "Field 'id' doesn't have a default value" 로 막힌다. 애플리케이션이 ID 를 만드는 코드는
+    # 어디에도 없으므로 DB 가 채우는 것이 맞다.
+    # 예외: transcript_segment.segment_id 는 게이트웨이가 정해서 보내는 계약 값이라(7.3절) 켜지 않는다.
+    auto_increment: bool = False
 
 
 @dataclass
@@ -105,7 +110,7 @@ TABLES: list[Table] = [
         "masking_event", "C-5 마스킹 이벤트 — 세그먼트당 여러 개 가능해 분리 (1NF)",
         cluster="통화",
         columns=[
-            Column("id", "BIGINT", "PK", nullable=False),
+            Column("id", "BIGINT", "PK", nullable=False, auto_increment=True),
             Column("segment_id", "BIGINT", "FK", "transcript_segment.segment_id", nullable=False, identifying=True),
             Column("pattern", "VARCHAR(4)", nullable=False, note="P1~P7"),
             Column("span_start", "INT", nullable=False),
@@ -128,7 +133,7 @@ TABLES: list[Table] = [
         "compliance_flag", "C-1~C-4 위반 탐지 — D-4(놓친 위반 표현 누적)의 원천 데이터",
         cluster="통화",
         columns=[
-            Column("id", "BIGINT", "PK", nullable=False),
+            Column("id", "BIGINT", "PK", nullable=False, auto_increment=True),
             Column("segment_id", "BIGINT", "FK", "transcript_segment.segment_id", nullable=False, identifying=True),
             Column("rule_code", "VARCHAR(4)", "FK", "compliance_rule.rule_code", nullable=False),
             Column("phrase", "VARCHAR(200)", nullable=False),
@@ -154,7 +159,7 @@ TABLES: list[Table] = [
         "recommendation", "추천 트리거 이벤트 — 카드 목록은 recommendation_card로 분리 (1NF)",
         cluster="추천",
         columns=[
-            Column("recommendation_id", "BIGINT", "PK", nullable=False),
+            Column("recommendation_id", "BIGINT", "PK", nullable=False, auto_increment=True),
             Column("call_id", "VARCHAR(40)", "FK", "call.call_id", nullable=False, identifying=True),
             Column("trigger_at_ms", "INT", nullable=False),
             Column("internal_latency_ms", "INT"),
@@ -166,7 +171,7 @@ TABLES: list[Table] = [
         "recommendation_card", "추천 카드 — 트리거 1건이 카드 여러 개를 낼 수 있어 분리 (1NF)",
         cluster="추천",
         columns=[
-            Column("card_id", "BIGINT", "PK", nullable=False),
+            Column("card_id", "BIGINT", "PK", nullable=False, auto_increment=True),
             Column("recommendation_id", "BIGINT", "FK", "recommendation.recommendation_id", nullable=False, identifying=True),
             Column("source_doc_id", "VARCHAR(30)", "FK", "document.document_id", note="B-6: 근거 없으면 NULL"),
             Column("title", "VARCHAR(100)", nullable=False, note="생성 모델 출력 — document.title과 다를 수 있음"),
@@ -176,12 +181,26 @@ TABLES: list[Table] = [
         ],
     ),
     Table(
+        "card_feedback", "카드 채택·무시 기록 (E-1) — 상담원이 추천을 실제로 썼는지. "
+        "recommendation_card에 컬럼을 더하지 않고 분리한 이유: 피드백은 카드 내용과 다른 사실이고 "
+        "자체 시각을 갖는다. 카드 하나에 이벤트가 여러 번 붙을 수 있어(채택→취소) 이력이 남아야 한다 — "
+        "masking_event·compliance_flag와 같은 이벤트 테이블 패턴. "
+        "⚠ 상담원 단위로 집계해 점수·순위를 만들지 않는다(부록 A-1) — 카드 품질을 재는 데이터다",
+        cluster="추천",
+        columns=[
+            Column("id", "BIGINT", "PK", nullable=False, auto_increment=True),
+            Column("card_id", "BIGINT", "FK", "recommendation_card.card_id", nullable=False, identifying=True),
+            Column("action", "ENUM('adopted','ignored')", nullable=False),
+            Column("created_at", "DATETIME", nullable=False),
+        ],
+    ),
+    Table(
         "closure", "F-2 종결 판정 — evidence 필드를 역정규화(POLICY 문서 참고)해 하나의 넓은 표로 관리. "
         "F-2는 종결형 처리가 있는 금융보험·쇼핑에만 적용된다([1.4절](/docs/01/)) — "
         "다산콜센터·질병관리본부는 안내형 업무라 이 테이블에 행이 생기지 않는다",
         cluster="종결",
         columns=[
-            Column("closure_id", "BIGINT", "PK", nullable=False, note="append-only: UPDATE 없이 INSERT만 (F-4)"),
+            Column("closure_id", "BIGINT", "PK", nullable=False, auto_increment=True, note="append-only: UPDATE 없이 INSERT만 (F-4)"),
             Column("call_id", "VARCHAR(40)", "FK", "call.call_id", nullable=False, identifying=True),
             Column("closure_type", "ENUM('상품해지','보상','반품','교환')", nullable=False,
                    note="상품해지·보상=금융보험, 반품·교환=쇼핑"),
@@ -205,7 +224,7 @@ TABLES: list[Table] = [
         "follow_up_action", "D-3 후속조치 항목 — 통화 1건에 여러 개 가능해 분리 (1NF)",
         cluster="후속처리",
         columns=[
-            Column("id", "BIGINT", "PK", nullable=False),
+            Column("id", "BIGINT", "PK", nullable=False, auto_increment=True),
             Column("call_id", "VARCHAR(40)", "FK", "call.call_id", nullable=False, identifying=True),
             Column("action_text", "VARCHAR(200)", nullable=False),
             Column("status", "VARCHAR(20)", nullable=False),
@@ -216,7 +235,7 @@ TABLES: list[Table] = [
         "knowledge_gap", "D-4 공백 리포트 — B/C/F 세 모듈의 실패 사례를 한 곳에 누적",
         cluster="후속처리",
         columns=[
-            Column("id", "BIGINT", "PK", nullable=False),
+            Column("id", "BIGINT", "PK", nullable=False, auto_increment=True),
             Column("module", "ENUM('B','C','F')", nullable=False),
             Column("description", "VARCHAR(300)", nullable=False),
             Column("call_id", "VARCHAR(40)", "FK", "call.call_id"),
@@ -230,7 +249,7 @@ TABLES: list[Table] = [
         "eval_run", "평가 실행 배치 — 6.2절 '여러 번 실행한 값 중 최저치 고정'을 위해 실행 단위로 분리",
         cluster="평가",
         columns=[
-            Column("run_id", "BIGINT", "PK", nullable=False),
+            Column("run_id", "BIGINT", "PK", nullable=False, auto_increment=True),
             Column("golden_set_version", "VARCHAR(10)", nullable=False),
             Column("git_commit", "VARCHAR(40)"),
             Column("error_rate", "FLOAT", nullable=False, note="4.2절 STT 오류 주입률 0.00~0.20, 팀 교차검증 반영"),
@@ -242,7 +261,7 @@ TABLES: list[Table] = [
         "eval_result", "평가 결과 상세 — 실행 1건이 지표 여러 개를 내므로 분리 (1NF)",
         cluster="평가",
         columns=[
-            Column("id", "BIGINT", "PK", nullable=False),
+            Column("id", "BIGINT", "PK", nullable=False, auto_increment=True),
             Column("run_id", "BIGINT", "FK", "eval_run.run_id", nullable=False, identifying=True),
             Column("module", "VARCHAR(10)", nullable=False, note="B/C/C-5/F-2 등"),
             Column("metric_name", "VARCHAR(40)", nullable=False),
@@ -254,7 +273,7 @@ TABLES: list[Table] = [
         "resource_center", "G-2 지역 자원 연계 — 조건부(여유 시) 모듈, 스키마만 선반영",
         cluster="G-2(조건부)",
         columns=[
-            Column("center_id", "BIGINT", "PK", nullable=False),
+            Column("center_id", "BIGINT", "PK", nullable=False, auto_increment=True),
             Column("name", "VARCHAR(100)", nullable=False),
             Column("category", "ENUM('정신건강복지센터','자살예방센터')", nullable=False),
             Column("address", "VARCHAR(200)", nullable=False),
@@ -267,34 +286,82 @@ TABLES: list[Table] = [
 ]
 
 
+def q(identifier: str) -> str:
+    """식별자를 큰따옴표로 감싼다(PostgreSQL 표준). **예약어 때문에 필요하다** — 2026-08-27 확인:
+    테이블 `call`, 컬럼 `rank` 가 예약어라 감싸지 않으면 CREATE TABLE 이 실패한다.
+    MySQL 시절 백틱으로 하던 것과 같은 이유이고, 인용 문자만 바뀌었다
+    (`_project/decisions/018-DB-PostgreSQL-전환.md`).
+    예약어 목록은 버전마다 늘어나므로 개별 예외를 두지 않고 전부 감싼다."""
+    return f'"{identifier}"'
+
+
+def pg_type(sql_type: str, auto_increment: bool) -> tuple[str, str]:
+    """MySQL 표기로 적힌 TABLES 정의를 PostgreSQL 타입으로 옮긴다.
+
+    두 번째 반환값은 컬럼 뒤에 붙일 제약(ENUM → CHECK). PostgreSQL 에는 인라인 ENUM 이 없고,
+    `CREATE TYPE` 을 쓰면 스키마 재적용 때 타입이 먼저 남아 충돌하므로 **CHECK 로 표현한다.**
+    """
+    t = sql_type.strip()
+    if auto_increment:
+        return "BIGINT GENERATED ALWAYS AS IDENTITY", ""
+    if t.upper().startswith("ENUM("):
+        values = t[t.index("(") + 1 : t.rindex(")")]
+        return "VARCHAR(30)", f"CHECK (%s IN ({values}))"
+    return {
+        "TINYINT": "SMALLINT",
+        "DATETIME": "TIMESTAMPTZ",
+        "BOOLEAN": "BOOLEAN",
+        "TEXT": "TEXT",
+        "FLOAT": "REAL",
+    }.get(t.upper(), t), ""
+
+
 def to_sql(tables: list[Table]) -> str:
+    """PostgreSQL DDL 을 만든다 (2026-08-27 MySQL 에서 전환 — decisions/018).
+
+    MySQL 과 다른 점 셋:
+      - 컬럼 주석을 인라인으로 못 단다 → 테이블 뒤에 `COMMENT ON COLUMN` 을 따로 낸다
+      - `ENUM(...)` 이 없다 → `CHECK (col IN (...))` 로 표현한다 (CREATE TYPE 은 재적용 때 충돌한다)
+      - `AUTO_INCREMENT` 가 없다 → `GENERATED ALWAYS AS IDENTITY`
+    """
     lines = [
-        "-- CallGuard MySQL 스키마 — db/generate_schema_docs.py에서 자동 생성.",
+        "-- CallGuard PostgreSQL 스키마 — db/generate_schema_docs.py에서 자동 생성.",
         "-- 이 파일을 직접 고치지 말고 generate_schema_docs.py의 TABLES를 고친 뒤 다시 생성할 것.",
         "",
     ]
     for t in tables:
         lines.append(f"-- {t.comment}")
-        lines.append(f"CREATE TABLE {t.name} (")
-        col_lines = []
-        fk_lines = []
+        lines.append(f"CREATE TABLE {q(t.name)} (")
+        col_lines: list[str] = []
+        fk_lines: list[str] = []
+        check_lines: list[str] = []
+        comment_lines: list[str] = []
         pk_col = None
         for c in t.columns:
+            col_type, check_tpl = pg_type(c.sql_type, c.auto_increment)
             null_sql = "NOT NULL" if not c.nullable else "NULL"
-            comment_sql = f" COMMENT '{c.note}'" if c.note else ""
-            col_lines.append(f"    {c.name} {c.sql_type} {null_sql}{comment_sql}")
+            col_lines.append(f"    {q(c.name)} {col_type} {null_sql}")
+            if check_tpl:
+                check_lines.append(f"    {check_tpl % q(c.name)}")
+            if c.note:
+                note = c.note.replace("'", "''")
+                comment_lines.append(
+                    f"COMMENT ON COLUMN {q(t.name)}.{q(c.name)} IS '{note}';"
+                )
             if c.key == "PK":
                 pk_col = c.name
             if c.key == "FK" and c.fk_ref:
                 ref_table, ref_col = c.fk_ref.split(".")
                 fk_lines.append(
-                    f"    FOREIGN KEY ({c.name}) REFERENCES {ref_table}({ref_col})"
+                    f"    FOREIGN KEY ({q(c.name)}) REFERENCES {q(ref_table)}({q(ref_col)})"
                 )
         if pk_col:
-            col_lines.append(f"    PRIMARY KEY ({pk_col})")
+            col_lines.append(f"    PRIMARY KEY ({q(pk_col)})")
+        col_lines.extend(check_lines)
         col_lines.extend(fk_lines)
         lines.append(",\n".join(col_lines))
         lines.append(");")
+        lines.extend(comment_lines)
         lines.append("")
     return "\n".join(lines)
 

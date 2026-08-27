@@ -6,6 +6,8 @@ status: "done"
 sprint: 1
 priority: 21
 date: 2026-08-25
+requirement:
+  - "SEC-1"
 ---
 
 기획서에는 테이블 5종의 이름만 있었다. 실제 기능 명세와 대조해 **17개**로 설계했다.

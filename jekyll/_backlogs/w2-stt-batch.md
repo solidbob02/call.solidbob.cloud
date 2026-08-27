@@ -6,6 +6,8 @@ status: "in-progress"
 sprint: 2
 priority: 6
 date: 2026-08-26
+requirement:
+  - "A-1"
 paths:
   - "services/gateway/stt/*"
   - "scripts/*stt*"

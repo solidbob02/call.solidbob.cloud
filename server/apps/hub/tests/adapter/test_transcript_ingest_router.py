@@ -18,11 +18,15 @@ class _StubMasking(MaskingPort):
         return text[:idx] + "*" * 11 + text[idx + 11:], (MaskedSpan(type="P4", span=(idx, idx + 11)),)
 
 
-def test_returns_501_when_masking_spoke_not_registered():
+def test_기본_마스킹_구현이_원문을_흘려보내지_않는다():
+    """2026-08-27 masking 스포크(P1~P5)가 붙어 더는 501 이 아니다.
+    501 이었던 이유는 임시 통과 경로를 만들지 않기 위해서였고, 그 목적은 그대로 지켜진다 —
+    실제 구현이 원문을 가린다."""
     with TestClient(app) as client:
         r = client.post("/hub/transcripts", json=BODY)
-    assert r.status_code == 501
-    assert "01012345678" not in r.text
+    assert r.status_code == 200
+    assert "01012345678" not in r.text  # SEC-1 — 원문이 응답에 없다
+    assert r.json()["masked"][0]["type"] == "P4"
 
 
 def test_returns_masked_contract_when_masking_registered():

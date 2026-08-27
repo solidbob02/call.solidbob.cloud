@@ -6,6 +6,10 @@ status: "in-progress"
 sprint: 1
 priority: 9
 date: 2026-08-26
+depends_on:                 # 방식 결정(w2) → 이 티켓이 그 결정을 구현한다
+  - "w2-domain-routing"
+requirement:
+  - "B-0"
 ---
 
 [3.2절](/docs/03/) 도메인 라우팅을 자동 분류로 확정(수동 선택 안 함) — 근거·설계:

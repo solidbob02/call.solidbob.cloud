@@ -6,6 +6,8 @@ status: "done"
 sprint: 1
 priority: 14
 date: 2026-08-25
+requirement:
+  - "B-1"
 ---
 
 ## 결정 (2026-08-25) — 안 A 채택

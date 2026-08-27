@@ -15,9 +15,9 @@ permalink: /docs/07/
 
 | 담당 | 인원 | 범위 |
 |---|---|---|
-| **AWS·인프라** | 정성윤 | Node.js WebSocket 게이트웨이, Google STT 연동, 화자 분리, **C-5 마스킹**, MySQL 스키마, Docker·배포, 레이턴시 측정 인프라, **CI 운영** |
+| **AWS·인프라** | 정성윤 | Node.js WebSocket 게이트웨이, Google STT 연동, 화자 분리, PostgreSQL 스키마, Docker·배포, 레이턴시 측정 인프라, **CI 운영** |
 | **백엔드·AI — AI (`ai/`)** | 류준 | 데이터셋 기반 **모델 학습**, 지식베이스 **청킹**, **BM25**·임베딩·하이브리드 검색(RRF)·**리랭킹**, LangChain·**LangGraph** 오케스트레이션, **평가 하네스**. 배포 `ai.solidbob.cloud`, 브랜치 `ai` |
-| **백엔드·AI — 서버 (`server/`)** | 장민석 | **파이프라인 구축**과 배선, **클린 아키텍처** 유지, 계약(포트·DTO) 정의, HTTP 경계·설정·저장(DB), **F-2 게이트**. 배포 `server.solidbob.cloud`, 브랜치 `server` |
+| **백엔드·AI — 서버 (`server/`)** | 장민석 | **C-5 마스킹**(2026-08-27 이관, `_project/decisions/019`), **파이프라인 구축**과 배선, **클린 아키텍처** 유지, 계약(포트·DTO) 정의, HTTP 경계·설정·저장(DB), **F-2 게이트**. 배포 `server.solidbob.cloud`, 브랜치 `server` |
 | **프론트엔드** | 조서희 | React 상담원 대시보드(`apps/dashboard`: 자막·경고·하단 책갈피 카드·종결 모달), WebSocket 클라이언트, 데모 시나리오, 결과 시각화. **앱(Flutter)은 만들지 않는다 — 웹만**. 고객 화면은 014로 철회(`_project/decisions/014`). |
 | 공동 | 4인 | 골든셋 작성·라벨링, 발표 자료 |
 

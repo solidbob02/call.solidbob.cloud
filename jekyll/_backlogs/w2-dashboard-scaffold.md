@@ -6,6 +6,8 @@ status: "todo"
 sprint: 2
 priority: 7
 date: 2026-08-26
+requirement:
+  - "B-5"
 paths:
   - "apps/dashboard/*"
 ---
