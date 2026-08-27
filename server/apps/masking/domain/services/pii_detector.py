@@ -1,5 +1,9 @@
 # Requirement: C-5
-"""탐지 파이프라인 ③ — 패턴 매칭. P1~P5 는 정규식, P6·P7(인명·상세주소)은 NER 이라 여기 없다.
+"""탐지 파이프라인 ③ — 패턴 매칭. P1~P5 는 숫자 정규식, P6·P7 은 문맥·토큰 규칙이다.
+
+P6(인명)·P7(상세주소)은 [2.4절](/docs/02/)이 NER 로 정했지만 모델은 `ai/` 몫이라
+(계약 2 가 `server/` 의 `transformers` import 를 막는다) **규칙으로 바닥을 깔았다.**
+각 모듈의 docstring 이 무엇을 못 잡는지 적어 두었다 — NER 이 붙으면 폴백으로 남는다.
 
 **지표 우선순위를 코드에 고정한다** ([2.4절](/docs/02/)):
 
@@ -17,6 +21,8 @@ from __future__ import annotations
 import re
 
 from ..value_objects.pii_pattern import PiiSpan
+from .address_detector import detect_addresses
+from .name_detector import detect_names
 from .number_normalizer import sino_to_digits, strip_separators
 
 # P5 인증번호는 문맥이 있을 때만 잡는다 — 4~6자리 숫자는 금액·개수와 구분이 안 된다.
@@ -63,6 +69,44 @@ def _detect_auth_code(text: str) -> list[PiiSpan]:
     ]
 
 
+# 자릿수만으로는 갈리지 않는 패턴이 있다 — **13자리는 주민등록번호(P1)이면서 계좌번호
+# (P3, 10~14)이기도 하다.** 글자는 어느 쪽으로 잡아도 가려지지만 **라벨이 틀리면 화면과
+# 리포트가 "주민등록번호"라고 거짓말한다.** 그래서 같은 구간에 여러 패턴이 걸리면
+# 발화의 문맥어로 가른다 — P5(인증번호)가 이미 쓰는 방식과 같다.
+_PATTERN_CONTEXT: dict[str, tuple[str, ...]] = {
+    "P1": ("주민등록번호", "주민번호", "주민"),
+    "P2": ("카드번호", "신용카드", "체크카드", "카드"),
+    "P3": ("계좌번호", "계좌", "이체", "입금", "송금"),
+    "P4": ("휴대전화", "휴대폰", "핸드폰", "전화번호", "연락처"),
+}
+
+
+def _disambiguate(text: str, spans: list[PiiSpan]) -> list[PiiSpan]:
+    """구간이 **정확히 같은** 후보들 중 하나만 남긴다. 문맥어가 있으면 그쪽, 없으면 규칙 순서.
+
+    구간이 다른 겹침(카드 14~16 vs 계좌 10~14)은 여기서 건드리지 않는다 — 그건 아래
+    `_resolve_overlaps` 가 「넓은 쪽」으로 처리한다. 여기는 **같은 글자를 두 이름으로 부르는**
+    경우만 다룬다.
+    """
+    groups: dict[tuple[int, int], list[PiiSpan]] = {}
+    for span in spans:
+        groups.setdefault((span.start, span.end), []).append(span)
+
+    picked: list[PiiSpan] = []
+    for candidates in groups.values():
+        if len(candidates) == 1:
+            picked.append(candidates[0])
+            continue
+        # 규칙 선언 순서대로 보되, 문맥어가 있는 첫 후보를 고른다.
+        by_context = next(
+            (c for c in candidates
+             if any(k in text for k in _PATTERN_CONTEXT.get(c.pattern, ()))),
+            None,
+        )
+        picked.append(by_context or candidates[0])
+    return picked
+
+
 def _resolve_overlaps(spans: list[PiiSpan]) -> list[PiiSpan]:
     """겹치면 **넓은 쪽**을 남긴다 — 좁은 쪽을 고르면 뒷자리가 노출된다(누락 0건 우선)."""
     ordered = sorted(spans, key=lambda s: (-s.length, s.start))
@@ -74,5 +118,11 @@ def _resolve_overlaps(spans: list[PiiSpan]) -> list[PiiSpan]:
 
 
 def detect(text: str) -> list[PiiSpan]:
-    """P1~P5 를 찾는다. 결과는 원문 오프셋 기준이고 시작 위치 순으로 정렬된다."""
-    return _resolve_overlaps(_detect_numeric(text) + _detect_auth_code(text))
+    """P1~P7 을 찾는다. 결과는 원문 오프셋 기준이고 시작 위치 순으로 정렬된다."""
+    found = (
+        _detect_numeric(text)
+        + _detect_auth_code(text)
+        + detect_names(text)
+        + detect_addresses(text)
+    )
+    return _resolve_overlaps(_disambiguate(text, found))
