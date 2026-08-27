@@ -21,6 +21,8 @@ from pathlib import Path
 
 from training.domain.services.domain_labels import to_domain
 
+CONVERSATION_FIELD = "대화셋일련번호"
+SENTENCE_NO_FIELD = "문장번호"
 UTTERANCE_FIELD = "고객질문(요청)"
 SPEAKER_FIELD = "화자"
 DOMAIN_FIELD = "도메인"
@@ -100,3 +102,63 @@ def stratified_split(
         val += group[:cut]
         train += group[cut:]
     return train, val
+
+
+# ─────────────────────────────────────── 통화 초반 발화 (골든셋 문체에 맞춘 증강)
+
+# 골든셋 발화는 "통화 초반의 완결된 질문" 한 문장이다
+# ("카드를 잃어버렸는데 신고하기 전에 이미 누가 써버린 돈은 저는 못 돌려받는 거예요?").
+# AI Hub 의 고객 발화는 같은 질문이 **짧은 턴으로 쪼개져** 있다
+# ("카드를 잃어버렸어요" / "그런것 같아요 아무리 찾아도 없네요" / "분실신고 하고 나서 …").
+#
+# 그래서 **한 대화의 앞쪽 고객 턴을 이어 붙여** 완결된 질문 형태로 만든다.
+# 지어낸 문장이 아니라 **실제 전사를 잇는 것**이고, B-0 의 실제 입력(통화 초반 발화)과도
+# 더 맞는다 — 지금 학습 표본은 통화 중반·후반 턴까지 섞여 있다.
+#
+# ⚠ 골든셋 문장을 학습에 쓰지 않는다. 평가 세트라 학습에 쓰면 그 라벨로 다시 잴 수 없다.
+MAX_OPENING_TURNS = 3
+
+
+def load_opening_samples(
+    root: Path, *, max_turns: int = MAX_OPENING_TURNS, min_chars: int = MIN_CHARS
+) -> list[Sample]:
+    """대화마다 앞쪽 고객 턴 1~max_turns 개를 이어 붙인 표본을 만든다.
+
+    1턴짜리는 `load_samples` 와 겹치므로 **2턴 이상만** 돌려준다 — 같은 문장을 두 번 넣으면
+    그 문장이 학습을 지배한다.
+    """
+    if not root.is_dir():
+        raise FileNotFoundError(f"데이터셋 경로가 없다: {root}")
+
+    conversations: dict[str, list[tuple[int, str, str]]] = {}
+    for path in sorted(root.rglob("*.json")):
+        if "/label/" not in path.as_posix():
+            continue
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        for rec in raw if isinstance(raw, list) else [raw]:
+            if rec.get(SPEAKER_FIELD) != CUSTOMER:
+                continue
+            text = (rec.get(UTTERANCE_FIELD) or "").strip()
+            domain = to_domain(rec.get(DOMAIN_FIELD, ""))
+            conv_id = rec.get(CONVERSATION_FIELD)
+            if not text or domain is None or not conv_id:
+                continue
+            try:
+                order = int(rec.get(SENTENCE_NO_FIELD, 0))
+            except (TypeError, ValueError):
+                continue
+            conversations.setdefault(conv_id, []).append((order, text, domain))
+
+    samples: list[Sample] = []
+    seen: set[str] = set()
+    for conv_id in sorted(conversations):
+        turns = sorted(conversations[conv_id])
+        for n in range(2, max_turns + 1):
+            if len(turns) < n:
+                break
+            joined = " ".join(t[1] for t in turns[:n])
+            if len(joined) < min_chars or joined in seen:
+                continue
+            seen.add(joined)
+            samples.append(Sample(text=joined, domain=turns[0][2]))
+    return samples
