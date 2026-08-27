@@ -94,3 +94,21 @@ def test_빈_URL_은_거부한다():
     """설정이 비었는데 조용히 뜨면 런타임에 이유 없는 연결 실패로 나타난다."""
     with pytest.raises(ValueError):
         build_es_client("")
+
+
+def test_도메인_라우팅_프로바이더가_포트를_돌려준다():
+    """⚠ v1 정확도 0.647 (목표 ≥0.95). 켤지는 팀 판단 — 배선 자체만 확인한다."""
+    from hub.app.ports.output.domain_routing_port import DomainRoutingPort
+
+    from retrieval.provider import build_domain_routing_provider
+
+    provider = build_domain_routing_provider("http://localhost:9200", client=FakeClient())
+    assert isinstance(provider(), DomainRoutingPort)
+    assert provider() is provider()
+
+
+def test_도메인_라우팅이_실제로_판정한다():
+    from retrieval.provider import build_domain_routing_provider
+
+    provider = build_domain_routing_provider("x", client=FakeClient())
+    assert asyncio.run(provider().classify("반품 배송비")).domain == "shopping"

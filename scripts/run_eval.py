@@ -36,6 +36,7 @@ from evaluation.harness import Ports, run_eval  # noqa: E402
 from evaluation.report import print_report  # noqa: E402
 from retrieval.adapter.outbound.es_bm25_retriever import EsBm25Retriever  # noqa: E402
 from retrieval.adapter.outbound.es_index import SINGLE_INDEX  # noqa: E402
+from retrieval.adapter.outbound.search_domain_router import SearchDomainRouter  # noqa: E402
 
 
 def _es_client(url: str | None):
@@ -60,8 +61,16 @@ def _es_client(url: str | None):
 
 def build_ports(client, *, index: str) -> Ports:
     """구현된 스포크만 꽂는다. 나머지는 None — 하네스가 "미구현"으로 보고한다."""
+    if client is None:
+        return Ports()
+
+    retriever = EsBm25Retriever(client, index=index)
     return Ports(
-        retrieval=EsBm25Retriever(client, index=index) if client is not None else None,
+        retrieval=retriever,
+        # B-0 v1 — 분류 모델이 아니라 검색 결과의 도메인 분포로 판정한다.
+        # 학습 데이터가 없어서다(골든셋은 평가 세트다 — 학습에 쓰면 그 라벨로 다시 못 잰다).
+        # decisions/007 이 폴백으로 설계한 경로를 1차로 쓰는 것이다. 자세한 건 모듈 docstring.
+        domain_routing=SearchDomainRouter(retriever),
         # ⚠ trigger 는 **구현이 있는데도 일부러 꽂지 않는다**(IsFinalTrigger, B-1).
         #   TranscriptEvent 에 이벤트 도착 시각이 없어서 발동 시각을 "발화 종료 + STT 지연
         #   상수(346ms)"로 모형화하고 있다. 그대로 채점하면 지연 분포가 상수 하나로 수렴해
