@@ -55,8 +55,8 @@
 - **팀 (2026-08-26 개편)**: 정성윤(AWS·인프라) · 류준(백엔드·AI 중 `ai/`) · 장민석(백엔드·AI 중 `server/`) · 조서희(프론트엔드, 신규 합류)
   — 백엔드·AI 는 원래 "둘이 함께"였으나, `fastapi/` 가 `server/`·`ai/` 로 갈리면서
   **디렉터리 경계를 담당 경계로** 삼았다(`_project/decisions/012`). 브랜치 이름도 여기에 맞췄다 —
-  장민석은 브랜치 `server` 에서 `server/` 를 고친다(2026-08-26 `ai` → `server` 개명).
-  류준만 아직 엇갈린다 — 브랜치 `backend` 에서 `ai/` 를 고친다
+  **브랜치 이름과 디렉터리 이름이 일치한다** — 류준은 브랜치 `ai` 에서 `ai/` 를,
+  장민석은 브랜치 `server` 에서 `server/` 를 고친다(2026-08-26 정리, 옛 `backend` 는 삭제 — `_project/decisions/015`)
   — 원래 3인 체제(정성윤·류준·장민석)에서 플러터 앱 개발을 접고, 장민석이 프론트엔드에서
   류준과 함께 백엔드·AI로 옮기고, 조서희가 새로 합류해 프론트엔드를 전담한다. 근거:
   `_project/decisions/005-팀-개편-4인-체제.md`
@@ -134,7 +134,7 @@ golden-set/              골든셋 (v1-10.json …)
 docs/                    구조 하네스(harness.md) · 아키텍처(architecture.md) · 도메인(domain.md) · 기획서 rev.4.1 사본. 공개, 지킬 밖
 server/                  요청이 흐르는 길 (Python 3.13). 계약(포트·DTO)·파이프라인 배선·클린 아키텍처.
                          main.py(합성 루트) · core/config.py · apps/hub/(7.3절 계약 DTO+포트, 슬라이스 transcript_ingest·myself)
-                         · .importlinter(계약 4종) · requirements.txt · pytest.ini · CLAUDE.md(영역 규칙). 배포: server.solidbob.cloud
+                         · .importlinter(계약 3종) · requirements.txt · pytest.ini · CLAUDE.md(영역 규칙). 배포: server.solidbob.cloud
                          실행: cd server && uvicorn main:app --reload --env-file ../.env
                          검증: cd server && pytest && PYTHONPATH=apps lint-imports --config .importlinter
 ai/                      품질을 만들고 재는 쪽 (Python 3.13). 청킹·BM25·리랭크·임베딩·모델 학습·랭그래프.
@@ -271,14 +271,24 @@ code(eval): 마스킹 재현율 계산 추가
 
 ### 브랜치
 
-역할별로 넷을 유지한다 — `PM`(정성윤) / `backend`(류준) / `server`(장민석) / `frontend`(조서희).
-`flutter` 는 앱 개발 중단(2026-08-26)으로 `ai` 로 대체됐고, 담당 디렉터리 분리(`_project/decisions/012`)에
-맞춰 **`ai` → `server` 로 다시 개명했다**(2026-08-26). 장민석이 고치는 것이 `server/` 이기 때문이다.
-⚠ 여기서 말하는 `server`·`ai` 는 **브랜치**다. `.github/branch-protection.json` 의
-`contexts: [server, ai, jekyll]` 는 **CI job 이름**(디렉터리 기준)이라 개명과 무관하다.
+역할별로 넷을 유지한다 — `PM`(정성윤) / `ai`(류준) / `server`(장민석) / `frontend`(조서희).
 
-**`server`(옛 `ai`) 와 `backend` 를 합치지 않는다** (2026-08-26 결정). 류준·장민석이 백엔드·AI 를 공동으로
-맡지만 브랜치는 따로 둔다. 근거·되돌리는 법: `_project/decisions/011-브랜치-정책과-main-보호.md`.
+**브랜치 이름 = 디렉터리 이름 = 담당자.** 담당 디렉터리 분리(`_project/decisions/012`)에 맞춰
+2026-08-26 에 정리했다. 류준은 브랜치 `ai` 에서 `ai/` 를, 장민석은 브랜치 `server` 에서 `server/` 를 고친다.
+옛 `backend` 는 삭제됐고, `flutter` 는 앱 개발 중단(2026-08-26)으로 이미 사라졌다.
+
+> 이제 브랜치·디렉터리·CI job 이름이 모두 `ai`·`server` 로 같다. 헷갈릴 일은 줄었지만,
+> **셋 중 하나만 바꾸면 나머지가 조용히 어긋난다.** 이름을 바꿀 때는 세 곳을 함께 고친다 —
+> `test.yml` 트리거(브랜치) · `test.yml` job 이름 · main 룰셋의 필수 통과 검사.
+> 2026-08-26 에 실제로 두 번 겪었다(`flutter`→`ai` 때 트리거 누락, `backend`→`server`+`ai` 때 룰셋 누락).
+
+> **옛 이름 주의.** 2026-08-26 이전 기록의 `backend`(류준)·`ai`(장민석)는 지금의
+> `ai`(류준)·`server`(장민석)다. **`ai` 라는 이름이 사람을 갈아탔다** — 그날 이전 기록의
+> `ai` 브랜치는 장민석, 그날 이후는 류준이다. 옛 기록은 그 시점의 사실이므로 고치지 않는다.
+> 개명 경위: `_project/decisions/015-브랜치명을-담당-디렉터리에-맞춘다.md`.
+
+**`ai` 와 `server` 를 합치지 않는다** (2026-08-26 결정). 근거·되돌리는 법:
+`_project/decisions/011-브랜치-정책과-main-보호.md`.
 
 > 브랜치를 합쳐도 충돌은 줄지 않는다. 이번 주 충돌 3건(`w2-domain-routing`·`w2-db-schema-domain`·
 > `progress.markdown`)의 원인은 브랜치 수가 아니라 **같은 티켓을 두 사람이 동시에 고친 것**이었다.
@@ -291,12 +301,16 @@ code(eval): 마스킹 재현율 계산 추가
 
 | | 설정 |
 |---|---|
-| PR 필수 | 승인 1건 이상 |
-| 필수 통과 검사 | `backend`(하네스 테스트 + 구조 계약) · `jekyll`(사이트 빌드 + 링크 검사) |
+| PR 필수 | 승인 0건 (혼자 관리 — 리뷰어를 두지 않는다) |
+| 필수 통과 검사 | `server`(파이프라인·계약) · `ai`(검색·평가) · `jekyll`(사이트 빌드 + 링크 검사) |
 | force push · 브랜치 삭제 | 금지 |
 
 CI(`test.yml`)는 위 네 브랜치 push 와 main 대상 PR 양쪽에서 돈다. 배포(`pages.yml`)는
 main push 에서만 도는데, 보호 설정 이후 그 push 는 **PR 머지로만 발생한다.**
+
+필수 통과 검사 이름은 `test.yml` 의 **job 이름**이지 브랜치 이름이 아니다 — 브랜치를
+개명해도 룰셋은 건드릴 필요가 없다. 반대로 **job 이름을 바꾸면 룰셋을 같이 고쳐야 한다**
+(없는 검사를 기다리며 PR 이 영원히 머지되지 않는다). 룰셋 변경은 `solidbob02`(admin) 몫이다.
 
 ---
 

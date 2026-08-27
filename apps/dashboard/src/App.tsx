@@ -8,12 +8,14 @@ export function App(): ReactElement {
   const { replay } = useGatewaySession();
 
   return (
-    <div className="app-shell">
-      <AppHeader onReplay={replay} />
-      <main className="panels">
-        <TranscriptPanel />
-        <TermsPanel />
-      </main>
+    <div className="app-viewport">
+      <div className="app-shell">
+        <AppHeader onReplay={replay} />
+        <main className="panels">
+          <TranscriptPanel />
+          <TermsPanel />
+        </main>
+      </div>
     </div>
   );
 }

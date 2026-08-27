@@ -71,21 +71,40 @@ permalink: /progress/
 - **발견 — 계약과 스키마 불일치**: [7.3절](/docs/07/) 예시는 `"segment_id": "seg_0031"` 로 문자열인데 `transcript_segment.segment_id` 는 BIGINT, 요청 스키마도 `int` 다. **코드와 DB 는 서로 맞고 계약 예시만 어긋난다** — 예시를 고칠지 타입을 바꿀지 팀 결정 사항이라 티켓에 적어두고 손대지 않았다
 - 남은 것: 실제 MySQL 에 붙여본 적이 없다. `db/schema.sql` 마이그레이션이 미착수라 붙일 DB 가 없어 integration 테스트는 `skip` 으로 자리만 잡았다. 그 뒤 `w3-transcript-query-api`(조회 API)
 
+### 2026-08-26 (51)
+- **`main` 동기화** — `ai`(구 `backend`) 브랜치를 `origin/main`(`3c518de`)으로 fast-forward. 조서희 님 대시보드 스캐폴딩 전체(`apps/dashboard/` 컴포넌트·스토어·4도메인 mock 시나리오·계약 타입)와 고객 화면 철회(`decisions/014`)를 받았다. 충돌 0건, 로컬 커밋 유실 0건
+- **브랜치 개명의 나머지 절반 — `backend`→`ai`(류준).** 장민석 님이 `ai`→`server` 를 먼저 마쳤고(위 (44)), 그 이름이 비어서 이어받았다. 이로써 **브랜치 이름 = 담당 디렉터리 이름**이 전부 맞았다. 브랜치 수는 넷 그대로다(`decisions/011` 유지). 이제 **`ai` 브랜치에서 `ai/` 를, `server` 브랜치에서 `server/` 를** 고친다. 근거·되돌리는 법: `_project/decisions/015`, 티켓 [w2-branch-rename](/backlog/w2-branch-rename/)
+- **`decisions/012` 가 이 개명을 미룬 이유는 틀린 것이었다** — "브랜치명을 바꾸면 main 룰셋의 필수 통과 검사 이름까지 함께 고쳐야 한다"고 적혀 있었으나, 그 검사 이름은 `test.yml` 의 **job 이름**(`server`·`ai`·`jekyll`)이지 브랜치 이름이 아니다(`gh api .../rules/branches/main` 으로 확인). 실제로 브랜치 이름이 걸린 곳은 **push 트리거 목록 한 줄뿐**이었고, 룰셋·`branch-protection.json` 은 손대지 않았다(장민석 님도 위 (44) 에서 같은 결론에 도달했다). admin 권한도 필요 없었다
+- **지우기 전에 미머지 커밋을 확인했다** — `origin/backend` 와 구 `origin/ai` 둘 다 `origin/main` 의 조상이었다(`git merge-base --is-ancestor`). 미머지 0건이라 삭제로 잃은 작업이 없다
+- **⚠ `ai` 라는 이름이 사람을 갈아탔다** — PR #28 이전 기록(PR #15·#22·#27, `STATE.md`)의 `ai` 브랜치는 **장민석**이고, 그 이후는 **류준**이다. 옛 기록은 그 시점의 사실이라 고치지 않았다(절대 원칙 8). 대신 `CLAUDE.md` §7 과 `decisions/015` 에 "옛 이름 주의" 절을 넣었다
+- **담당 분리를 문서 전체에 반영** — 아직 "류준·장민석 공동"으로 남아 있던 곳을 `decisions/012` 기준으로 고쳤다: `ai/CLAUDE.md` §6(→ 류준)·`server/CLAUDE.md` §5(→ 장민석, C-5 마스킹만 정성윤)·[7.1 담당표](/docs/07/)를 `ai/`·`server/` 두 줄로 분리·[7.2](/docs/07/) "공동 작업" 줄을 "디렉터리로 나눈다"로 교체·`docs/architecture.md` 스포크 표에 **위치** 열 추가
+- **7.1 표 아래에 경계 판정 기준을 넣었다** — "품질을 만들거나 재는 코드인가 → `ai/`" / "요청 하나를 처리하는 데 반드시 실행되는가 → `server/`". C-5·F-2 가 `server/` 인 이유(규칙 기반 판정, 모델 미관여 — 절대 원칙 9)도 함께 적었다
+- **`generation`·`compliance` 의 위치를 `server/apps/` → `ai/apps/` 로 정정** — `.claude/rules/rfp-harness.md §3.1` 이 `fastapi/` 분리 이전 표기를 유지하고 있었다. 두 모듈 다 모델(EXAONE·분류기)을 로드하는데 **`server/.importlinter` 계약 2 가 `server/` 안의 `torch`·`transformers`·`langchain`·`langgraph` import 를 금지**하므로 거기서는 애초에 만들 수 없다. 문서가 아니라 구조 계약이 이미 정답을 갖고 있던 경우다. ⚠ 장민석 님 확인 대상으로 [미결](/open-items/)에 올렸다
+- **`CLAUDE.md` §7 의 필수 통과 검사 이름도 실제와 어긋나 있었다** — `backend`·`jekyll` 로 적혀 있었으나 룰셋은 이미 `server`·`ai`·`jekyll` 이다. 표를 고치고, "검사 이름은 job 이름이지 브랜치 이름이 아니다"를 §7 에 명시했다. **정성윤 님이 아래 (50) 에서 같은 곳을 더 낫게 고쳤다** — 이름을 바꿀 때 함께 고칠 세 곳(트리거·job 이름·룰셋)을 실제 사례 3건과 함께 못박은 판을 채택하고, 내 판에만 있던 "옛 이름 주의"만 얹었다
+- 다음: `ai/` 2주차 작업 — B-1~B-3 검색(트리거 판정·하이브리드·리랭킹) 이어서
+
+### 2026-08-26 (50)
+- **브랜치 개편에 CI·문서를 맞췄다 — `backend` 삭제, `ai`(류준)·`server`(장민석) 확정.** 담당 디렉터리 분리(`decisions/012`)에 맞춰 브랜치 이름을 정리한 결과, **브랜치 이름 = 디렉터리 이름 = CI job 이름**이 됐다. 그런데 `test.yml` 트리거 목록이 `[main, PM, backend, server, frontend]` 로 남아 있었다 — **없어진 `backend` 를 가리키고 실제 쓰는 `ai` 가 빠져 있어, 류준이 `ai` 브랜치에 푸시해도 테스트가 돌지 않는 상태**였다. `[main, PM, ai, server, frontend]` 로 교체
+- **오늘 같은 함정에 세 번째로 걸렸다** — ① 오전 `flutter`→`ai` 개명 때 트리거 목록 누락 ② `fastapi/` 분리로 job 이름이 `backend`→`server`+`ai` 로 갈렸을 때 룰셋의 필수 통과 검사 누락(PR 이 없는 검사를 기다리며 머지 불가) ③ 이번 브랜치 개편 때 트리거 목록 누락. 매번 **이름을 한 곳만 바꾸고 나머지가 조용히 어긋났다.** `CLAUDE.md` §7 에 "이름을 바꿀 때는 세 곳을 함께 고친다 — `test.yml` 트리거(브랜치) · `test.yml` job 이름 · main 룰셋의 필수 통과 검사"를 실제 사례와 함께 못박았다
+- **`CLAUDE.md` 3곳 정정** — ① 팀 소개의 "류준만 아직 엇갈린다 — 브랜치 `backend` 에서 `ai/` 를 고친다"는 `backend` 삭제로 **해소됐다**(이제 브랜치·디렉터리가 일치) ② §7 브랜치 절을 `PM`/`ai`/`server`/`frontend` 기준으로 재작성 ③ main 보호 설정 표가 실제와 달랐다 — 승인 "1건 이상"→**0건**(혼자 관리), 필수 검사 `backend`→**`server`·`ai`·`jekyll`**
+- **룰셋은 이미 정리돼 있었다** — 확인해 보니 `['jekyll','ai','server']` 로 `backend` 가 빠진 상태였다. 내 계정은 `admin` 이 없어 API 로는 못 고치므로(404) 정성윤이 직접 처리한 것으로 보인다
+- **네 곳 정합성 확인** — 브랜치 `PM·ai·server·frontend` / CI 트리거 `main, PM, ai, server, frontend` / CI job `server, ai, jekyll` / 룰셋 필수검사 `server, ai, jekyll`. 전부 맞물린다
+- 남은 것: `ai`·`server` 브랜치는 현재 main 과 동기화된 상태(ahead 0)라 새 작업이 올라오면 CI 가 정상 작동하는지 첫 푸시에서 확인 필요
+
+### 2026-08-26 (49)
+- **상담원 화면 토스식 레이아웃** — 색 팔레트는 유지하고 여백·모서리·타이포만 키움. 카드 좌측 컬러바를 도메인 배지로 대체(FIN 청록·SHOP 호박·DASAN 블루·HLT 민트). `typecheck`·`build` 통과.
+
+### 2026-08-26 (48)
+- **자막 패널 자동 스크롤** — 새 발화가 오면 최신 줄로 따라감. `is_final`은 smooth, 사용자가 위로 올려 보면 강제 스크롤하지 않음. 카드 패널은 그대로.
+
+### 2026-08-26 (47)
+- **바깥 배경 블롭 제거** — teal/amber 블러를 지우고 웜그레이 그라데이션(`#EDECE7→#E0DDD3`)만 남김. 떠있는 느낌은 셸 그림자로만.
+
 ### 2026-08-26 (46)
-- **`POST /hub/search` 구현 — 상담원 수동 검색 폴백**(`w2-search-endpoint` done). [§3 프랙탈 단면](https://github.com/solidbob02/call.solidbob.cloud/blob/main/docs/architecture.md) 그대로 스키마→라우터→DTO→입력포트→인터랙터→프로바이더→테스트 8개 파일. `RetrievalPort` 가 이미 있어 `server/` 는 HTTP 경계만 얹었다 — DB 도 필요 없어 백로그 6건 중 유일하게 지금 완결 가능한 티켓이었다
-- **빈 목록으로 통과시키지 않고 501 을 돌려준다.** 빈 결과는 "관련 문서 없음"(B-6)과 구분되지 않아, 200 으로 통과시키면 **검색이 죽은 것인지 정말 없는 것인지 알 수 없게 된다**([절대 원칙 10](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md) — 측정할 수 없는 상태를 만들지 않는다). `masking_provider` 가 같은 이유로 501 인 것과 같은 판단
-- **순위를 허브가 다시 매기지 않는다** — retrieval 스포크가 준 순서를 그대로 유지한다. 허브가 정렬에 손대면 자동 추천과 수동 검색이 서로 다른 순위를 내놓는다. 테스트로 고정
-- 구현 중 확인한 것 — **의존성 해석이 본문 검증보다 먼저다.** 스포크 미등록 상태에서는 입력이 잘못돼도 422 가 아니라 501 이 난다. 구현이 없다는 사실이 먼저 알려지는 쪽이 맞다고 보고 그대로 두되 테스트로 그 순서를 문서화했다
-- 검증: `cd server && pytest` **28개 통과**(11→28) · `lint-imports` 계약 3종 KEPT · 라우트 표에 `POST /hub/search` 확인
-- 남은 것: `ai/apps/retrieval/` 이 `RetrievalPort` 를 구현하면 `dependency_overrides` 에 꽂는다. 다음은 `w2-mysql-persistence`(영속성 — 나머지 4건의 전제)
+- **떠있는 패널 대비 강화** — 바깥 배경을 `#E8E5DC→#DDD9CE` 그라데이션으로 어둡게, 블롭 opacity 0.22·크기 확대, 셸 그림자를 `0 28px 70px / 0.16`으로. 헤더·자막·카드는 그대로.
 
 ### 2026-08-26 (45)
-- **`server/` 파이프라인 백로그 6건 생성.** 콜센터 대시보드에 넣을 기능을 레퍼런스(Genesys Agent Copilot · Amazon Connect · Cresta)와 대조해 뽑고, **프론트가 아니라 그것을 떠받치는 파이프라인 관점**으로 환산했다. 화면은 조서희 님 담당이라 손대지 않는다
-- **가장 큰 공백은 영속성이었다** — `db/schema.sql` 에 테이블 16개가 있는데 **저장하는 코드가 0개**다. 아웃바운드 어댑터가 `log_*` 둘뿐이라 `transcript_ingest_interactor` 가 마스킹까지 제대로 하고도 결과가 어디에도 남지 않는다. `w2-mysql-persistence` 가 나머지 4건의 전제
-- 2주차 착수 가능 2건 — `w2-mysql-persistence`(영속성), `w2-search-endpoint`(수동 검색 폴백. `RetrievalPort` 가 이미 있어 **HTTP 표면만** 얹으면 되고 DB 도 필요 없다). 이후 `w3-transcript-query-api`(interim 199건 중복을 서버가 흡수) · `w4-knowledge-gap-intake` · `w7-card-feedback` · `w7-postcall-contract`
-- **레퍼런스에서 의도적으로 뺀 것** — 감정 분석 점수(Genesys sentiment) · Cresta 식 실시간 코칭 점수·상담원 순위. [부록 A-1](/docs/12/) 금지 범위이고 [절대 원칙 9](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md)에 어긋난다. 카드 채택 기록도 **카드 품질을 재는 용도**로만 두고 상담원 단위 집계는 만들지 않기로 티켓에 못박았다
-- **확인된 사실 2건** — ① `recommendation_card` 에 채택 여부 컬럼이 없어 `w7-card-feedback` 은 스키마 변경(팀 승인)이 따라온다 ② `postcall`(D-1~D-3) 계열 포트가 아예 없다. 반대로 `knowledge_gap`·`follow_up_action` 테이블은 이미 있어 **수집 경로만** 만들면 된다
-- 우리 F-2 충족요건 체크리스트가 Genesys 의 "intent-based checklist(최대 7항목)"와 같은 패턴임을 확인 — 독자 설계가 업계 표준과 수렴했다
+- **상담원 화면에 떠있는 패널 셸** — 페이지 배경 `#EDECE7`·블러 블롭 2개, 본체를 흰 카드(radius 20px)로 띄움. 헤더 로고 그림자·도메인 select·다시 재생(재생 아이콘). 자막·카드 내부는 그대로. `typecheck`·`build` 통과. 1024px에서 padding 20px 확인.
 
 ### 2026-08-26 (44)
 - **브랜치 `ai` → `server` 로 개명.** 담당 디렉터리 분리(`_project/decisions/012` — 류준 `ai/` · 장민석 `server/`) 직후 [7절](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md)이 "⚠ 브랜치 이름과 엇갈린다 — 장민석은 브랜치 `ai`에서 `server/`를 고친다"고 적어야 했던 상태를 해소한 것이다. 이제 장민석은 브랜치 `server` 에서 `server/` 를 고친다
