@@ -19,8 +19,8 @@
     app.dependency_overrides[get_trigger_port] = build_trigger_provider()
     SPOKES.append("trigger")
 
-    # B-0 은 선택이라 허브 기본값이 None 이다(501 이 아니다). v1 정확도가 0.647 이라
-    # 켜면 틀린 도메인으로 검색이 좁아진다 — 켤지는 팀 판단이다.
+    # B-0 은 선택이라 허브 기본값이 None 이다(501 이 아니다). v1 골든셋 0.857 로
+    # 목표(0.95)에 못 미쳐, 켜면 약 7건 중 1건은 틀린 도메인으로 검색이 좁아진다.
     # app.dependency_overrides[get_domain_routing_port] = build_domain_routing_provider(...)
 
 `sys.path` 에 **`ai/apps` 와 `ai` 둘 다** 올린다 — 앞의 것은 `retrieval`·`training` 을 최상위
@@ -90,9 +90,9 @@ def build_domain_routing_provider(
 ) -> Callable[[], DomainRoutingPort]:
     """`get_domain_routing_port` 를 대체할 프로바이더 (B-0 v1).
 
-    ⚠ **분류 모델이 아니다.** 검색 결과의 도메인 분포로 판정한다 — 학습 데이터가 없어서다.
-    2026-08-27 실측 정확도 **0.647** 로 목표(≥0.95)에 못 미친다. 켜기 전에
-    `SearchDomainRouter` docstring 과 `w1-domain-routing` 티켓을 읽는다.
+    ⚠ **분류 모델이 아니다.** 검색 결과의 도메인 분포로 판정한다.
+    2026-08-27 실측 골든셋 **0.857**(n=14, 목표 ≥0.95 미달) — 그런데 **파인튜닝한 분류기
+    (0.786)보다 낫다.** 자세한 건 `w1-domain-routing` 티켓.
     """
     port = SearchDomainRouter(EsBm25Retriever(client or build_es_client(url, api_key), index=index))
     return lambda: port
@@ -104,6 +104,10 @@ def build_model_domain_routing_provider(
     """`decisions/007` 설계 ① — 파인튜닝한 KcELECTRA 분류기.
 
     모델은 **처음 판정할 때** 올라간다(생성자에서는 경로만 확인). 기동을 느리게 하지 않는다.
+
+    ⚠ **2026-08-27 기준 이걸 켜면 더 나빠진다.** 골든셋 0.786 vs 검색 기반 v1 0.857.
+    AI Hub 검증에서는 0.879 인데 골든셋에서는 안 오른다 — 분포가 다르다.
+    `w1-domain-routing` 티켓을 읽고 켠다.
     """
     from training.adapter.outbound.model_domain_router import ModelDomainRouter
 

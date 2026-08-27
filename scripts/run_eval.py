@@ -64,12 +64,17 @@ def _es_client(url: str | None):
 def build_domain_router(kind: str, retriever, *, model_dir: Path):
     """B-0 라우터를 고른다. `decisions/007` 의 ①(분류기) / ②(검색 폴백)에 대응한다.
 
-    `auto` — 학습된 분류기가 있으면 ①, 없으면 ②. 모델 산출물은 gitignore 라 사람마다
-    있고 없고가 갈리는데, 없다고 채점이 멈추면 안 되고 **어느 쪽으로 쟀는지는 드러나야 한다.**
+    `auto` 는 **검색 기반 v1** 을 쓴다. 분류기가 있어도 마찬가지다 —
+    2026-08-27 실측에서 분류기(골든셋 0.786)가 v1(0.857)을 못 넘었기 때문이다.
+    AI Hub 검증에서는 0.879 인데 골든셋에서는 안 오른다(분포가 다르다).
+
+    분류기가 v1 을 넘는 것이 측정되면 이 기본값을 뒤집는다. 그때까지 분류기를 보려면
+    `--domain-router model` 로 **명시적으로** 고른다 — 더 나쁜 쪽이 기본값으로 조용히
+    끼어들면 안 된다. 어느 쪽으로 쟀는지는 실행할 때 출력에 찍힌다.
     """
     if kind == "none":
         return None
-    if kind in ("model", "auto") and model_dir.is_dir():
+    if kind == "model" and model_dir.is_dir():
         from training.adapter.outbound.model_domain_router import ModelDomainRouter
 
         print(f"B-0: 분류기 사용 — {model_dir}")
@@ -79,7 +84,10 @@ def build_domain_router(kind: str, retriever, *, model_dir: Path):
             f"분류기가 없다: {model_dir}\n"
             "  .venv/bin/python scripts/train_domain_classifier.py 로 먼저 학습한다"
         )
-    print("B-0: 검색 기반 v1 사용 (분류기 없음)")
+    if model_dir.is_dir():
+        print("B-0: 검색 기반 v1 사용 (분류기가 있지만 v1 이 더 낫다 — --domain-router model 로 강제)")
+    else:
+        print("B-0: 검색 기반 v1 사용 (분류기 없음)")
     return SearchDomainRouter(retriever)
 
 
@@ -113,7 +121,7 @@ def main() -> int:
         "--domain-router",
         choices=("auto", "model", "search", "none"),
         default="auto",
-        help="B-0 판정 방식. auto: 학습된 분류기가 있으면 그것, 없으면 검색 기반 v1",
+        help="B-0 판정 방식. auto(기본): 검색 기반 v1 — 분류기가 아직 v1 을 못 넘었다",
     )
     ap.add_argument("--classifier", type=Path, default=DEFAULT_CLASSIFIER_DIR)
     args = ap.parse_args()
