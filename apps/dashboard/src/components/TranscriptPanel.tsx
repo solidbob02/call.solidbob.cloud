@@ -8,9 +8,12 @@ import {
   type ReactElement,
   type UIEvent,
 } from "react";
+import { BrandLockup } from "./AppHeader";
 import { MaskedText } from "./MaskedText";
 import { formatOffsetMs } from "../lib/text/codepoints";
 import { findMatches, type CharRange } from "../lib/text/highlight";
+import { ManualSearchBar } from "./ManualSearchBar";
+import type { ManualSearchOutcome } from "../hooks/useGatewaySession";
 import { useCallStore } from "../store/callStore";
 
 /** 이 거리 안이면 맨 아래에 있는 것으로 본다. */
@@ -22,7 +25,13 @@ interface SearchMatch {
   range: CharRange;
 }
 
-export function TranscriptPanel(): ReactElement {
+interface TranscriptPanelProps {
+  onManualSearch: (query: string) => Promise<ManualSearchOutcome>;
+}
+
+export function TranscriptPanel({
+  onManualSearch,
+}: TranscriptPanelProps): ReactElement {
   const utterances = useCallStore((state) => state.utterances);
 
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -189,6 +198,9 @@ export function TranscriptPanel(): ReactElement {
       className="panel transcript-panel"
       aria-labelledby="transcript-heading"
     >
+      <header className="pane-header left-pane-header">
+        <BrandLockup />
+      </header>
       <header className="panel-head transcript-head">
         <h2 id="transcript-heading">실시간 자막</h2>
         <div className="transcript-search">
@@ -352,6 +364,8 @@ export function TranscriptPanel(): ReactElement {
           </ol>
         )}
       </div>
+
+      <ManualSearchBar onSearch={onManualSearch} />
 
       {showJump ? (
         <button type="button" className="jump-latest" onClick={jumpToLatest}>

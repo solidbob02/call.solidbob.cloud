@@ -14,17 +14,19 @@ export function App(): ReactElement {
   return (
     <div className="app-viewport">
       <div className="app-shell">
-        <AppHeader onReplay={replay} onEndCall={endCall} />
         {phase === "wrapup" ? (
-          <WrapUpPanel
-            onResume={resumeCall}
-            onRestart={replay}
-            onWrapUp={wrapUp}
-          />
+          <>
+            <AppHeader onReplay={replay} onEndCall={endCall} />
+            <WrapUpPanel
+              onResume={resumeCall}
+              onRestart={replay}
+              onWrapUp={wrapUp}
+            />
+          </>
         ) : (
           <main className="panels">
-            <TranscriptPanel />
-            <TermsPanel onManualSearch={manualSearch} />
+            <TranscriptPanel onManualSearch={manualSearch} />
+            <TermsPanel onReplay={replay} onEndCall={endCall} />
           </main>
         )}
       </div>

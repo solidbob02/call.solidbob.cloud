@@ -1,15 +1,45 @@
 import {
-  useEffect,
   useRef,
   useState,
-  type FormEvent,
   type ReactElement,
 } from "react";
-import { cardSourceType, type ClosureEvent } from "../types/contract";
+import {
+  DEMO_DOMAIN_LABELS,
+  DEMO_DOMAINS,
+  cardSourceType,
+  type ClosureEvent,
+  type DemoDomain,
+} from "../types/contract";
 import { cardId, evidenceTally, useCallStore } from "../store/callStore";
 import type { PanelCard } from "../store/callStore";
-import type { ManualSearchOutcome } from "../hooks/useGatewaySession";
+import { SessionControls } from "./AppHeader";
+import {
+  ArrowSelectChip,
+  type ArrowSelectOption,
+} from "./ArrowSelectChip";
 import { BookmarkDock } from "./BookmarkDock";
+
+type TermsContentView = "closure" | "popup";
+
+const VIEW_OPTIONS: readonly ArrowSelectOption<TermsContentView>[] = [
+  { value: "closure", label: "충족요건" },
+  { value: "popup", label: "팝업창" },
+];
+
+const DOMAIN_COLORS: Record<DemoDomain, string> = {
+  finance: "#2DD4BF",
+  dasan: "#818cf8",
+  shopping: "#F5A623",
+  health: "#2DD4BF",
+};
+
+const DOMAIN_OPTIONS: readonly ArrowSelectOption<DemoDomain>[] = DEMO_DOMAINS.map(
+  (domain) => ({
+    value: domain,
+    label: DEMO_DOMAIN_LABELS[domain],
+    color: DOMAIN_COLORS[domain],
+  }),
+);
 
 function categoryFromDocId(docId: string): string {
   return docId.split("-")[0] ?? docId;
@@ -20,11 +50,20 @@ function cardDomId(index: number): string {
 }
 
 interface TermsPanelProps {
-  onManualSearch: (query: string) => Promise<ManualSearchOutcome>;
+  onReplay: () => void;
+  onEndCall: () => void;
 }
 
-export function TermsPanel({ onManualSearch }: TermsPanelProps): ReactElement {
+export function TermsPanel({
+  onReplay,
+  onEndCall,
+}: TermsPanelProps): ReactElement {
   const cards = useCallStore((state) => state.cards);
+  const mode = useCallStore((state) => state.mode);
+  const demoDomain = useCallStore((state) => state.demoDomain);
+  const setDemoDomain = useCallStore((state) => state.setDemoDomain);
+  const error = useCallStore((state) => state.error);
+  const [view, setView] = useState<TermsContentView>("closure");
   const pending = cards.find((item) => item.closure !== null && !item.settled);
   const tally =
     pending?.closure !== undefined && pending.closure !== null
@@ -40,9 +79,31 @@ export function TermsPanel({ onManualSearch }: TermsPanelProps): ReactElement {
 
   return (
     <section className="panel terms-panel" aria-labelledby="terms-heading">
+      <header className="pane-header right-pane-header">
+        <SessionControls onReplay={onReplay} onEndCall={onEndCall} />
+        {error !== null ? <p className="header-error">{error}</p> : null}
+      </header>
       <header className="panel-head terms-head">
-        <h2 id="terms-heading">이용약관 · 충족요건</h2>
-        {tally !== null ? (
+        <h2 id="terms-heading" className="sr-only">
+          이용약관 · 충족요건
+        </h2>
+        <div className="terms-chips">
+          <ArrowSelectChip
+            options={VIEW_OPTIONS}
+            value={view}
+            onChange={setView}
+            aria-label="콘텐츠 보기"
+          />
+          {mode === "mock" ? (
+            <ArrowSelectChip
+              options={DOMAIN_OPTIONS}
+              value={demoDomain}
+              onChange={setDemoDomain}
+              aria-label="도메인"
+            />
+          ) : null}
+        </div>
+        {view === "closure" && tally !== null ? (
           <div className="tally-chip">
             <ProgressRing met={tally.met} total={tally.total} />
             <span>{`근거 ${tally.met}/${tally.total} 충족`}</span>
@@ -56,155 +117,25 @@ export function TermsPanel({ onManualSearch }: TermsPanelProps): ReactElement {
           <ul className="term-card-list">
             {cards.map((item, index) => (
               <li key={`${item.card.source.doc_id}-${item.card.title}`}>
-                <TermCard item={item} index={index} />
+                <TermCard item={item} index={index} view={view} />
               </li>
             ))}
           </ul>
         )}
       </div>
-      <ManualSearchBar onSearch={onManualSearch} />
       <BookmarkDock onJump={jumpTo} />
     </section>
-  );
-}
-
-function noticeFor(outcome: ManualSearchOutcome, query: string): string {
-  switch (outcome.kind) {
-    case "added":
-      return `「${query}」 결과 ${outcome.count}건을 아래에 추가했어요.`;
-    case "empty":
-      return `「${query}」 관련 문서 없음. 검색어를 바꿔 다시 찾아보세요.`;
-    case "duplicate":
-      return `「${query}」 결과는 이미 패널에 올라와 있어요.`;
-    case "error":
-      return outcome.message;
-  }
-}
-
-/**
- * §2.3 B-6 으로 "관련 문서 없음"이 떴을 때 상담원이 직접 찾는 경로.
- * 카드가 있든 없든 항상 열려 있어야 한다 — 자동 추천이 맞았는지는 상담원이 판단한다.
- */
-function ManualSearchBar({
-  onSearch,
-}: {
-  onSearch: (query: string) => Promise<ManualSearchOutcome>;
-}): ReactElement {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (open) {
-      inputRef.current?.focus();
-    }
-  }, [open]);
-
-  async function submit(event: FormEvent<HTMLFormElement>): Promise<void> {
-    event.preventDefault();
-    const trimmed = query.trim();
-    if (trimmed.length === 0 || busy) {
-      return;
-    }
-    setBusy(true);
-    setNotice(null);
-    const outcome = await onSearch(trimmed);
-    setBusy(false);
-    setNotice(noticeFor(outcome, trimmed));
-  }
-
-  if (!open) {
-    return (
-      <div className="manual-search">
-        <button
-          type="button"
-          className="manual-search-open"
-          onClick={() => {
-            setOpen(true);
-          }}
-        >
-          <SearchIcon />
-          관련 문서를 못 찾으셨나요?
-          <ChevronRightIcon />
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="manual-search">
-      <form
-        className="manual-search-form"
-        onSubmit={(event) => {
-          void submit(event);
-        }}
-      >
-        <SearchIcon />
-        <input
-          ref={inputRef}
-          type="text"
-          className="manual-search-input"
-          placeholder="직접 검색해보세요"
-          aria-label="문서 직접 검색"
-          value={query}
-          disabled={busy}
-          onChange={(event) => {
-            setQuery(event.target.value);
-          }}
-        />
-        <button
-          type="submit"
-          className="manual-search-submit"
-          disabled={busy || query.trim().length === 0}
-        >
-          검색
-        </button>
-        <button
-          type="button"
-          className="search-clear"
-          aria-label="직접 검색 닫기"
-          onClick={() => {
-            setOpen(false);
-            setQuery("");
-            setNotice(null);
-          }}
-        >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.6"
-            strokeLinecap="round"
-            aria-hidden="true"
-          >
-            <path d="M6 6 18 18M18 6 6 18" />
-          </svg>
-        </button>
-      </form>
-      {busy ? (
-        <p className="manual-search-note">
-          <span className="spinner" aria-hidden="true" />
-          검색 중...
-        </p>
-      ) : notice !== null ? (
-        <p className="manual-search-note" role="status">
-          {notice}
-        </p>
-      ) : null}
-    </div>
   );
 }
 
 function TermCard({
   item,
   index,
+  view,
 }: {
   item: PanelCard;
   index: number;
+  view: TermsContentView;
 }): ReactElement {
   const settleClosure = useCallStore((state) => state.settleClosure);
   const toggleAdoption = useCallStore((state) => state.toggleAdoption);
@@ -228,20 +159,23 @@ function TermCard({
       data-category={category}
     >
       <div className="term-card-body">
-        <div className="card-head">
-          <p className={`card-category cat-${category.toLowerCase()}`}>
-            {category}
-          </p>
-          {manual ? <span className="card-flag">수동 검색</span> : null}
-          <AdoptToggle adopted={adopted} onToggle={onAdopt} />
-        </div>
-        <h3>{item.card.title}</h3>
-        <p className="card-summary">{item.card.summary}</p>
-        <p className="card-source">
-          <FileTextIcon />
-          <span>{item.card.source.title}</span>
-        </p>
-        {closure !== null ? (
+        {view === "popup" ? (
+          <>
+            <div className="card-head">
+              <p className={`card-category cat-${category.toLowerCase()}`}>
+                {category}
+              </p>
+              {manual ? <span className="card-flag">수동 검색</span> : null}
+              <AdoptToggle adopted={adopted} onToggle={onAdopt} />
+            </div>
+            <h3>{item.card.title}</h3>
+            <p className="card-summary">{item.card.summary}</p>
+            <p className="card-source">
+              <FileTextIcon />
+              <span>{item.card.source.title}</span>
+            </p>
+          </>
+        ) : closure !== null ? (
           <ClosureBlock
             closure={closure}
             canSettle={canSettle}
@@ -250,7 +184,9 @@ function TermCard({
               settleClosure(closure.closure_type);
             }}
           />
-        ) : null}
+        ) : (
+          <p className="closure-empty">충족요건 없음</p>
+        )}
       </div>
     </article>
   );
@@ -300,7 +236,6 @@ function ClosureBlock({
 
   return (
     <div className="closure-block">
-      <hr className="closure-split" />
       <h4 className="closure-subhead">종결 충족요건</h4>
       <div className={`tally-row cat-${category.toLowerCase()}`}>
         <ProgressRing met={tally.met} total={tally.total} />
@@ -379,44 +314,6 @@ function ProgressRing({
       >
         {`${met}/${total}`}
       </text>
-    </svg>
-  );
-}
-
-function SearchIcon(): ReactElement {
-  return (
-    <svg
-      className="search-icon"
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      aria-hidden="true"
-    >
-      <circle cx="10.5" cy="10.5" r="6.5" />
-      <path d="M15.5 15.5 21 21" />
-    </svg>
-  );
-}
-
-function ChevronRightIcon(): ReactElement {
-  return (
-    <svg
-      className="manual-search-chevron"
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M9 6 15 12 9 18" />
     </svg>
   );
 }
