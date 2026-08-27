@@ -1,5 +1,10 @@
 # Requirement: F-2, QUA-1
-"""HTTP 표면: 스포크가 없으면 501 — 검증 없이 종결을 통과시키지 않는다 (절대 규칙)."""
+"""HTTP 표면. 2026-08-27 부터 실제 게이트(closure_gate 스포크)가 기본으로 붙어 있다.
+
+그 전에는 501 을 확인하는 테스트였다 — 스포크가 없을 때 통과시키지 않는 것이 절대 규칙이라서다.
+이제 구현이 있으므로 **기본 배선으로 실제 판정이 나오는지**를 본다. 지키려는 성질은 그대로다:
+**근거가 미충족이면 어떤 경로로도 `approved` 가 나오지 않는다.**
+"""
 
 from fastapi.testclient import TestClient
 
@@ -19,10 +24,25 @@ class _Stub(ClosureGatePort):
                               verdict="blocked" if missing else "approved", missing=missing, reason=reason)
 
 
-def test_스포크가_없으면_501이고_통과시키지_않는다():
+def test_기본_배선으로_실제_게이트가_판정한다():
+    """스텁 없이 — `main.py` 가 조립한 그대로. 미충족 근거는 `approved` 가 될 수 없다."""
     with TestClient(app) as client:
         r = client.post("/hub/closure-checks", json=BODY)
-    assert r.status_code == 501
+    assert r.status_code == 200
+    body = r.json()
+    assert body["verdict"] == "blocked"
+    assert "approved" not in r.text
+    # 규칙표에 있는 세 필드 중 요청이 채우지 못한 둘. 키가 빠진 것도 미충족이다.
+    assert body["missing"] == ["약정혜택소멸_안내", "고객확인_기록"]
+    assert body["source"]["doc_id"] == "FIN-POLICY-CLOSE-1"
+
+
+def test_규칙표에_없는_처리유형은_판정하지_않고_422다():
+    """`approved` 는 절대 규칙 위반이고 `blocked` 도 거짓말이다 — 판정할 규칙이 없는 것이지
+    근거가 빠진 것이 아니다. F-2 미적용 도메인(다산·질병관리본부)은 이 경로를 부르지 않는다."""
+    with TestClient(app) as client:
+        r = client.post("/hub/closure-checks", json={**BODY, "closure_type": "민원접수"})
+    assert r.status_code == 422
     assert "approved" not in r.text
 
 
