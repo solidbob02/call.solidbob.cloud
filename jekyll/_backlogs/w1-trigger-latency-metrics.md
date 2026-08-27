@@ -6,6 +6,9 @@ status: "done"
 sprint: 1
 priority: 24
 date: 2026-08-25
+requirement:
+  - "B-1"
+  - "E-2"
 ---
 
 트리거 허용 창을 0~1,500ms 로 확정하면서 함께 들어간 작업이다.

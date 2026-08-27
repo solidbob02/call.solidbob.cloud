@@ -6,6 +6,9 @@ status: "todo"
 sprint: 2
 priority: 5
 date: 2026-08-26
+requirement:
+  - "B-2"
+  - "E-1"
 ---
 
 단순 RAG + 골든셋 50건으로 **첫 실측치**를 낸다. 이 프로젝트에서 처음으로 숫자가 기록되는 시점이다.

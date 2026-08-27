@@ -11,20 +11,29 @@
 
 ## 1. 스타 토폴로지 — 모듈 사이 구조 (허브-스포크)
 
-`rfp-harness.md §3.1`의 코드 위치가 곧 스포크 목록이다. 여기에 `hub`를 더한다. 담당은 2026-08-26 4인 개편 기준(`_project/decisions/005`) — 백엔드·AI는 류준·장민석 공동.
+`rfp-harness.md §3.1`의 코드 위치가 곧 스포크 목록이다. 여기에 `hub`를 더한다.
+담당은 2026-08-26 **디렉터리 분리 기준**(`_project/decisions/012`)이다 — 스포크가 `ai/`에
+있으면 류준, `server/`에 있으면 장민석. `decisions/005`의 "백엔드·AI 공동"은 이것으로 갱신됐다.
 
 **도메인 4종(금융보험·다산·쇼핑·질병관리본부)은 스포크를 복제하지 않는다.** 스포크는 기능 축이고 도메인은 데이터 축이다 — `retrieval`이 `domain`으로 인덱스를 고르고, `closure_gate`가 도메인별 규칙표를 읽는다([domain.md §2](domain.md)).
 
-| 패키지 | 역할 | 기능 ID | 담당 |
-|---|---|---|---|
-| `hub` | **허브** — 7.3절 인터페이스 계약 3종(전사 이벤트·추천 카드·종결 판정)을 DTO + 포트로 소유. 파이프라인 배선. 도메인 로직 없음 | 7.3절 | 류준·장민석 (계약 변경은 4인 컨펌) |
-| `masking` | C-5 개인정보 마스킹 — 자막·저장 양쪽 **앞단** | C-5, SEC-1 | 정성윤 (P1~P5) / 류준·장민석 (P6~P7, 여유 시) |
-| `retrieval` | 트리거 판정 + 하이브리드 검색 + 리랭킹 | B-1~B-3 | 류준·장민석 (공동) |
-| `generation` | 근거 기반 카드 요약 + 출처 + "관련 문서 없음", 폴백 모드 | B-4~B-6 | 류준·장민석 (공동) |
-| `compliance` | 위반 탐지 + 대체 표현 | C-1~C-4 | 류준·장민석 (공동) |
-| `closure_gate` | 종결 요건 검증 (조건부, 7주차 체크포인트) | F-2 | 류준·장민석 (공동) |
-| `postcall` | 요약·유형 분류·공백 리포트 | D-1~D-4 | 류준·장민석 (공동) |
-| `evaluation` | 평가 하네스 (이미 존재 — `ai/apps/evaluation/`) | E-1~E-4 | 설계 류준·장민석 / 운영 정성윤 |
+| 패키지 | 위치 | 역할 | 기능 ID | 담당 |
+|---|---|---|---|---|
+| `hub` | `server/` | **허브** — 7.3절 인터페이스 계약 3종(전사 이벤트·추천 카드·종결 판정)을 DTO + 포트로 소유. 파이프라인 배선. 도메인 로직 없음 | 7.3절 | 장민석 (계약 변경은 류준과 합의, 4인 컨펌) |
+| `masking` | `server/` | C-5 개인정보 마스킹 — 자막·저장 양쪽 **앞단** | C-5, SEC-1 | 정성윤 (P1~P5) / 류준 (P6~P7 NER, 여유 시) |
+| `closure_gate` | `server/` | 종결 요건 검증 (조건부, 7주차 체크포인트) | F-2 | 장민석 |
+| `postcall` | `server/` | 요약·유형 분류·공백 리포트 | D-1~D-4 | 장민석 (요약 모델 호출은 `ai/` 포트 경유) |
+| `retrieval` | `ai/` | 트리거 판정 + 하이브리드 검색 + 리랭킹 | B-1~B-3 | 류준 |
+| `generation` | `ai/` | 근거 기반 카드 요약 + 출처 + "관련 문서 없음", 폴백 모드 | B-4~B-6 | 류준 |
+| `compliance` | `ai/` | 위반 탐지 + 대체 표현 | C-1~C-4 | 류준 |
+| `evaluation` | `ai/` | 평가 하네스 (이미 존재 — `ai/apps/evaluation/`) | E-1~E-4 | 설계 류준 / 운영 정성윤 |
+
+> **`generation`·`compliance` 의 위치를 `server/` → `ai/` 로 정정했다 (2026-08-26).**
+> `rfp-harness.md §3.1`은 분리 이전 표기라 둘을 `server/apps/` 로 적어 뒀지만, 두 모듈 다
+> 모델(EXAONE·분류기)을 로드한다. **`server/.importlinter` 계약 2가 `server/` 안에서
+> `torch`·`transformers`·`langchain`·`langgraph` import 를 금지**하므로 거기서는 애초에
+> 만들 수 없다. 문서가 아니라 계약이 이미 정답을 갖고 있던 경우다.
+> ⚠ 장민석 확인 대상 — `jekyll/open-items.markdown` 참고.
 
 | 방향 | 허용 | 이유 |
 |---|---|---|
@@ -79,7 +88,7 @@ apps/<spoke>/
 ├── adapter/
 │   ├── inbound/api/schemas/ # pydantic 요청/응답 스키마 (HTTP 표면이 있는 앱만)
 │   ├── inbound/api/v1/      # FastAPI 라우터 — 스키마 ↔ DTO 변환은 여기서만
-│   └── outbound/            # log_*_adapter.py · es/ mysql/ hf/ stt/ — 외부 시스템 구현체
+│   └── outbound/            # log_*_adapter.py · es/ postgres/ hf/ stt/ — 외부 시스템 구현체
 ├── dependencies/            # FastAPI DI 프로바이더 (포트 ↔ 구현체 결합은 여기서만)
 └── tests/
     ├── app/use_cases/       # 인터랙터 — 스텁 포트로
@@ -112,7 +121,7 @@ app/dtos/<이름>_dto.py                           # Query/Command · Result (fr
 app/ports/input/<이름>_use_case.py               # UseCase ABC
 app/ports/output/<이름>_record_port.py           # 활동 기록 아웃바운드 포트 (인터랙터가 실제 사용)
 app/use_cases/<이름>_interactor.py               # 대장 — 포트를 실제로 호출
-adapter/outbound/log_<이름>_record_adapter.py    # 임시 로그 구현 (영속 필요 시 mysql/ 로 교체)
+adapter/outbound/log_<이름>_record_adapter.py    # 임시 로그 구현 (영속 필요 시 postgres/ 로 교체)
 dependencies/<이름>_provider.py                  # DI
 tests/app/use_cases/test_<이름>_interactor.py    # 스텁 포트로 검증
 
@@ -163,7 +172,7 @@ DDD 쪽 대응: 바운디드 컨텍스트 = 스포크, 유비쿼터스 언어 = 
 - 환경변수는 `.env.example`에 **키 이름만** 등록하고(`SEC-2`), `os.environ`을 읽는 곳은 `core/config.py` 하나뿐이다. 스포크에서 `os.getenv`·`load_dotenv`를 새로 쓰지 않는다.
 - 마스킹 전 원문은 `hub`의 `TranscriptIngestCommand` → `transcript_ingest_interactor`가 `MaskingPort.mask()`를 부르기 전까지만 존재한다. 기록 포트·로그·DB·다른 스포크로 나가는 모든 문자열은 마스킹 후 `TranscriptEvent`다 (`SEC-1`). 원문을 받는 포트 시그니처를 만들지 않는다.
 - 목표 수치를 코드에 하드코딩하지 않는다. 임계값은 `apps/evaluation/metrics/*.py`의 상수(`ON_TIME_WINDOW_MS` 등)가 정본이고, 기획서 6.1절과 함께 바꾼다.
-- 테스트: 유스케이스는 **스텁 포트**로(mock 프레임워크보다 스텁 구현 선호), 실제 ES·MySQL·STT가 필요한 것은 `@pytest.mark.integration`.
+- 테스트: 유스케이스는 **스텁 포트**로(mock 프레임워크보다 스텁 구현 선호), 실제 ES·PostgreSQL·STT가 필요한 것은 `@pytest.mark.integration`.
 
 ---
 
@@ -171,6 +180,6 @@ DDD 쪽 대응: 바운디드 컨텍스트 = 스포크, 유비쿼터스 언어 = 
 
 - **도메인 라우팅** — 통화가 4개 도메인 중 어디인지 누가·언제 판정하는가(게이트웨이 메타데이터? `retrieval` 첫 발화 분류?). 7.3절 계약에 `domain` 필드가 없다 → v3 필요. 라우팅 정확도는 지표로 편입해야 한다.
 
-- 각 스포크 `adapter/outbound/` 하위 이름(`es`/`mysql`/`hf`/`stt`)은 제안이다. [Task 1] 때 확정하고 이 문서를 고친다.
+- 각 스포크 `adapter/outbound/` 하위 이름(`es`/`postgres`/`hf`/`stt`)은 제안이다. [Task 1] 때 확정하고 이 문서를 고친다.
 - Node 게이트웨이(`services/gateway`)·React 대시보드(`apps/dashboard`)의 계층 규칙은 이 문서 범위 밖이다. TypeScript라 import-linter를 못 쓰므로 스캐폴딩 시 `dependency-cruiser` 또는 `eslint-plugin-boundaries` 중 하나를 고른다 — 미결.
 - 허브가 F-2 게이트를 "요청 시"에만 부르는지, 종결 시도 이벤트를 게이트웨이가 별도 메시지로 보내는지는 7.3절 계약 v2에 없다. 7주차 체크포인트 전에 정한다.

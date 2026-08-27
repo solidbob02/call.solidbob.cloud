@@ -6,6 +6,8 @@ status: "done"
 sprint: 1
 priority: 3
 date: 2026-08-25
+requirement:
+  - "COST-1"
 ---
 
 V3·V4 실측의 전제였다. 결제 계정이 열려야 STT 를 호출할 수 있다.

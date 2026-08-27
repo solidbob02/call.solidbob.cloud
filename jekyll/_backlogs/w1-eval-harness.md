@@ -6,6 +6,10 @@ status: "done"
 sprint: 1
 priority: 9
 date: 2026-08-25
+requirement:
+  - "E-1"
+  - "E-2"
+  - "E-4"
 ---
 
 `services/core/eval/` — 골든셋 로더 + metrics(retrieval·trigger·compliance·masking·closure_gate·latency) + `harness.py`. 단위테스트 25개 통과.

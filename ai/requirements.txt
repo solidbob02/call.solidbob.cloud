@@ -27,13 +27,17 @@ accelerate==1.14.0
 # evaluation 이 hub 의 pydantic DTO 를 import 한다 (의존 방향 ai → server).
 pydantic==2.13.4
 
+# --- 검색 (B-2) ---
+# 서버(infra/docker-compose.yml 의 elasticsearch:9.5.1)와 major·minor 를 맞춘다.
+# 어긋나면 클라이언트가 접속 자체를 거부한다.
+elasticsearch==9.5.0
+
 # --- 검증 ---
 pytest==9.1.1
 import-linter==2.13
 
 # --- 아직 도입하지 않은 것 ---
 # 실제로 쓰기 시작할 때 버전을 고정해 추가한다. 미리 적어두면 CI 가 쓰지도 않는 것을 설치한다.
-#   elasticsearch        B-2 하이브리드 검색 (nori BM25 + dense_vector + RRF)
 #   rank-bm25            BM25 단독 베이스라인 (2주차 w2-naive-rag)
 #   sentence-transformers  임베딩 · 리랭킹
 #   langchain · langgraph  파이프라인 오케스트레이션

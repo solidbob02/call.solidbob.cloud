@@ -3,7 +3,7 @@
 """세션 종료 검사 — Stop 훅에서 실행된다. CLAUDE.md §0.5 세션 종료 루틴의 자동화.
 
 세 가지를 본다:
-  ① 진행 기록 누락    파일을 고쳤는데 progress.markdown 에 오늘 항목이 없다   → 차단(exit 2)
+  ① 진행 기록 누락    파일을 고쳤는데 jekyll/_logs/ 에 내 오늘 기록이 없다      → 차단(exit 2)
   ② status 정합성     만진 파일이 어느 티켓 소관인데 그 티켓이 아직 todo      → 경고
   ③ 중복 티켓         슬러그가 겹치는 티켓이 둘 다 살아 있다                   → 경고
 
@@ -32,10 +32,11 @@ from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-PROGRESS = ROOT / "jekyll" / "progress.markdown"
+LOGS = ROOT / "jekyll" / "_logs"
 BACKLOGS = ROOT / "jekyll" / "_backlogs"
 
-DATE_HEADING = re.compile(r"^###\s+(\d{4}-\d{2}-\d{2})")
+# 로그 파일명: YYYY-MM-DD-NN-사람.md  (2026-08-27 부터. 그 전에는 progress.markdown 한 파일)
+LOG_NAME = re.compile(r"^(\d{4}-\d{2}-\d{2})-(\d+)-([a-z]+)\.md$")
 SLUG_PREFIX = re.compile(r"^w\d+-")
 IGNORED_SUBJECT = re.compile(r"^(Merge |merge:|Revert )")
 
@@ -79,7 +80,7 @@ def tickets() -> list[tuple[str, dict[str, object]]]:
 
 # ─────────────────────────────────────────────── ① 진행 기록
 
-PROGRESS_REL = "jekyll/progress.markdown"
+LOGS_REL = "jekyll/_logs/"
 
 
 def changed_today() -> tuple[list[str], list[str]]:
@@ -108,11 +109,15 @@ def changed_today() -> tuple[list[str], list[str]]:
 def i_wrote_the_log(dirty: list[str]) -> bool:
     """*내가* 오늘 진행 기록을 남겼는가.
 
-    "오늘 날짜 항목이 있는가"로 보면 안 된다 — 팀원이 먼저 쓴 항목이 오늘 날짜라
+    "오늘 날짜 기록이 있는가"로 보면 안 된다 — 팀원이 먼저 쓴 기록이 오늘 날짜라
     내 누락이 그대로 묻힌다(2026-08-26 에 실제로 이렇게 뚫렸다). 그래서
-    progress.markdown 을 이 세션에서 실제로 건드렸는지를 본다.
+    jekyll/_logs/ 아래 파일을 이 세션에서 실제로 만들거나 고쳤는지를 본다.
+
+    로그가 파일 1개 = 항목 1건으로 갈리면서(2026-08-27) 이 검사는 더 정확해졌다 —
+    예전에는 네 명이 같은 progress.markdown 을 고쳐서, 남의 변경을 머지만 해도
+    "내가 썼다"로 잡힐 수 있었다.
     """
-    if any(f.endswith("progress.markdown") for f in dirty):
+    if any(f.startswith(LOGS_REL) for f in dirty):
         return True
 
     me = git("config", "user.email").strip()
@@ -124,18 +129,19 @@ def i_wrote_the_log(dirty: list[str]) -> bool:
         sha, email = ln.split("\t", 1)
         if me and email != me:
             continue
-        if PROGRESS_REL in git("show", "--name-only", "--pretty=format:", sha):
+        touched = git("show", "--name-only", "--pretty=format:", sha).splitlines()
+        if any(f.startswith(LOGS_REL) for f in touched):
             return True
     return False
 
 
 def progress_has_today() -> bool:
-    """오늘 날짜 항목이 형식대로 있는가 (보조 확인)."""
-    if not PROGRESS.exists():
+    """오늘 날짜 기록이 하나라도 있는가 (보조 확인 — 작성자는 따지지 않는다)."""
+    if not LOGS.is_dir():
         return False
     today = date.today().isoformat()
-    return any(DATE_HEADING.match(ln) and DATE_HEADING.match(ln).group(1) == today
-               for ln in PROGRESS.read_text(encoding="utf-8").splitlines())
+    return any(m and m.group(1) == today
+               for m in (LOG_NAME.match(p.name) for p in LOGS.glob("*.md")))
 
 
 # ─────────────────────────────────────────────── ② status 정합성
@@ -203,8 +209,9 @@ def main() -> int:
         return 0
 
     dirty, commits = changed_today()
-    # 진행 기록 파일 자체를 고친 것은 "작업"으로 세지 않는다 (로그만 쓴 세션)
-    substantive = [f for f in dirty if not f.endswith("progress.markdown")]
+    # 진행 기록 자체를 쓴 것은 "작업"으로 세지 않는다 (로그만 쓴 세션)
+    substantive = [f for f in dirty
+                   if not f.startswith(LOGS_REL) and not f.endswith("progress.markdown")]
     worked = bool(substantive or commits)
     lines: list[str] = []
 
@@ -221,9 +228,9 @@ def main() -> int:
     if missing_log:
         what = substantive[:4] if substantive else commits[:4]
         note = ("" if progress_has_today() else
-                f"\n            (오늘 날짜 항목 자체가 없습니다 — ### {date.today().isoformat()})")
-        lines.insert(0, "[진행 기록] 이번 세션에서 파일을 고쳤는데 jekyll/progress.markdown 을 "
-                        "건드리지 않았습니다" + note + "\n"
+                f"\n            (오늘 날짜 기록 자체가 없습니다 — jekyll/_logs/{date.today().isoformat()}-01-<사람>.md)")
+        lines.insert(0, "[진행 기록] 이번 세션에서 파일을 고쳤는데 jekyll/_logs/ 에 "
+                        "기록을 남기지 않았습니다" + note + "\n"
                         "            " + "\n            ".join(f"· {w}" for w in what))
 
     if not lines:

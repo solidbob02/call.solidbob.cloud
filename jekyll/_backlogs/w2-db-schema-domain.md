@@ -6,6 +6,8 @@ status: "done"
 sprint: 2
 priority: 8
 date: 2026-08-26
+requirement:
+  - "SEC-1"
 ---
 
 도메인 4종 전환(`_project/decisions/004`) 후속. 스키마 일부가 통신 도메인 가정에 묶여 있다.

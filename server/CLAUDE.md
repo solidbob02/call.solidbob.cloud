@@ -86,7 +86,7 @@ server/
 
 ```bash
 cd server && pytest                            # 단위 테스트
-cd server && PYTHONPATH=apps lint-imports --config .importlinter   # 구조 계약 4종
+cd server && PYTHONPATH=apps lint-imports --config .importlinter   # 구조 계약 3종
 ```
 
 CI(`.github/workflows/test.yml`)의 `server` job 이 이 둘을 돌린다.
@@ -97,10 +97,15 @@ CI(`.github/workflows/test.yml`)의 `server` job 이 이 둘을 돌린다.
 
 ---
 
-## 5. 담당
+## 5. 담당 — 장민석
 
-정성윤(AWS·인프라) — 게이트웨이·인프라·C-5 마스킹·CI 운영.
-류준·장민석(백엔드·AI 공동) — 파이프라인·슬라이스.
+`server/` 는 **장민석**이 맡는다 — 파이프라인 배선·클린 아키텍처·계약(포트·DTO).
+브랜치도 같은 이름 `server` 다(`_project/decisions/015`).
+`../ai/` 는 류준(브랜치 `ai`)이다. 근거: `_project/decisions/012`.
+
+**`apps/masking/`(C-5)도 장민석이다** — 원래 정성윤 담당이었으나 티켓·코드가 없는 착수 전
+상태였고 부재가 겹쳐 2026-08-27 이관했다(`_project/decisions/019`). 게이트웨이·인프라·CI
+운영은 정성윤 몫으로 그대로다. ⚠ 정성윤 복귀 시 이 항목을 먼저 공유한다.
 
 `server/` 를 고치면 `ai/` 의 계약 소비 지점이 함께 깨질 수 있다.
-**포트·DTO 를 바꿀 때는 `../ai/` 를 먼저 grep 한다.**
+**포트·DTO 를 바꿀 때는 `../ai/` 를 먼저 grep 하고 류준과 합의한다.**

@@ -14,6 +14,9 @@ vendor
 
 # 모델 가중치 — 용량이 크고 HuggingFace에서 다시 받을 수 있어 커밋하지 않는다.
 /models/
+# 로컬 개발 인프라 오버라이드 (포트·비밀번호 등). SEC-2
+/infra/.env
+
 /.venv/
 /logs/
 

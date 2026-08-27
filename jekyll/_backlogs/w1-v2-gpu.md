@@ -6,6 +6,8 @@ status: "done"
 sprint: 1
 priority: 3
 date: 2026-08-25
+requirement:
+  - "B-4"
 ---
 
 **결과: Apple M5 MacBook Air 24GB 통합메모리, CUDA 없음(MPS 가속).**

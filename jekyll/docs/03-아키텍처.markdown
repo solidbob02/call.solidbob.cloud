@@ -37,7 +37,7 @@ permalink: /docs/03/
        └─ F-2 게이트 모듈 ──→ 같은 ES 인덱스 조회 + 규칙 판정
        │
        ▼
-   [MySQL]
+   [PostgreSQL]
      ├─ call            통화 메타
      ├─ transcript      마스킹된 전사
      ├─ recommendation  추천 이력
@@ -60,7 +60,7 @@ permalink: /docs/03/
 | **HuggingFace Transformers** | **① 임베딩 모델(`KoE5`) ② 컴플라이언스 분류기 파인튜닝(`KcELECTRA-base` + `klue/roberta-base` 대조군) ③ NER(P6·P7, `koelectra-ner`)** | 필수 |
 | **Ollama** | **카드 요약 생성(B-4) 서빙 — 2026-08-26 추가** | 필수 |
 | React | 상담원 대시보드 | 필수 |
-| MySQL | 통화 메타·전사·추천·종결·평가 결과 | 필수 |
+| PostgreSQL | 통화 메타·전사·추천·종결·평가 결과 | 필수 |
 | Git | 형상관리 | 필수 |
 | Docker | 서비스 컨테이너화 | 필수 |
 | matplotlib | 오류율별 성능 곡선, 레이턴시 분포 | 필수 |
@@ -124,7 +124,7 @@ permalink: /docs/03/
 > 필요**하다(미착수). 생성 모델과 달리 인코더는 파인튜닝 헤드 없이 정확도를 잴 수
 > 없어 이번 세션에서는 결정만 하고 실측은 4~5주차로 미룬다.
 
-> **캐시 저장소**: 별도 저장소를 두지 않는다. **프로세스 인메모리 LRU + MySQL 영속화**로 처리한다.
+> **캐시 저장소**: 별도 저장소를 두지 않는다. **프로세스 인메모리 LRU + PostgreSQL 영속화**로 처리한다.
 
 ## 3.2 도메인 라우팅 — 자동 분류 (2026-08-26 확정)
 

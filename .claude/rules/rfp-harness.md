@@ -31,28 +31,33 @@ apps/dashboard (React)      --WebSocket-->  services/gateway            fastapi
                                                                          ├── 생성(HF Transformers)
                                                                          └── F-2 게이트
 
-infra/ (Docker, AWS, MySQL, Elasticsearch)
+infra/ (Docker, AWS, PostgreSQL, Elasticsearch)
 
-[MySQL] call · transcript · recommendation · closure · eval_result
+[PostgreSQL] call · transcript · recommendation · closure · eval_result
 [Elasticsearch] nori(BM25) + dense_vector + RRF
 ```
 
 | 담당자 | 역할 | 소유 디렉토리 | 근거 |
 |---|---|---|---|
-| **정성윤** | AWS·인프라 | `services/gateway/`, `infra/`, `server/apps/masking/`(C-5, 예외적으로 코어 내 배치) | [팀 분업](/docs/07/) |
+| **정성윤** | AWS·인프라 | `services/gateway/`, `infra/`, CI 운영 | [팀 분업](/docs/07/) |
 | **류준** | 백엔드·AI 중 **AI** | `ai/` — 데이터셋 모델 학습·청킹·BM25·리랭크·임베딩·LangChain/LangGraph·평가 하네스 | `_project/decisions/012` |
 | **장민석** | 백엔드·AI 중 **서버** | `server/` — 파이프라인 구축·클린 아키텍처·계약(포트·DTO)·요청 경로 배선 | `_project/decisions/012` |
 | **조서희** | 프론트엔드 | `apps/dashboard/`(상담원: 자막 · 이용약관·충족요건), 결과 시각화(matplotlib) | [팀 분업](/docs/07/), `_project/decisions/014` |
 
-> **⚠ 브랜치 이름과 디렉터리 이름이 엇갈린다** — 류준은 브랜치 `backend` 에서 `ai/` 를,
-> 장민석은 브랜치 `ai` 에서 `server/` 를 주로 고친다. 브랜치는 넷을 유지하기로 했으므로
-> (`_project/decisions/011`) 지금은 이름만 어긋난 상태다. 정리는 팀 확인 후 — 브랜치명을
-> 바꾸면 main 룰셋의 필수 통과 검사 이름까지 함께 고쳐야 한다.
+> **브랜치 이름 = 담당 디렉터리 이름** (2026-08-26 개명, `_project/decisions/015`) —
+> 류준은 브랜치 `ai` 에서 `ai/` 를, 장민석은 브랜치 `server` 에서 `server/` 를 고친다.
+> 브랜치는 넷을 유지한다(`_project/decisions/011`). 개명해도 main 룰셋은 그대로다 —
+> 필수 통과 검사 이름은 `test.yml` 의 **job 이름**(`server`·`ai`·`jekyll`)이지 브랜치 이름이
+> 아니다. 브랜치 이름이 걸린 곳은 `test.yml` 의 push 트리거 목록 하나뿐이다.
+> ⚠ 2026-08-26 이전 기록의 `ai` 브랜치는 **장민석**을 가리킨다 — 이름이 사람을 갈아탔다.
 
 > **팀 개편 (2026-08-26)**: 원래 3인 체제에서 플러터 앱 개발을 중단하고, 장민석이
 > 프론트엔드에서 류준과 함께 백엔드·AI로 옮겼다. 조서희가 신규 합류해 프론트엔드를
 > 전담한다. 기존 [7.2절 부하 경고](/docs/07/)가 지적한 "류준 단독 백엔드·AI 과부하"는
-> 이 개편으로 해소된다. C-5·평가 하네스 CI 운영을 정성윤에게 둔 기존 조치는 유지한다.
+> 이 개편으로 해소된다. 평가 하네스 CI 운영은 정성윤이 계속 맡는다.
+> **C-5 마스킹은 2026-08-27 장민석으로 이관됐다**(`_project/decisions/019`) — 티켓·코드가 없는
+> 착수 전 상태였고, `server/apps/masking/` 이 장민석 담당 디렉터리 안이라 `decisions/012`
+> (디렉터리 경계 = 담당 경계)와도 맞는다.
 > 근거: `_project/decisions/005-팀-개편-4인-체제.md`.
 
 ---
@@ -66,20 +71,25 @@ infra/ (Docker, AWS, MySQL, Elasticsearch)
 | **A-1·A-2** | 스트리밍 STT + 화자 분리 | `services/gateway/stt/`, `services/gateway/diarization/` | 부분 전사 결과 스트리밍, [V1](/docs/05/) 결과에 따라 채널분리/diarization 분기 | [기능 명세](/docs/02/), [데이터 확보 계획](/docs/05/) |
 | **B-0** | 도메인 라우팅 — [4개 도메인](/docs/01/) 자동 분류(2026-08-26 확정) | `server/apps/hub/app/ports/output/domain_routing_port.py`, `ai/apps/evaluation/` | 도메인 분류 정확도 ≥0.95 | [아키텍처 3.2](/docs/03/), `_project/decisions/007` |
 | **B-1~B-3** | 트리거 판정 + 하이브리드 검색(nori+dense_vector+RRF) + 리랭킹 | `ai/apps/retrieval/` | Recall@5 ≥0.70(오류 없음)/≥0.60(오류 10%), 트리거 적절 발동률(0~1,500ms) ≥0.85, 내부 처리 p95 ≤1,000ms | [핵심 기술 난제](/docs/04/), [평가 설계](/docs/06/) |
-| **B-4~B-6** | 근거 기반 요약 카드 생성 + 출처 표시 | `server/apps/generation/` | 출처 표시율 100%, 환각 150문항 중 5건 이하, 근거 부족 시 "관련 문서 없음" 반환 | [기능 명세 2.3](/docs/02/) |
-| **C-1~C-4** | 컴플라이언스 탐지 + 대체 표현 제시 | `server/apps/compliance/` | 재현율 ≥0.90, 정밀도 ≥0.60 (재현율 우선) | [평가 설계](/docs/06/) |
-| **C-5** | 개인정보 실시간 마스킹 | `server/apps/masking/` (담당: 정성윤) | **P1~P7 패턴 마스킹 누락 0건 — 절대 규칙.** 화면·DB 저장 양쪽 앞단 적용, 원본 미보관 | [기능 명세 2.4](/docs/02/), [평가 설계](/docs/06/) |
+| **B-4~B-6** | 근거 기반 요약 카드 생성 + 출처 표시 | `ai/apps/generation/` | 출처 표시율 100%, 환각 150문항 중 5건 이하, 근거 부족 시 "관련 문서 없음" 반환 | [기능 명세 2.3](/docs/02/) |
+| **C-1~C-4** | 컴플라이언스 탐지 + 대체 표현 제시 | `ai/apps/compliance/` | 재현율 ≥0.90, 정밀도 ≥0.60 (재현율 우선) | [평가 설계](/docs/06/) |
+| **C-5** | 개인정보 실시간 마스킹 | `server/apps/masking/` (담당: **장민석** — 2026-08-27 이관, `_project/decisions/019`) | **P1~P7 패턴 마스킹 누락 0건 — 절대 규칙.** 화면·DB 저장 양쪽 앞단 적용, 원본 미보관 | [기능 명세 2.4](/docs/02/), [평가 설계](/docs/06/) |
 | **D-4** | 지식베이스 공백 리포트 | `server/apps/postcall/` | B(검색 실패)/C(놓친 위반)/F(사후 문제) 케이스를 같은 루프로 누적 | [기능 명세 2.5](/docs/02/) |
 | **E-1~E-4** | 평가 하네스 | `ai/apps/evaluation/` | 규칙 기반 채점(LLM 채점 배제), 여러 회 실행 최저치 고정, 기준선 미달 시 CI 실패 | [평가 설계](/docs/06/) |
 | **F-2** | 종결 요건 검증 게이트 *(조건부, 7주차 체크포인트)* | `server/apps/closure_gate/` | 필수 근거 미기재 시 종결 **100% 차단 — 절대 규칙**. 판정은 규칙, 설명만 LLM | [기능 명세 2.7](/docs/02/), [부록 A-2](/docs/12/) |
 | **G-2** | 지역 자원 연계 검색 *(여유 시)* | `server/apps/resources/` | 자원 매칭 정확도 ≥0.95, 폐지·이전 기관 반환 0건 | [기능 명세 2.8](/docs/02/) |
 
+> **2026-08-26 위치 정정** — `generation`·`compliance` 를 `server/apps/` → `ai/apps/` 로 옮겨
+> 적었다. 둘 다 모델(EXAONE·분류기)을 로드하는데 **`server/.importlinter` 계약 2가 `server/`
+> 안에서 `torch`·`transformers`·`langchain`·`langgraph` import 를 금지**한다. 위 표는 `fastapi/`
+> 분리 이전 표기가 남아 있던 것이다. 자세한 근거: `docs/architecture.md §1`. ⚠ 장민석 확인 대상.
+
 ### 3.2 품질·검증 영역
 
 | 요구 ID | 정의 | 코드 위치 | 검수 기준 | 근거 문서 |
 |---|---|---|---|---|
-| **SEC-1** | 개인정보 원본 미보관 | `server/apps/masking/`, MySQL `transcript` 스키마 | 마스킹 전 원문이 DB·로그 어디에도 남지 않음 (스키마 리뷰로 검증) | [기능 명세 C-5](/docs/02/), [부록 A](/docs/12/) |
-| **SEC-2** | 자격증명 분리 | `.env.example`, `infra/secrets/` | Google STT 키·MySQL 비밀번호가 코드/레포에 커밋되지 않음. `.env.example`엔 키 이름만 | `.env.example` |
+| **SEC-1** | 개인정보 원본 미보관 | `server/apps/masking/`, PostgreSQL `transcript` 스키마 | 마스킹 전 원문이 DB·로그 어디에도 남지 않음 (스키마 리뷰로 검증) | [기능 명세 C-5](/docs/02/), [부록 A](/docs/12/) |
+| **SEC-2** | 자격증명 분리 | `.env.example`, `infra/secrets/` | Google STT 키·PostgreSQL 비밀번호가 코드/레포에 커밋되지 않음. `.env.example`엔 키 이름만 | `.env.example` |
 | **QUA-1** | 요구 ID별 PyTest/Jest 자동화 테스트 | `server/apps/*/tests/`, `apps/dashboard/test/` | 핵심 모듈(트리거·검색·마스킹·F-2 게이트) 단위 테스트 존재, CI에서 실행 | [평가 설계 6.2](/docs/06/) |
 | **QUA-2** | 골든셋 회귀 평가 자동화 | `ai/apps/evaluation/harness.py` | 골든셋(1주차 10개→2주차 50개→3주차 150개) 기준 eval 하네스가 스프린트마다 실행되고 [진행상황](/progress/)에 기록됨 | [데이터 확보 계획 5.3](/docs/05/) |
 | **COST-1** | Google STT 사용량을 무료 크레딧/무료 한도 내로 이중 캡 | `services/gateway/stt/budget_guard.js`, GCP 콘솔 쿼터 | ① GCP 쿼터로 하드 리밋(1차) ② `STT_MAX_SECONDS_PER_DAY`/`_MONTH`(`.env.example`) 초과 시 새 스트림 오픈 거부(2차, 애플리케이션 가드) | [리스크 및 대응](/docs/11/) |
@@ -97,7 +107,7 @@ claude "rfp-harness.md의 요구사항을 반영해 CallGuard 모노레포 뼈�
 1. Root에 services/gateway, fastapi, apps/dashboard, infra/ 디렉토리 생성
 2. services/gateway: Node.js WebSocket 게이트웨이 골격 + Google STT 스트리밍 연동 지점 +
    COST-1 사용량 가드(STT_MAX_SECONDS_PER_DAY/_MONTH 초과 시 스트림 오픈 거부)
-3. fastapi: FastAPI 앱 골격 + MySQL 연결 설정 (SEC-2 반영, .env.example의 키 이름만 사용)
+3. fastapi: FastAPI 앱 골격 + PostgreSQL 연결 설정 (SEC-2 반영, .env.example의 키 이름만 사용)
 4. apps/dashboard: React 프로젝트 초기화 (2.1절 — 자막/경고 + 하단 책갈피 카드)
    고객 화면 apps/customer 는 만들지 않는다. `_project/decisions/014`
 5. 모든 주요 생성 파일 상단에 관련 [요구 ID] 주석 명시할 것"
@@ -120,7 +130,7 @@ claude "C-5 요구사항에 따라 server/apps/masking/에 STT 전사 결과를 
 - 단계: ① 구분자·공백 제거 후 연속 숫자열 판정 ② 한글 수사→숫자 변환(보조) ③ 정규식(P1~P4) +
   NER(P6·P7) 매칭 ④ 마스킹 (기능 명세 2.4절 탐지 파이프라인 순서 그대로)
 - server/apps/<모듈>/tests/test_masking.py에 P1~P7 패턴 목록에 대한 누락 0건 검증 테스트 생성
-- 화면 표시 전 / MySQL 저장 전 양쪽 모두에 적용되는지 확인하는 테스트 포함"
+- 화면 표시 전 / PostgreSQL 저장 전 양쪽 모두에 적용되는지 확인하는 테스트 포함"
 ```
 
 ### [Task 4] 2.1절 (검수 워크스페이스 화면) 구현
@@ -139,8 +149,8 @@ claude "2.1절 화면 구성을 위한 React 컴포넌트를 만들어줘.
 개발 완료 후 Claude Code가 스스로 수행할 검증 루틴:
 
 - [ ] **[추적성 검사]** 구현된 모든 소스 파일 상단에 `# Requirement: <ID>` 주석이 있는가?
-- [ ] **[모의 검수]** `cd server && pytest` 실행 시 Recall@5/MRR, 마스킹 누락 건수가 출력되는가? (QUA-1)
-- [ ] **[보안]** MySQL 스키마에 마스킹 전 원문 컬럼이 없는가? (SEC-1)
+- [ ] **[모의 검수]** `cd ai && pytest` 실행 시 Recall@5/MRR, 마스킹 누락 건수가 출력되는가? (QUA-1) — 평가 하네스는 분리 이후 `ai/` 에 있다. 요청 경로 테스트는 `cd server && pytest`
+- [ ] **[보안]** PostgreSQL 스키마에 마스킹 전 원문 컬럼이 없는가? (SEC-1)
 - [ ] **[비밀정보]** `.env.example`에 실제 값 대신 키 이름만 정의되어 있는가? (SEC-2)
 - [ ] **[절대 규칙]** C-5 마스킹 누락, F-2 오판정이 평균값이 아니라 1건 단위로 실패 처리되는가? ([평가 설계 6.2](/docs/06/))
 - [ ] **[문서 동기화]** 요구사항이 바뀌면 이 파일과 `jekyll/docs/` 하위 해당 기획서 페이지를 함께 갱신했는가?

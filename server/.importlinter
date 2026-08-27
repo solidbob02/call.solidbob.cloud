@@ -20,6 +20,7 @@
 [importlinter]
 root_packages =
     hub
+    masking
     core
 include_external_packages = True
 
@@ -37,6 +38,7 @@ layers =
     (domain)
 containers =
     hub
+    masking
 
 # -----------------------------------------------------------------------------
 # 계약 2) 의존 방향 — server 는 ai 를 모른다
@@ -49,6 +51,7 @@ name = 서브도메인 방향 (server → ai import 금지)
 type = forbidden
 source_modules =
     hub
+    masking
     core
 forbidden_modules =
     evaluation
@@ -61,17 +64,18 @@ forbidden_modules =
 # -----------------------------------------------------------------------------
 # 계약 3) 프레임워크 격리 — app·domain 계층은 웹/DB/검색엔진을 모른다
 # -----------------------------------------------------------------------------
-# HTTP(fastapi)·DB(sqlalchemy/pymysql)·검색(elasticsearch)·STT(google)는 adapter 계층의 관심사다.
+# HTTP(fastapi)·DB(sqlalchemy/psycopg)·검색(elasticsearch)·STT(google)는 adapter 계층의 관심사다.
 # (pydantic 은 app/dtos 에서 실용적으로 허용, domain 에서는 금지 — 계약 4.)
 [importlinter:contract:framework-isolation]
 name = 프레임워크 격리 (app·domain → fastapi/sqlalchemy/elasticsearch import 금지)
 type = forbidden
 source_modules =
     hub.app
+    masking.domain
 forbidden_modules =
     fastapi
     sqlalchemy
-    pymysql
+    psycopg
     elasticsearch
     google
 
@@ -80,4 +84,12 @@ forbidden_modules =
 # -----------------------------------------------------------------------------
 # C-5 마스킹 규칙·F-2 게이트 판정이 여기 산다. "판정은 규칙이 한다"(절대 원칙 9)를
 # 코드 구조로 고정하는 계약. hub 에 domain 이 생기면 hub.domain 을 여기에 추가한다.
-# 지금은 domain 계층이 없어 비어 있다 — 스포크가 생기는 시점에 채운다.
+# 2026-08-27 masking 스포크가 생기며 채웠다.
+[importlinter:contract:domain-purity]
+name = 도메인 순수성 (domain → pydantic·fastapi import 금지)
+type = forbidden
+source_modules =
+    masking.domain
+forbidden_modules =
+    pydantic
+    fastapi

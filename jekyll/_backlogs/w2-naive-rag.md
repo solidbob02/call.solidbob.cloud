@@ -6,6 +6,8 @@ status: "todo"
 sprint: 2
 priority: 3
 date: 2026-08-26
+requirement:
+  - "B-2"
 ---
 
 발화 → 검색 → 문서 ID 목록. 리랭킹·생성 없이 **검색만** 붙인다.

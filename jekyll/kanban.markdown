@@ -33,6 +33,18 @@ permalink: /kanban/
   .role-ai{ background:rgba(245,166,35,.12); color:#F5A623; }
   .role-app{ background:rgba(255,230,168,.10); color:#FFE6A8; }
   .kanban .col.empty-hint{ color:#4d5568; font-size:0.8rem; }
+  .kanban .card .badges{ display:flex; flex-wrap:wrap; align-items:center; gap:0.3rem; margin-bottom:0.4rem; }
+  .kanban .card .badges .role{ margin-bottom:0; }
+  .req{ font-family:'IBM Plex Mono',monospace; font-size:0.6rem; letter-spacing:.03em; font-weight:600; padding:0.1rem 0.4rem; border-radius:3px; white-space:nowrap; border:1px solid currentColor; }
+  .req-A{ background:rgba(126,214,199,.12); color:#7ED6C7; }
+  .req-B{ background:rgba(245,166,35,.12); color:#F5A623; }
+  .req-C{ background:rgba(233,127,127,.12); color:#E97F7F; }
+  .req-D{ background:rgba(168,150,224,.12); color:#A896E0; }
+  .req-E{ background:rgba(110,143,214,.12); color:#8FA8E8; }
+  .req-F{ background:rgba(255,230,168,.12); color:#FFE6A8; }
+  .req-G{ background:rgba(150,168,180,.12); color:#96A8B4; }
+  .req-Q{ background:rgba(121,131,155,.14); color:#9AA3B8; }
+  .req-S{ background:rgba(121,131,155,.14); color:#9AA3B8; }
   .kb-nav-item .role{ display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:0.65rem; letter-spacing:.04em; font-weight:600; padding:0.15rem 0.5rem; border-radius:999px; white-space:nowrap; border:1px solid currentColor; }
   @keyframes kb-fade{ from{ opacity:0; } to{ opacity:1; } }
   @media (max-width:640px){
@@ -108,7 +120,48 @@ permalink: /kanban/
             {% endcase %}
             {% for item in column %}
             <div class="card">
-              <span class="role role-{{ item.role }}">{% case item.role %}{% when "infra" %}인프라{% when "ai" %}백엔드·AI{% when "app" %}프론트엔드{% else %}{{ item.role }}{% endcase %}</span><br>
+              <div class="badges">
+                <span class="role role-{{ item.role }}">{% case item.role %}{% when "infra" %}인프라{% when "ai" %}백엔드·AI{% when "app" %}프론트엔드{% else %}{{ item.role }}{% endcase %}</span>
+                {% assign feats = "" | split: "" %}
+                {% for r in item.requirement %}
+                  {% assign fam = r | slice: 0 %}
+                  {% case r %}
+                    {% when "A-1" %}{% assign nm = "실시간 자막" %}
+                    {% when "A-2" %}{% assign nm = "화자 분리" %}
+                    {% when "B-0" %}{% assign nm = "도메인 판별" %}
+                    {% when "B-1" %}{% assign nm = "추천 시점" %}
+                    {% when "B-2" %}{% assign nm = "문서 검색" %}
+                    {% when "B-3" %}{% assign nm = "문서 검색" %}
+                    {% when "B-4" %}{% assign nm = "추천 카드" %}
+                    {% when "B-5" %}{% assign nm = "추천 카드" %}
+                    {% when "B-6" %}{% assign nm = "카드 출처" %}
+                    {% when "C-1" %}{% assign nm = "실시간 경고" %}
+                    {% when "C-2" %}{% assign nm = "실시간 경고" %}
+                    {% when "C-3" %}{% assign nm = "실시간 경고" %}
+                    {% when "C-4" %}{% assign nm = "대체 표현" %}
+                    {% when "C-5" %}{% assign nm = "개인정보 마스킹" %}
+                    {% when "D-1" %}{% assign nm = "통화 후 요약" %}
+                    {% when "D-2" %}{% assign nm = "통화 후 요약" %}
+                    {% when "D-3" %}{% assign nm = "후속조치" %}
+                    {% when "D-4" %}{% assign nm = "공백 리포트" %}
+                    {% when "E-1" %}{% assign nm = "평가 하네스" %}
+                    {% when "E-2" %}{% assign nm = "평가 하네스" %}
+                    {% when "E-4" %}{% assign nm = "평가 하네스" %}
+                    {% when "F-2" %}{% assign nm = "종결 요건" %}
+                    {% when "G-2" %}{% assign nm = "자원 연계" %}
+                    {% when "SEC-1" %}{% assign nm = "원본 미보관" %}
+                    {% when "SEC-2" %}{% assign nm = "자격증명 분리" %}
+                    {% when "QUA-1" %}{% assign nm = "테스트 자동화" %}
+                    {% when "QUA-2" %}{% assign nm = "골든셋 회귀" %}
+                    {% when "COST-1" %}{% assign nm = "STT 비용 가드" %}
+                    {% else %}{% assign nm = r %}
+                  {% endcase %}
+                  {% capture pair %}{{ fam }}|{{ nm }}{% endcapture %}
+                  {% assign feats = feats | push: pair %}
+                {% endfor %}
+                {% assign feats = feats | uniq %}
+                {% for f in feats %}{% assign parts = f | split: "|" %}<span class="req req-{{ parts[0] }}" title="기능 ID: {{ item.requirement | join: ', ' }}">{{ parts[1] }}</span>{% endfor %}
+              </div>
               <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
             </div>
             {% endfor %}
@@ -153,6 +206,8 @@ paths:                    # (선택) 이 티켓 소관 파일 — 붙여두면 �
   - "apps/dashboard/*"
 depends_on:               # (선택) 앞 단계 티켓. 일부러 나눈 단계는 중복 경고에서 빠집니다
   - "w2-baseline"
+requirement:              # (선택) 이 티켓이 만드는 기능 ID — 카드에 기능 이름 배지로 붙습니다
+  - "B-2"
 ---
 
 무엇을 / 왜 / 완료 조건을 적습니다.
@@ -160,6 +215,18 @@ depends_on:               # (선택) 앞 단계 티켓. 일부러 나눈 단계�
 
 파일명은 `w{주차}-{영문-슬러그}.md` 로 짓습니다(예: `w1-eval-ci.md`). 한글 파일명은 URL이 깨집니다.
 상태를 바꿀 때는 **자기 티켓의 `status` 한 줄만** 고칩니다.
+
+`requirement` 는 기획서의 [기능 ID](/docs/02/)를 그대로 씁니다 — 새 접두어를 만들지 않습니다.
+같은 ID를 코드 파일 상단에도 `# Requirement: B-2` 로 답니다. **두 곳이 같은 ID라 백로그에서 코드까지
+추적이 이어집니다.**
+
+보드에는 ID 가 아니라 **기능 이름**(「실시간 자막」·「문서 검색」·「추천 카드」…)으로 뜹니다.
+프론트엔드가 카드만 보고 **어느 화면을 짜야 하는지** 바로 알 수 있게 하기 위해서입니다 —
+`A-1`·`SEC-1` 같은 코드는 화면을 만드는 쪽에서 읽히지 않습니다. ID→이름 대응은 `kanban.markdown`
+안의 `case` 블록에 있고, 같은 이름으로 겹치면 배지 하나로 합칩니다(`D-1`+`D-2` → 「통화 후 요약」).
+정확한 ID 는 배지에 마우스를 올리면 보입니다.
+
+배포·저장소 정리처럼 기능 ID 대상이 아닌 티켓은 비워 둡니다.
 
 세션을 끝낼 때 `python3 scripts/check_session_end.py` 를 돌리면 상태가 실제와 어긋난 티켓과
 중복 티켓을 알려줍니다. 진행 기록을 빠뜨리면 `Stop` 훅이 세션을 끝내지 못하게 막습니다.

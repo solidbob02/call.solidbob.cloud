@@ -6,6 +6,8 @@ status: "done"
 sprint: 1
 priority: 6
 date: 2026-08-25
+requirement:
+  - "SEC-1"
 ---
 
 `db/schema.sql`(17개 테이블) + `db/docs/ERD.md`. 팀 교차검증 1회 완료.
