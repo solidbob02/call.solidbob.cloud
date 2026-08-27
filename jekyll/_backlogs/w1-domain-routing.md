@@ -6,6 +6,8 @@ status: "in-progress"
 sprint: 1
 priority: 9
 date: 2026-08-26
+depends_on:                 # 방식 결정(w2) → 이 티켓이 그 결정을 구현한다
+  - "w2-domain-routing"
 requirement:
   - "B-0"
 ---
