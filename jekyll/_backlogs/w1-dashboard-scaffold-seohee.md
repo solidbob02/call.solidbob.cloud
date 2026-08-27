@@ -6,6 +6,9 @@ status: "done"
 sprint: 1
 priority: 12
 date: 2026-08-26
+requirement:
+  - "B-5"
+  - "C-5"
 ---
 
 `apps/dashboard` 를 Vite + React 18 + TypeScript strict 로 스캐폴딩한다.

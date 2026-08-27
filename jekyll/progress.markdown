@@ -5,6 +5,11 @@ permalink: /progress/
 ---
 
 ### 2026-08-27
+- **칸반에 기능 ID 태그 추가.** 역할 배지(인프라/백엔드·AI/프론트엔드)만으로는 "누가"만 보이고 "무엇을 만드는지"가 안 보였다. 티켓 front matter 에 `requirement:` 필드를 두고 [기획서 기능 ID](/docs/02/)를 그대로 단다 — **코드 파일 상단의 `# Requirement: <ID>` 주석과 같은 ID**라 백로그에서 코드까지 추적이 이어진다([rfp-harness](https://github.com/solidbob02/call.solidbob.cloud/blob/main/.claude/rules/rfp-harness.md) §1-3). 새 접두어를 만들지 않는다는 기존 규칙을 그대로 따랐다
+- **[/kanban/](/kanban/) 에 기능 ID 커버리지 표 신설** — 28개 기능 ID 각각에 티켓이 몇 건 붙어 있는지 집계한다. 티켓 29건에 태그를 달았고, 배포·저장소 정리 등 기능 ID 대상이 아닌 9건은 비워 뒀다
+- **커버리지 표가 바로 공백을 드러냈다** — 티켓이 **0건인 기능이 8개**다: `B-6`·`C-1`·`C-2`·`C-3`·`C-4`·`F-2`·`G-2`·`SEC-2`. 이 중 **`C-1`~`C-4` 컴플라이언스 탐지는 [필수 블록](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md)인데 아무도 티켓을 만들지 않았다**(F-2 는 조건부, G-2 는 여유 시라 지금 없는 것이 맞다)
+- ⚠ 이 작업으로 **남의 티켓 파일 29건을 건드렸다** — `status` 가 아니라 `requirement` 한 필드만 추가하는 기계적 변경이라 담당·상태에는 영향이 없지만, 칸반 규칙상 예외이므로 남긴다
+
 - **MySQL 영속성 어댑터 구현**(`w2-mysql-persistence`, in-progress). `adapter/outbound/mysql/` 에 커넥션 팩토리와 `TranscriptIngestRecordPort` 구현체를 만들고, 프로바이더가 **MySQL 설정이 있으면 리포지토리·없으면 로그 어댑터**로 떨어지게 배선했다. `pytest` **34개 통과**(28→34), 계약 3종 KEPT
 - **실제 MySQL 없이 SEC-1 을 검증했다** — 커넥션을 `Protocol` 로 추상화해 가짜를 꽂고, 리포지토리가 쿼리 인자로 무엇을 넘기는지 그대로 들여다봐 **원문이 없음을 테스트로 고정**했다. 그동안 "스키마 리뷰로 검증"한다고만 돼 있던 항목이다
 - **7.3절이 이미 정해둔 규칙을 어댑터가 지킨다** — *"DB에는 `is_final: true`만 저장"*. [V4 실측](/docs/05/)상 20초에 interim 이 199건 오는데, `record()` 는 interim 이면 **커넥션조차 열지 않는다**. 마스킹 구간은 다시 넣기 전에 지운다(같은 segment 재수신 시 이전 구간이 남아 섞인다)

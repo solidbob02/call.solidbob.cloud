@@ -6,6 +6,8 @@ status: "in-progress"
 sprint: 2
 priority: 1
 date: 2026-08-26
+requirement:
+  - "SEC-1"
 paths:
   - "server/apps/hub/adapter/outbound/*"
   - "server/core/config.py"

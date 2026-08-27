@@ -6,6 +6,9 @@ status: "done"
 sprint: 1
 priority: 4
 date: 2026-08-25
+requirement:
+  - "A-1"
+  - "C-5"
 ---
 
 - V3: 한국어 긴 숫자열 출력 형태 → C-5 정규화 단계 설계의 전제

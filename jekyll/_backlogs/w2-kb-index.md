@@ -6,6 +6,8 @@ status: "in-progress"
 sprint: 2
 priority: 2
 date: 2026-08-26
+requirement:
+  - "B-2"
 ---
 
 4개 도메인 지식베이스(`knowledge-base/{finance,dasan,shopping,health}/`)를 Elasticsearch 에 넣는다.

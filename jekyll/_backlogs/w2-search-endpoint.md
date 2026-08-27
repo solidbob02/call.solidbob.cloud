@@ -6,6 +6,9 @@ status: "done"
 sprint: 2
 priority: 2
 date: 2026-08-26
+requirement:
+  - "B-2"
+  - "B-3"
 paths:
   - "server/apps/hub/adapter/inbound/api/v1/*"
 ---

@@ -6,6 +6,8 @@ status: "in-progress"
 sprint: 1
 priority: 9
 date: 2026-08-26
+requirement:
+  - "B-0"
 ---
 
 [3.2절](/docs/03/) 도메인 라우팅을 자동 분류로 확정(수동 선택 안 함) — 근거·설계:

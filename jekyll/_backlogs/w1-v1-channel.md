@@ -6,6 +6,8 @@ status: "done"
 sprint: 1
 priority: 2
 date: 2026-08-25
+requirement:
+  - "A-2"
 ---
 
 **결과: 전부 모노.** diarization 필수이며, 데모는 물리 2채널(브라우저 2대)로 우회한다.

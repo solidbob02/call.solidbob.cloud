@@ -6,6 +6,9 @@ status: "todo"
 sprint: 3
 priority: 3
 date: 2026-08-26
+requirement:
+  - "A-1"
+  - "SEC-1"
 depends_on:
   - "w2-mysql-persistence"
 paths:

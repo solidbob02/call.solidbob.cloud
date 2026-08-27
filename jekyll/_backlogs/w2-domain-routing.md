@@ -6,6 +6,8 @@ status: "done"
 sprint: 2
 priority: 1
 date: 2026-08-26
+requirement:
+  - "B-0"
 ---
 
 ⚠ **2주차의 다른 작업이 전부 이 결정에 걸려 있다.** 통화가 금융보험·다산콜센터·쇼핑·

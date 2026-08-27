@@ -6,6 +6,8 @@ status: "todo"
 sprint: 2
 priority: 9
 date: 2026-08-26
+requirement:
+  - "QUA-2"
 depends_on:
   - "w2-baseline"
 paths:
