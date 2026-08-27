@@ -3,7 +3,7 @@
 <!-- 이전 판: plan-rev1-initial.md (초판) -->
 
 
-> **⚠ 2026-08-27 수정**: 관계형 DB 를 **MySQL → PostgreSQL** 로 바꿨다(7곳). 이 파일은 원래 rev.4 사본이라 수정하지 않는 문서였으나 사용자 지시로 직접 고쳤다 — `CLAUDE.md` §3 규칙도 함께 갱신했다. 근거·되돌리는 법: `_project/decisions/016-DB-PostgreSQL-전환.md`, `rev4-보완지시서.md` 11번.
+> **⚠ 2026-08-27 수정**: 관계형 DB 를 **MySQL → PostgreSQL** 로 바꿨다(7곳). 이 파일은 원래 rev.4 사본이라 수정하지 않는 문서였으나 사용자 지시로 직접 고쳤다 — `CLAUDE.md` §3 규칙도 함께 갱신했다. 근거·되돌리는 법: `_project/decisions/018-DB-PostgreSQL-전환.md`, `rev4-보완지시서.md` 11번.
 
 # 실시간 상담원 어시스트 RAG 시스템
 

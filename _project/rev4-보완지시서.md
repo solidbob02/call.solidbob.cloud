@@ -429,7 +429,7 @@ C-5·CI 운영을 정성윤에게 이관하는 완화 조치를 뒀다. 완화 �
 ## 11.1 변경
 
 rev.4 는 투입자원 표·C-5 적용 지점·캐시 전략에서 관계형 DB 를 **MySQL** 로 적었다.
-**PostgreSQL 로 바꾼다.** 근거·되돌리는 법: `_project/decisions/016-DB-PostgreSQL-전환.md`.
+**PostgreSQL 로 바꾼다.** 근거·되돌리는 법: `_project/decisions/018-DB-PostgreSQL-전환.md`.
 
 ## 11.2 rev.4 의 어느 서술을 덮는가
 

@@ -1,7 +1,7 @@
 # Requirement: SEC-2
 """PostgreSQL 커넥션 팩토리. 설정 '값'은 여기서만 읽고 어디에도 로깅하지 않는다.
 
-2026-08-27 MySQL 에서 전환 — `_project/decisions/016-DB-PostgreSQL-전환.md`.
+2026-08-27 MySQL 에서 전환 — `_project/decisions/018-DB-PostgreSQL-전환.md`.
 리포지토리는 이 모듈의 `ConnectionFactory` 타입만 알고 psycopg 를 직접 import 하지 않는다 —
 테스트가 가짜 커넥션을 꽂을 수 있어야 실제 DB 없이도 SEC-1 을 검증할 수 있다.
 """

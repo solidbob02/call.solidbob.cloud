@@ -8,14 +8,22 @@
     .venv/bin/python scripts/index_knowledge_base.py                 # 요약만
     .venv/bin/python scripts/index_knowledge_base.py --out data/processed/kb-chunks.json
 
-ES 적재는 아직 붙이지 않았다 — 인덱스를 도메인별로 나눌지 하나로 두고 `domain` 필드로
-필터할지가 미결이다(`docs/domain.md` §3). 그 결정 전에 인덱스를 만들면 다시 만들어야 한다.
+ES 적재(2026-08-27 추가). 기본은 `single` — 인덱스 하나 + `domain` 필터다
+(`_project/decisions/017`). `per-domain` 은 도메인이 늘었을 때를 대비해 남겨 둔 경로다.
+
+    export ELASTICSEARCH_URL=http://localhost:9200
+    .venv/bin/python scripts/index_knowledge_base.py --to-es --recreate
+    .venv/bin/python scripts/index_knowledge_base.py --to-es            # 재적재 재현 확인
+    .venv/bin/python scripts/index_knowledge_base.py --to-es --layout per-domain --recreate
+
+`--to-es` 없이 돌리면 예전과 똑같이 요약(과 `--out` 덤프)만 낸다.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from collections import Counter
 from pathlib import Path
@@ -23,8 +31,33 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "ai" / "apps"))  # 2026-08-26 fastapi/ → server/·ai/ 분리 반영
 
+from retrieval.adapter.outbound import es_index  # noqa: E402
 from retrieval.adapter.outbound.knowledge_base_loader import load_chunks  # noqa: E402
 from retrieval.domain.services.chunking import MAX_CHARS  # noqa: E402
+
+
+def _es_client():
+    """ES 클라이언트를 만든다. 설정을 읽는 곳은 여기 한 곳뿐이다.
+
+    `ai/` 에는 config 모듈이 없고 `server/core/config.py` 는 import 경로 밖이다
+    (`ai/pytest.ini` 의 pythonpath 는 `../server/apps` 까지만 올린다). 어댑터가 환경변수를
+    직접 읽으면 테스트에서 갈아끼울 수 없으므로, 스크립트가 읽어 주입한다.
+    """
+    url = os.environ.get("ELASTICSEARCH_URL")
+    if not url:
+        raise SystemExit(
+            "ELASTICSEARCH_URL 이 비어 있다. .env 를 읽었는지 확인하거나 직접 지정한다:\n"
+            "  export ELASTICSEARCH_URL=http://localhost:9200"
+        )
+    try:
+        from elasticsearch import Elasticsearch
+    except ModuleNotFoundError:
+        raise SystemExit(
+            "elasticsearch 패키지가 없다:  pip install -r ai/requirements.txt"
+        ) from None
+
+    api_key = os.environ.get("ELASTICSEARCH_API_KEY") or None
+    return Elasticsearch(url, api_key=api_key) if api_key else Elasticsearch(url)
 
 
 def main() -> int:
@@ -32,7 +65,18 @@ def main() -> int:
     ap.add_argument("--kb", type=Path, default=ROOT / "knowledge-base")
     ap.add_argument("--out", type=Path, help="청크 목록을 JSON 으로 저장할 경로")
     ap.add_argument("--max-chars", type=int, default=MAX_CHARS)
+    ap.add_argument("--to-es", action="store_true", help="Elasticsearch 에 적재한다")
+    ap.add_argument(
+        "--layout",
+        choices=es_index.LAYOUTS,
+        default="single",
+        help="single(기본): 한 인덱스 + domain 필터 / per-domain: 도메인별 인덱스 4개 (전환 대비)",
+    )
+    ap.add_argument("--recreate", action="store_true", help="인덱스를 지우고 다시 만든다")
     args = ap.parse_args()
+
+    if (args.recreate or args.layout != "single") and not args.to_es:
+        ap.error("--layout / --recreate 는 --to-es 와 함께 쓴다")
 
     chunks = load_chunks(args.kb, max_chars=args.max_chars)
 
@@ -54,6 +98,20 @@ def main() -> int:
             encoding="utf-8",
         )
         print(f"\n저장: {args.out}")
+
+    if args.to_es:
+        client = _es_client()
+        created = es_index.create_indices(client, args.layout, recreate=args.recreate)
+        counts = es_index.index_chunks(client, chunks, args.layout)
+        print(f"\nES 적재 — 레이아웃 {args.layout}")
+        if created:
+            print(f"  생성된 인덱스: {', '.join(created)}")
+        for name, n in counts.items():
+            print(f"  {name}: {n}건")
+        total = sum(counts.values())
+        if total != len(chunks):
+            print(f"  ⚠ 청크 {len(chunks)}개인데 색인 문서는 {total}건이다")
+            return 1
     return 0
 
 

@@ -1,6 +1,6 @@
 # Requirement: SEC-1, SEC-2
 # 로컬 개발용 PostgreSQL. 팀원 누구나 같은 명령으로 같은 상태를 만든다.
-# 2026-08-27 MySQL 에서 전환 — `_project/decisions/016-DB-PostgreSQL-전환.md`
+# 2026-08-27 MySQL 에서 전환 — `_project/decisions/018-DB-PostgreSQL-전환.md`
 #
 #   cd infra && docker compose up -d      # 최초 기동 시 db/schema.sql 이 자동 적용된다
 #   docker compose ps                     # 상태 확인

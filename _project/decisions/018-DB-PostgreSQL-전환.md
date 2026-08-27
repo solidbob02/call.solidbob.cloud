@@ -1,4 +1,4 @@
-# 016 — 관계형 DB 를 MySQL → PostgreSQL 로 전환
+# 018 — 관계형 DB 를 MySQL → PostgreSQL 로 전환
 
 **날짜**: 2026-08-27
 **상태**: 확정 (사용자 지시)

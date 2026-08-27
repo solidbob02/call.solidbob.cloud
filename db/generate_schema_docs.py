@@ -290,7 +290,7 @@ def q(identifier: str) -> str:
     """식별자를 큰따옴표로 감싼다(PostgreSQL 표준). **예약어 때문에 필요하다** — 2026-08-27 확인:
     테이블 `call`, 컬럼 `rank` 가 예약어라 감싸지 않으면 CREATE TABLE 이 실패한다.
     MySQL 시절 백틱으로 하던 것과 같은 이유이고, 인용 문자만 바뀌었다
-    (`_project/decisions/016-DB-PostgreSQL-전환.md`).
+    (`_project/decisions/018-DB-PostgreSQL-전환.md`).
     예약어 목록은 버전마다 늘어나므로 개별 예외를 두지 않고 전부 감싼다."""
     return f'"{identifier}"'
 
@@ -317,7 +317,7 @@ def pg_type(sql_type: str, auto_increment: bool) -> tuple[str, str]:
 
 
 def to_sql(tables: list[Table]) -> str:
-    """PostgreSQL DDL 을 만든다 (2026-08-27 MySQL 에서 전환 — decisions/016).
+    """PostgreSQL DDL 을 만든다 (2026-08-27 MySQL 에서 전환 — decisions/018).
 
     MySQL 과 다른 점 셋:
       - 컬럼 주석을 인라인으로 못 단다 → 테이블 뒤에 `COMMENT ON COLUMN` 을 따로 낸다
