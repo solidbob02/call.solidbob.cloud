@@ -11,7 +11,7 @@
 ```
 1. CLAUDE.md                  ← 지금 이 파일 (규칙)
 2. jekyll/_logs/              ← 팀 전체가 보는 진행 기록. 항목 1건 = 파일 1개. /progress/ 가 렌더링
-3. _project/STATE.md          ← 세션 인수인계용 현재 상태 (비공개)
+3. _project/STATE.md          ← 지금 상태 (비공개). 짧다 — 지난 기록은 STATE-archive.md
 4. jekyll/open-items.markdown ← 아직 정하지 못한 것
 ```
 
@@ -25,13 +25,20 @@
 ## 0.5. 세션 종료 루틴 (작업이 있었던 모든 세션, 예외 없음)
 
 ```
-1. jekyll/_logs/              ← 오늘 한 일을 파일 하나로 남겼는가?
+1. jekyll/_logs/              ← 오늘 한 일을 파일 하나로 남겼는가?  ★ 필수
 2. jekyll/_backlogs/          ← 손댄 티켓의 status 를 옮겼는가? 새로 시작한 일의 티켓을 만들었는가?
-3. _project/STATE.md          ← 다음 세션이 이어받을 상태를 갱신했는가?
+3. _project/STATE.md          ← **내 영역 상태가 바뀌었으면 그 줄만 고친다** (안 바뀌었으면 안 건드린다)
 4. jekyll/open-items.markdown ← 이번에 정하지 못하고 남긴 것을 적었는가?
 ```
 
 **커밋·푸시·PR 로 세션이 끝나지 않는다. 위 4개를 확인해야 끝난다.**
+
+> ⚠ **`STATE.md` 에 세션 기록을 쓰지 않는다 (2026-08-27, `decisions/101`).** 세션에 무엇을 했는지는
+> `_logs/` 한 곳에만 쓴다 — `§4` 가 *"같은 내용을 세 곳에 적지 않는다"* 고 정한 그대로다.
+> `STATE.md` 는 **지금 상태**만 담고, 갱신은 **맨 위에 블록을 끼워 넣는 게 아니라 해당 줄을
+> 덮어쓰는 것**이다. 전에는 네 사람이 같은 자리에 삽입해 매번 충돌했다 — 그 파일 커밋 63건 중
+> **19건이 머지 커밋**이었고 08-27 네 브랜치 통합에서는 **네 번 모두** 여기서 걸렸다.
+> 옛 기록은 `_project/STATE-archive.md` 에 그대로 있다(한 글자도 안 고쳤다, 절대 원칙 8).
 
 - 기록을 PR 본문이나 커밋 메시지에만 쓰지 않는다. PR 은 머지되면 닫히고, 팀이 보는 것은 `/progress/` 페이지다.
   같은 내용을 두 곳에 쓰는 게 아까우면 **`_logs/` 를 먼저 쓰고 PR 본문에 옮긴다** — 반대 방향은 유실된다.
@@ -173,7 +180,8 @@ _project/                ⚠ 비공개. 지킬 루트 밖이라 사이트에 올
                          지시로 직접 수정 가능해졌다(DB 를 PostgreSQL 로 바꾼 것이 첫 사례,
                          decisions/018). 고칠 때는 파일 상단에 수정 이력을 남긴다
   rev4-보완지시서.md      rev.4 위에 얹히는 패치
-  STATE.md               세션 인수인계용 현재 상태
+  STATE.md               지금 상태. 세션 기록은 넣지 않는다 — 해당 줄을 덮어쓴다(decisions/101)
+  STATE-archive.md       옛 세션 기록 보관 (2026-08-24~08-27). 새로 추가하지 않는다
   decisions/             결정 기록 (ADR)
 db/                      schema.sql(DDL) · ERD.md · erd.dot · generate_schema_docs.py
 knowledge-base/          도메인별(finance/dasan/shopping/health) terms / manual / policy
