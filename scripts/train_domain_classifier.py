@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "ai" / "apps"))
 
 from training.adapter.outbound.aihub_minwon_loader import (  # noqa: E402
+    load_opening_samples,
     load_samples,
     stratified_split,
 )
@@ -36,10 +37,19 @@ def main() -> int:
     ap.add_argument("--epochs", type=int, default=cfg.epochs)
     ap.add_argument("--batch-size", type=int, default=cfg.batch_size)
     ap.add_argument("--limit", type=int, help="도메인별 상한 — 빠르게 확인할 때만 쓴다")
+    ap.add_argument(
+        "--no-opening-turns",
+        action="store_true",
+        help="통화 초반 턴 이어붙이기 증강을 끈다 (증강 효과를 재려고 비교할 때)",
+    )
     args = ap.parse_args()
 
     samples, dropped = load_samples(args.data)
-    print(f"표본 {len(samples)}건 · 걸러낸 것 {dropped}")
+    print(f"단일 턴 {len(samples)}건 · 걸러낸 것 {dropped}")
+    if not args.no_opening_turns:
+        opening = load_opening_samples(args.data)
+        samples = samples + opening
+        print(f"초반 턴 증강 +{len(opening)}건 → 합계 {len(samples)}건")
 
     if args.limit:
         by: dict[str, list] = {}

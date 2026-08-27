@@ -21,11 +21,15 @@ from pathlib import Path
 from training.adapter.outbound.aihub_minwon_loader import Sample
 from training.domain.services.domain_labels import LABEL_ORDER, label_to_index
 
-# 2026-08-27 실측(표본 3,000): 토큰 길이 **중앙 8 · p95 18 · 최대 38**. 32 를 넘는 것이 0.10% 다.
+# 상한이지 패딩 길이가 아니다 — 아래 `_collate` 가 **배치 안의 가장 긴 것**에 맞춰 패딩한다.
 #
-# 처음에 128 로 잡았다가 학습이 기어갔다 — 중앙값이 8인데 128 로 패딩하면 **연산의 94%가
-# 패딩**이다. 짧은 발화를 다루면서 관성으로 큰 값을 쓰면 이렇게 조용히 16배를 태운다.
-MAX_LENGTH = 32
+# 2026-08-27 실측: 단일 턴은 중앙 8 · p95 18, 초반 턴을 이어 붙인 증강까지 합치면
+# 중앙 11 · p95 36 · 최대 110. 64 면 p95 를 넉넉히 덮는다.
+#
+# 처음에 128 **고정 패딩**으로 잡았다가 학습이 기어갔다 — 중앙값이 8인데 128 로 채우면
+# **연산의 94%가 패딩**이다. 짧은 발화를 다루면서 관성으로 큰 값을 쓰면 조용히 16배를 태운다.
+# 고정 패딩을 동적 패딩으로 바꾼 것이 그 교훈의 나머지 절반이다.
+MAX_LENGTH = 64
 
 
 def _log(*args, flush: bool = True, **kw) -> None:
@@ -37,7 +41,7 @@ def _log(*args, flush: bool = True, **kw) -> None:
 class TrainConfig:
     base_model: str = "models/kcelectra-base"
     output_dir: str = "models/domain-classifier"
-    epochs: int = 2
+    epochs: int = 4
     batch_size: int = 64
     learning_rate: float = 2e-5
     warmup_ratio: float = 0.1
@@ -56,18 +60,33 @@ def pick_device() -> str:
     return "cpu"
 
 
-def _encode(tokenizer, samples: list[Sample], max_length: int):
+class _Dataset:
+    """토큰화만 해 두고 패딩은 배치를 만들 때 한다 — 짧은 발화가 대부분이라 이게 훨씬 싸다."""
+
+    def __init__(self, tokenizer, samples: list[Sample], max_length: int):
+        self._enc = tokenizer(
+            [s.text for s in samples], truncation=True, max_length=max_length
+        )["input_ids"]
+        self._labels = [label_to_index(s.domain) for s in samples]
+
+    def __len__(self) -> int:
+        return len(self._labels)
+
+    def __getitem__(self, i):
+        return self._enc[i], self._labels[i]
+
+
+def _collate(batch, pad_id: int):
+    """배치 안에서 가장 긴 것에 맞춰 패딩한다. 고정 길이로 채우면 대부분이 패딩 연산이 된다."""
     import torch
 
-    enc = tokenizer(
-        [s.text for s in samples],
-        truncation=True,
-        padding="max_length",
-        max_length=max_length,
-        return_tensors="pt",
-    )
-    labels = torch.tensor([label_to_index(s.domain) for s in samples])
-    return torch.utils.data.TensorDataset(enc["input_ids"], enc["attention_mask"], labels)
+    width = max(len(ids) for ids, _ in batch)
+    input_ids = torch.full((len(batch), width), pad_id, dtype=torch.long)
+    attention = torch.zeros((len(batch), width), dtype=torch.long)
+    for row, (ids, _) in enumerate(batch):
+        input_ids[row, : len(ids)] = torch.tensor(ids, dtype=torch.long)
+        attention[row, : len(ids)] = 1
+    return input_ids, attention, torch.tensor([label for _, label in batch], dtype=torch.long)
 
 
 def evaluate(model, loader, device) -> dict:
@@ -117,10 +136,15 @@ def train(train_set: list[Sample], val_set: list[Sample], cfg: TrainConfig, *, l
         label2id={d: i for i, d in enumerate(LABEL_ORDER)},
     ).to(device)
 
+    pad_id = tokenizer.pad_token_id
+    collate = lambda b: _collate(b, pad_id)  # noqa: E731
     train_loader = DataLoader(
-        _encode(tokenizer, train_set, cfg.max_length), batch_size=cfg.batch_size, shuffle=True
+        _Dataset(tokenizer, train_set, cfg.max_length),
+        batch_size=cfg.batch_size, shuffle=True, collate_fn=collate,
     )
-    val_loader = DataLoader(_encode(tokenizer, val_set, cfg.max_length), batch_size=cfg.batch_size)
+    val_loader = DataLoader(
+        _Dataset(tokenizer, val_set, cfg.max_length), batch_size=cfg.batch_size, collate_fn=collate
+    )
 
     steps = len(train_loader) * cfg.epochs
     optimizer = AdamW(model.parameters(), lr=cfg.learning_rate)
