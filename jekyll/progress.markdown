@@ -5,6 +5,11 @@ permalink: /progress/
 ---
 
 ### 2026-08-27
+- **Elasticsearch 를 도커에 추가 — nori 포함해서 굽는다.** `w2-kb-index` 의 적재가 여기서 막혀 있었다. **공식 이미지에 `nori`(한국어 형태소 분석기)가 없어** [3.1절](/docs/03/)이 지정한 `nori(BM25) + dense_vector + RRF` 구성을 쓰려면 플러그인을 넣어 구워야 한다 — `infra/elasticsearch/Dockerfile` 이 그 일을 한다. 기동 때마다 설치하면 느리고 네트워크 없는 환경에서 실패한다
+- **실동작 확인** — ES 8.15.3 · `analysis-nori` 1개. `"반품 배송비는 누가 부담하나요"` → `반품·배송·비·누구·부담` 으로 분석되고, **`nori` 와 `dense_vector`(1024차원, KoE5 기준) 매핑이 한 인덱스에서 함께 동작**한다
+- **포트를 `127.0.0.1` 에만 바인딩했다** — 로컬 개발이라 `xpack.security` 를 껐기 때문이다. 인증 없는 ES 를 외부에 열지 않는다. 힙은 512MB(모델·DB·ES 가 같은 노트북에서 함께 돈다)
+- **Neo4j 는 보류로 기록**([미결 항목](/open-items/)) — 저장소 전체에 `Neo4j`·`그래프 DB`·`GraphRAG` 언급이 **0건**이다. 기획서·투입자원 목록 어디에도 없어 **새 도구 도입 결정**이 필요하고([1.1절](/docs/01/)), 현재 지식베이스는 조항 102개 평면 구조라 **그래프 관계를 쓰는 설계가 없다.** 용도부터 정해야 한다
+- **랭그래프·랭체인도 미결로 등록** — [영역 규칙](https://github.com/solidbob02/call.solidbob.cloud/blob/main/ai/CLAUDE.md)이 "한다" 목록에 올려두고 `orchestration` 디렉터리도 예정 표에 있으나 **의존성·코드가 둘 다 없다.** `server/.importlinter` 에는 **금지 대상**으로만 있다 — 설치돼 있다는 뜻이 아니다. 파이프라인은 포트로 이미 배선돼 있어 **오케스트레이션 없이도 동작**하므로 필요한 시점에 정한다(`ai/` — 류준 담당)
 - **관계형 DB 를 MySQL → PostgreSQL 로 전환**(`_project/decisions/016`). 사용자 지시. **검토 시에는 MySQL 유지를 권고**했다 — 기획서가 MySQL 로 지정했고, PostgreSQL 의 대표 강점인 pgvector 가 이 프로젝트에서는 **Elasticsearch `dense_vector` 와 중복**이며, 이미 동작하는 상태였기 때문이다. 사용자가 재확인해 확정했고 이 판단 근거는 되돌릴 때를 위해 결정 기록에 남겼다
 - **기획서(`_project/plan.md`)를 직접 수정했다** — 원래 "수정하지 않는 사본"이었으나 사용자 지시로 규칙이 바뀌었다. 파일 상단에 수정 이력을 남기고 `CLAUDE.md` §3 규칙도 함께 갱신했다. `rev4-보완지시서.md` 에도 11번 항목으로 덮어썼다
 - **방언 차이가 스키마 전반에 걸렸다** — 이름만 바꾸는 작업이 아니었다. 백틱→큰따옴표 · `AUTO_INCREMENT`→`GENERATED ALWAYS AS IDENTITY` · `ENUM`→`CHECK` · `TINYINT`→`SMALLINT` · `DATETIME`→`TIMESTAMPTZ` · **인라인 `COMMENT` 가 없어 `COMMENT ON COLUMN` 을 따로 생성** · `ON DUPLICATE KEY UPDATE`→`ON CONFLICT DO UPDATE` · `lastrowid` 가 없어 `RETURNING` 으로 교체

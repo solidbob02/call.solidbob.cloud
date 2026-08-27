@@ -41,6 +41,33 @@ POSTGRES_PORT=5433          # 다른 PostgreSQL 이 5432 를 쓰고 있을 때
 POSTGRES_PASSWORD=...
 ```
 
+## Elasticsearch
+
+하이브리드 검색(B-2)용이다. **공식 이미지에 `nori`(한국어 형태소 분석기)가 없어**
+[3.1절](/docs/03/)이 지정한 `nori(BM25) + dense_vector + RRF` 구성을 쓰려면 플러그인을 넣어 구워야 한다 —
+`elasticsearch/Dockerfile` 이 그 일을 한다.
+
+```bash
+docker compose up -d elasticsearch          # 최초 1회는 이미지를 굽느라 몇 분 걸린다
+curl localhost:9200/_cat/plugins            # analysis-nori 가 보여야 한다
+```
+
+동작 확인:
+
+```bash
+curl -X POST localhost:9200/_analyze -H 'Content-Type: application/json' \
+  -d '{"analyzer":"nori","text":"반품 배송비는 누가 부담하나요"}'
+# → 반품 · 배송 · 비 · 누구 · 부담
+```
+
+`.env` 에 `ELASTICSEARCH_URL=http://127.0.0.1:9200` 을 넣는다.
+
+**포트를 `127.0.0.1` 에만 바인딩한다** — 로컬 개발이라 `xpack.security` 를 껐기 때문이다.
+인증 없는 ES 를 외부에 열지 않는다.
+
+힙은 기본 512MB 다(`ES_JAVA_OPTS`). 모델·DB·ES 가 같은 노트북에서 함께 도는 것을 고려한 값이고,
+부족하면 `infra/.env` 에서 올린다.
+
 ## 스키마를 고쳤을 때
 
 `db/schema.sql` 은 **최초 기동(빈 볼륨)일 때만** 적용된다. 이미 뜬 컨테이너에는 반영되지 않는다.

@@ -37,5 +37,33 @@ services:
       retries: 20
       start_period: 20s
 
+  # Elasticsearch — 하이브리드 검색(B-2). nori 플러그인을 포함해 굽는다.
+  elasticsearch:
+    build:
+      context: ./elasticsearch
+      args:
+        ES_VERSION: ${ES_VERSION:-8.15.3}
+    container_name: callguard-elasticsearch
+    restart: unless-stopped
+    environment:
+      # 단일 노드 개발용. 운영 클러스터 설정을 여기 두지 않는다.
+      discovery.type: single-node
+      # 로컬 개발이라 보안을 끈다 — 그래서 이 포트를 외부에 열지 않는다(127.0.0.1 바인딩).
+      xpack.security.enabled: "false"
+      # M4 16GB 를 고려한 힙. 모델·DB·ES 가 같은 노트북에서 함께 돈다.
+      ES_JAVA_OPTS: ${ES_JAVA_OPTS:--Xms512m -Xmx512m}
+      TZ: Asia/Seoul
+    ports:
+      - "127.0.0.1:${ELASTICSEARCH_PORT:-9200}:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
 volumes:
   postgres-data:
+  elasticsearch-data:
