@@ -28,7 +28,7 @@ accelerate==1.14.0
 pydantic==2.13.4
 
 # --- 검색 (B-2) ---
-# 서버(docker-compose.yml 의 elasticsearch:9.5.1)와 major·minor 를 맞춘다.
+# 서버(infra/docker-compose.yml 의 elasticsearch:9.5.1)와 major·minor 를 맞춘다.
 # 어긋나면 클라이언트가 접속 자체를 거부한다.
 elasticsearch==9.5.0
 

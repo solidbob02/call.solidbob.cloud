@@ -38,11 +38,17 @@ services:
       start_period: 20s
 
   # Elasticsearch — 하이브리드 검색(B-2). nori 플러그인을 포함해 굽는다.
+  #
+  # 2026-08-27: `ai` 브랜치가 저장소 루트에 두었던 ES 전용 compose 를 여기로 합쳤다
+  # (`_project/decisions/020`). 로컬 환경은 이 파일 하나다 — 둘로 두면 9200 을 서로
+  # 뺏고, 버전이 갈리면 클라이언트가 아예 붙지 않는다.
   elasticsearch:
     build:
       context: ./elasticsearch
       args:
-        ES_VERSION: ${ES_VERSION:-8.15.3}
+        # `ai/requirements.txt` 의 elasticsearch==9.5.0 과 major·minor 를 맞춘다.
+        # 어긋나면 클라이언트가 접속 자체를 거부한다(실측 — Dockerfile 주석 참고).
+        ES_VERSION: ${ES_VERSION:-9.5.1}
     container_name: callguard-elasticsearch
     restart: unless-stopped
     environment:
@@ -52,13 +58,17 @@ services:
       xpack.security.enabled: "false"
       # M4 16GB 를 고려한 힙. 모델·DB·ES 가 같은 노트북에서 함께 돈다.
       ES_JAVA_OPTS: ${ES_JAVA_OPTS:--Xms512m -Xmx512m}
+      # 끄지 않으면 기동할 때마다 GeoIP DB 를 받으려다 실패 로그를 남긴다. 쓰지 않는 기능이다.
+      ingest.geoip.downloader.enabled: "false"
       TZ: Asia/Seoul
     ports:
       - "127.0.0.1:${ELASTICSEARCH_PORT:-9200}:9200"
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      # 200 만 보면 red 여도 healthy 가 된다. 상태 문자열까지 확인한다.
+      # 인덱스가 복제본 0개라 green 이다(number_of_replicas=0, es_index.build_settings).
+      test: ["CMD-SHELL", "curl -fs localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"]
       interval: 10s
       timeout: 5s
       retries: 30

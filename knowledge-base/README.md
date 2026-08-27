@@ -36,7 +36,7 @@
 (2026-08-27, `_project/decisions/017`). 조항이 102개뿐이라 도메인별로 나눌 이유가 없다.
 
 ```bash
-export ELASTICSEARCH_URL=http://localhost:9200      # docker compose up -d elasticsearch
+export ELASTICSEARCH_URL=http://localhost:9200      # cd infra && docker compose up -d
 .venv/bin/python scripts/index_knowledge_base.py --to-es --recreate
 ```
 

@@ -47,6 +47,22 @@ POSTGRES_PASSWORD=...
 [3.1절](/docs/03/)이 지정한 `nori(BM25) + dense_vector + RRF` 구성을 쓰려면 플러그인을 넣어 구워야 한다 —
 `elasticsearch/Dockerfile` 이 그 일을 한다.
 
+**버전은 `9.5.1` 이다.** `ai/requirements.txt` 의 `elasticsearch==9.5.0` 클라이언트와 major·minor 를
+맞춘 값이다 — 어긋나면 붙지 않는다. 9.x 클라이언트로 8.15.3 서버에 붙여 본 결과:
+
+```
+BadRequestError(400, 'media_type_header_exception',
+  'Accept version must be either version 8 or 7, but found 9')
+```
+
+한쪽을 바꾸면 다른 쪽도 바꾼다. 근거: `_project/decisions/020`.
+
+> ⚠ **RRF 는 basic 라이선스에서 막힌다.** ES 의 `retriever.rrf` 는 8.15.3·9.5.1 **양쪽 다**
+> `403 current license is non-compliant for [Reciprocal Rank Fusion (RRF)]` 로 거부된다(실측).
+> 30일 trial(`POST /_license/start_trial`)에서는 동작하지만 **2026-09-26 에 만료돼 프로젝트
+> 종료(10-27)를 못 넘긴다.** 순위 병합은 ES 기능이 아니라 `ai/` 검색 코드에서 계산해야 한다
+> — [미결 항목](/open-items/) 참고. **BM25·kNN·nori·`dense_vector` 자체는 basic 에서 전부 된다.**
+
 ```bash
 docker compose up -d elasticsearch          # 최초 1회는 이미지를 굽느라 몇 분 걸린다
 curl localhost:9200/_cat/plugins            # analysis-nori 가 보여야 한다

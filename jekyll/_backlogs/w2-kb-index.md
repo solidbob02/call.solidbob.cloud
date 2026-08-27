@@ -2,7 +2,7 @@
 title: "지식베이스 색인 — 고정 청킹 + 문서 ID 부여"
 assignee: "류준·장민석"
 role: "ai"
-status: "in-progress"
+status: "done"
 sprint: 2
 priority: 2
 date: 2026-08-26
@@ -75,7 +75,7 @@ BM25 IDF 가 불안정해지고, 얻는 이점(독립 재적재)은 전체 재�
 |---|---|---|
 | `adapter/outbound/` | `es_index.py` | 인덱스 이름·설정(nori)·매핑, 생성, bulk 적재 |
 | — | `scripts/index_knowledge_base.py` | `--to-es --layout single\|per-domain --recreate` 추가 |
-| — | `docker-compose.yml` | 로컬 ES 9.5.1 + `analysis-nori` 기동 시 설치 |
+| — | `infra/docker-compose.yml` | 로컬 ES 9.5.1 + `analysis-nori`(이미지에 굽는다) |
 
 ```
 single      callguard-kb-single                            ← 현재 쓰는 것
@@ -100,7 +100,7 @@ BM25 term statistics 가 샤드 단위라 샤드 수가 다르면 그 자체가 
 `pytest -m integration` 과 아래 명령을 돌려 102건이 들어가는 것을 본 뒤 `done` 으로 옮긴다.
 
 ```bash
-docker compose up -d elasticsearch
+cd infra && docker compose up -d elasticsearch && cd ..
 export ELASTICSEARCH_URL=http://localhost:9200
 .venv/bin/python scripts/index_knowledge_base.py --to-es --recreate
 .venv/bin/python scripts/index_knowledge_base.py --to-es            # 재적재 재현 확인
@@ -110,3 +110,26 @@ cd ai && pytest -m integration
 > ⚠ `assignee` 는 `류준·장민석` 공동 그대로 두었다. 2026-08-26 담당 분리(`decisions/012`)로
 > `ai/` 는 류준 몫이 됐지만, 이 티켓은 그 전에 이미 `in-progress` 였다 — 진행 중 티켓의
 > 수행자는 소급 수정하지 않는다(CLAUDE.md §4). 이번 작업은 류준이 했다.
+
+---
+
+## ✅ 완료 확인 (2026-08-27, 장민석)
+
+위 "아직 `done` 이 아닌 이유"에 적힌 **실제 ES 기동 확인을 마쳐 `done` 으로 옮겼다.**
+공동 티켓(`assignee: 류준·장민석`)이라 상태를 옮겼고, 본문은 고치지 않았다.
+
+- ES **9.5.1** + `analysis-nori` 9.5.1 기동 (`cd infra && docker compose up -d`)
+- `--to-es --recreate` → `callguard-kb-single` **102건** 적재
+- `--to-es` 재실행 → **재적재 재현** (문서 수 동일)
+- `cd ai && pytest -m integration` → **5건 통과** (그동안 `.venv` 에 `elasticsearch` 가
+  없어 `importorskip` 으로 skip 되고 있었다. `elasticsearch==9.5.0` 설치 후 통과)
+- BM25 검색 동작 확인 — `"반품 배송비"` → `SHOP-TERM-4.2` (9.98)
+
+**도커 구성이 바뀌었다** — 루트 `docker-compose.yml` 을 `infra/` 로 합치고 ES 를 **9.5.1** 로
+맞췄다(`_project/decisions/020`). 9.x 클라이언트가 8.x 서버에 붙지 않는 것이 실측으로 확인돼
+버전을 클라이언트 핀에 맞췄다. 명령이 `cd infra && docker compose up -d` 로 바뀐 것이 차이다.
+
+> ⚠ **후속 — RRF 는 basic 라이선스에서 막힌다.** `retriever.rrf` 가 8.15.3·9.5.1 양쪽 다
+> `403 non-compliant for [Reciprocal Rank Fusion (RRF)]` 다. 이 티켓(적재)에는 영향이 없지만
+> [`w2-naive-rag`](/backlog/w2-naive-rag/)에 걸린다 — 순위 병합을 `ai/` 코드에서 계산해야 한다.
+> [미결 항목](/open-items/) 참고.

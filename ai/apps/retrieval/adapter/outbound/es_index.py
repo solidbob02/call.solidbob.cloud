@@ -71,7 +71,7 @@ def build_settings() -> dict[str, Any]:
     한쪽만 남기면 매칭이 끊긴다.
 
     ⚠ nori 는 `analysis-nori` 플러그인이다. 기본 이미지에 없으면 인덱스 생성이 실패한다
-    (`docker-compose.yml` 주석 참고).
+    (`infra/docker-compose.yml` 주석 참고).
     """
     return {
         "number_of_shards": 1,  # BM25 term statistics 가 샤드 단위 — 비교의 교란 변수를 없앤다
