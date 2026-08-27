@@ -62,9 +62,15 @@ def build_ports(client, *, index: str) -> Ports:
     """구현된 스포크만 꽂는다. 나머지는 None — 하네스가 "미구현"으로 보고한다."""
     return Ports(
         retrieval=EsBm25Retriever(client, index=index) if client is not None else None,
-        # 아직 없는 것: domain_routing(B-0) · trigger(3주차) · compliance(6주차)
-        #             masking(server/apps/masking — 포트 어댑터 배선은 별건)
-        #             closure_gate(F-2, 7주차 조건부)
+        # ⚠ trigger 는 **구현이 있는데도 일부러 꽂지 않는다**(IsFinalTrigger, B-1).
+        #   TranscriptEvent 에 이벤트 도착 시각이 없어서 발동 시각을 "발화 종료 + STT 지연
+        #   상수(346ms)"로 모형화하고 있다. 그대로 채점하면 지연 분포가 상수 하나로 수렴해
+        #   p50 = p95 = 346, 적절 발동률 1.0 이 나온다 — **숫자는 나오지만 측정이 아니다.**
+        #   측정할 수 없는 것을 측정한 것처럼 쓰지 않는다(절대 원칙 10). 게이트웨이가 도착
+        #   시각을 실어 보내게 되면 그때 꽂는다. 서버 경로에는 꽂는다(발동 여부는 진짜 판정이다).
+        #
+        # 아직 구현이 없는 것: domain_routing(B-0) · compliance(6주차) · closure_gate(F-2)
+        #   masking 은 server/apps/masking 에 있으나 하네스 배선은 별건이다.
     )
 
 
