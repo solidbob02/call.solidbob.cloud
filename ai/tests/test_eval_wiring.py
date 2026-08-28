@@ -111,8 +111,9 @@ def test_ES가_없어도_마스킹과_F2는_채점된다():
 
     assert report["retrieval"] == NOT_IMPLEMENTED          # ES 가 없으니 당연하다
     assert isinstance(report["masking"], dict), "마스킹이 '미구현'으로 보고됐다"
-    assert isinstance(report["closure_gate"], dict), "F-2 가 '미구현'으로 보고됐다"
-    assert report["masking"]["n"] > 0 and report["closure_gate"]["n"] > 0
+    # ⚠ 2026-08-28 단일 도메인 전환(`decisions/201`) — 다산에는 종결 처리 유형이 없어
+    #   F-2 채점 케이스가 0건이다. 스포크는 꽂히지만 잴 것이 없는 상태가 정상이다.
+    assert report["masking"]["n"] > 0
 
 
 def test_절대_규칙은_건_단위로_보고된다():
@@ -123,5 +124,4 @@ def test_절대_규칙은_건_단위로_보고된다():
 
     assert report["masking"]["absolute_rule_passed"] is True, (
         f"C-5 누락 {report['masking']['miss_count']}건 — {report['masking']['missed_items']}")
-    assert report["closure_gate"]["absolute_rule_passed"] is True, (
-        f"F-2 오판정 — {report['closure_gate']['failed_items']}")
+    # F-2 는 다산에 케이스가 0건이라 판정할 것이 없다 — 위 주석 참고.
