@@ -22,6 +22,7 @@
 root_packages =
     evaluation
     retrieval
+    training
 include_external_packages = True
 
 # -----------------------------------------------------------------------------
@@ -40,6 +41,7 @@ layers =
 containers =
     evaluation
     retrieval
+    training
 
 # -----------------------------------------------------------------------------
 # 계약 2) 모듈 상호 독립 — 스포크끼리 직접 참조하지 않는다
@@ -53,6 +55,7 @@ type = independence
 modules =
     evaluation
     retrieval
+    training
 
 # -----------------------------------------------------------------------------
 # 계약 3) 도메인 순수성 — 알고리즘 계층은 프레임워크·모델 라이브러리를 모른다
@@ -66,6 +69,7 @@ type = forbidden
 source_modules =
     evaluation
     retrieval.domain
+    training.domain
 forbidden_modules =
     fastapi
     sqlalchemy

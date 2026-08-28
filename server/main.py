@@ -53,7 +53,7 @@ def _wire_retrieval(app: FastAPI, settings: Settings) -> str | None:
 
     **`ai/` 는 서비스가 아니라 라이브러리다** — `ai/requirements.txt` 에 웹 프레임워크가 없고
     HTTP 표면도 없다. 그래서 HTTP 로 부르지 않고 같은 프로세스에서 쓴다.
-    근거·되돌리는 법: `_project/decisions/023`.
+    근거·되돌리는 법: `_project/decisions/024`.
 
     **못 꽂으면 조용히 501 로 남는다** — 임시 구현을 만들지 않는다. `ai/` 의존성이 없는
     환경(server CI)에서도 이 파일이 import 돼야 하므로 실패를 예외로 올리지 않는다.
