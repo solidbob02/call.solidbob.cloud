@@ -4,6 +4,8 @@ title: 데이터베이스 ERD
 permalink: /docs/16/
 ---
 
+{% include pivot-201.html note="**이 페이지에서 바뀐 것**: `call.domain` 컬럼은 값이 `dasan` 하나뿐이라 사실상 상수가 됐다. **컬럼을 지우지는 않았다** — 되돌릴 때 마이그레이션이 더 비싸다. 새 기능(A-3 언어 코드 · C-6 폭언 · D 감정)에 필요한 스키마는 아직 설계되지 않았다." %}
+
 [3장 시스템 아키텍처](/docs/03/)는 `call`·`transcript`·`recommendation`·`closure`·
 `eval_result` 5개 테이블만 언급한다. 이건 아키텍처 다이어그램에 들어간 5개 큰 덩어리일
 뿐, 기능 명세를 하나씩 대조해보면 1:N 관계로 쪼개야 할 하위 데이터와 원래 계획엔 없던

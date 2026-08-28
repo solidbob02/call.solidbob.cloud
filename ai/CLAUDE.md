@@ -52,10 +52,6 @@ ai/
       domain/           청킹 규칙 · 랭킹 산식 — 순수 파이썬
       adapter/outbound/ 지식베이스 로더 · ES 색인(es_index.py) · (예정) 모델 로더
       tests/
-    training/           B-0 도메인 분류기 학습·추론
-      domain/services/  AI Hub 표기 ↔ 도메인 코드 매핑 — 순수
-      adapter/outbound/ 데이터 로더 · KcELECTRA 파인튜닝 · 추론 어댑터
-      tests/
     evaluation/         E-1~E-4 평가 하네스
       golden_set.py     골든셋 로더
       harness.py        hub 포트를 소비해 각 모듈을 채점
@@ -65,7 +61,7 @@ ai/
   tests/                합성 루트 전용 (모듈끼리 못 보는 것을 여기서 교차 검증)
 ```
 
-**`provider.py`·`tests/` 가 `apps/` 밖에 있는 이유**: `retrieval`·`training`·`evaluation` 은
+**`provider.py`·`tests/` 가 `apps/` 밖에 있는 이유**: `retrieval`·`evaluation` 은
 서로를 import 할 수 없다(`.importlinter` 계약 2 — **테스트도 계약 대상이다**). 두 모듈을
 동시에 아는 코드는 계약 밖에 둔다. `server/main.py`·`server/tests/` 와 같은 자리다.
 
@@ -77,7 +73,13 @@ ai/
 | `compliance` | 컴플라이언스 탐지 분류기 | C-1~C-4 |
 | `orchestration` | 랭그래프 파이프라인 | — |
 
-`training` 은 2026-08-27 에 만들어졌다(B-0 분류기).
+~~`training` 은 2026-08-27 에 만들어졌다(B-0 분류기).~~
+**2026-08-28 삭제됐다** — 다산 단일 도메인이 되어 분류할 도메인이 없다(`_project/decisions/201`).
+학습 코드·KcELECTRA 파인튜닝 어댑터·`scripts/train_domain_classifier.py` 가 함께 지워졌고
+`.importlinter` 의 `root_packages` 에서도 빠졌다. 되돌리려면 git 이력에서 꺼낸다.
+
+⚠ **모델 학습이 `ai/` 에서 완전히 사라진 것은 아니다.** A-3(동시 통번역)·C-6(콜 가드)·
+D(감정분석)가 모델을 쓰므로, 새 학습 모듈이 필요해지면 그때 `root_packages` 에 다시 넣는다.
 
 ---
 
@@ -116,7 +118,7 @@ CI(`.github/workflows/test.yml`)의 `ai` job 이 이 둘을 돌린다.
 ## 5. 데이터
 
 ```
-../knowledge-base/   도메인 4종(finance · dasan · shopping · health) × terms/manual/policy
+../knowledge-base/   dasan/ 하나 × terms/manual/policy (조항 20개 — 2026-08-28 `decisions/201`)
 ../golden-set/       골든셋 (v1-10 · v1-50 …). 도메인·발화 종료 시각·정답 문서 ID·P1~P7 패턴
 ../data/raw/         AI Hub 원본 (gitignore — 커밋하지 않는다)
 ../data/processed/   전사 결과 등 파생물 (gitignore)
