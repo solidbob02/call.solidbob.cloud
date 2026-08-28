@@ -43,9 +43,33 @@ from hub.adapter.outbound.postgres.eval_run_repository import (  # noqa: E402
     EvalRunRecord,
     PostgresEvalRunRepository,
 )
-from masking.adapter.outbound.rule_masking_adapter import RuleMaskingAdapter  # noqa: E402
+from masking.adapter.outbound.rule_masking_adapter import (  # noqa: E402
+    PARTIAL_PATTERNS,
+    SUPPORTED_PATTERNS,
+    RuleMaskingAdapter,
+)
 from retrieval.adapter.outbound.es_bm25_retriever import EsBm25Retriever  # noqa: E402
 from retrieval.adapter.outbound.es_index import SINGLE_INDEX  # noqa: E402
+
+
+def masking_coverage(items) -> dict[str, list[str]]:
+    """어댑터가 **지원한다고 선언한 패턴**과 **골든셋이 실제로 재는 패턴**을 대조한다.
+
+    **여기서 하는 이유**: 어댑터의 선언(`SUPPORTED_PATTERNS`·`PARTIAL_PATTERNS`)은
+    `server/apps/masking/` 에 있고 골든셋은 `evaluation` 이 읽는다. 둘을 동시에 아는 코드는
+    양쪽 계약 밖의 **합성 루트**에 있어야 한다 — 이 파일이 그 자리다. 포트를 넓히지 않고
+    상수를 읽기만 하므로 `MaskingPort` 계약은 그대로다.
+
+    장민석이 2026-08-27 에 `PARTIAL_PATTERNS` 를 두며 *"완전 지원과 뭉뚱그리면 평가
+    하네스가 수치를 해석할 수 없다"* 고 적었다. 그 선언을 실제로 읽는 곳이 없어서
+    (`ai/` 에서 grep 0건) 2026-08-28 에 이었다.
+    """
+    measured = {p.pattern for it in items for p in it.pii_patterns}
+    return {
+        "measured": sorted(measured),
+        "uncovered": sorted(set(SUPPORTED_PATTERNS) - measured),
+        "rule_fallback": sorted(set(PARTIAL_PATTERNS) & measured),
+    }
 
 
 
@@ -124,7 +148,11 @@ def main() -> int:
 
     ports = build_ports(client, index=args.index)
     reports = [run_eval(items, ports) for _ in range(args.runs)]
-    print_report(reports[0], golden_set_path=golden_path)
+    print_report(
+        reports[0],
+        golden_set_path=golden_path,
+        masking_coverage=masking_coverage(items),
+    )
 
     if args.runs > 1:
         _print_worst(reports)

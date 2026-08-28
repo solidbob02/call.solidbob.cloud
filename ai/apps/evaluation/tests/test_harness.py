@@ -5,7 +5,7 @@
 확인한다. 실제 정확도 수치를 여기서 하드코딩하지 않는다 (6.2절 원칙 5)."""
 
 from evaluation.golden_set import load_golden_set
-from evaluation.harness import NOT_IMPLEMENTED, Ports, run_eval
+from evaluation.harness import NO_SAMPLES, NOT_IMPLEMENTED, Ports, run_eval
 from hub.app.dtos import ClosureVerdict, DomainClassification, MaskedSpan, TranscriptEvent, TriggerDecision
 from hub.app.ports.output import ClosureGatePort, DomainRoutingPort, MaskingPort, TriggerPort
 
@@ -36,6 +36,7 @@ def test_도메인_라우팅은_더_이상_채점하지_않는다():
     report = run_eval(load_golden_set(), Ports())
     assert report["domain_routing"] == NOT_IMPLEMENTED
 
+
 class _PerfectClosureGate(ClosureGatePort):
     """골든셋의 기대값을 그대로 돌려주는 가짜 포트 구현 — 배선만 검증한다."""
 
@@ -52,10 +53,24 @@ def test_F2_는_다산에_채점할_케이스가_없다():
 
     스포크를 꽂아도 채점할 항목이 0건이다. **"통과"가 아니라 "잴 것이 없다"** 이고,
     그 둘을 구분해 보고하는지 확인한다(절대 원칙 10).
+
+    ⚠ 2026-08-28: 이 단언이 원래 `result == NOT_IMPLEMENTED or result.get("n") == 0` 이었다.
+    **docstring 이 약속한 「구분」을 실제로는 검증하지 않았고**, 그때 하네스는 빈 입력에
+    `absolute_rule_passed: True` 를 내고 있었다 — 가짜 만점이 그대로 통과했다.
+    이제 세 상태(미구현 / 표본 없음 / 채점됨)를 서로 다른 값으로 본다.
     """
     report = run_eval(load_golden_set(), Ports(closure_gate=_PerfectClosureGate()))
-    result = report["closure_gate"]
-    assert result == NOT_IMPLEMENTED or result.get("n") == 0, result
+    assert report["closure_gate"] == NO_SAMPLES, report["closure_gate"]
+
+
+def test_스포크가_없는_것과_표본이_없는_것을_구분한다():
+    """둘 다 「측정 불가」지만 다음에 할 일이 다르다 — 만들 것인가, 골든셋을 채울 것인가."""
+    no_spoke = run_eval(load_golden_set(), Ports())["closure_gate"]
+    no_samples = run_eval(load_golden_set(), Ports(closure_gate=_PerfectClosureGate()))["closure_gate"]
+    assert no_spoke == NOT_IMPLEMENTED
+    assert no_samples == NO_SAMPLES
+    assert no_spoke != no_samples
+
 
 class _FixedDelayTrigger(TriggerPort):
     """항상 발화 종료 900ms 뒤에 발동하는 가짜 포트 — 배선과 지연 분포 계산만 검증한다."""
