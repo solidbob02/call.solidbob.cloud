@@ -14,27 +14,34 @@ export interface MaskedSpan {
   span: [number, number];
 }
 
-export type DemoDomain = "finance" | "dasan" | "shopping" | "health";
+/**
+ * 데모 도메인. decisions/201 이후 다산콜센터만 남긴다.
+ * 옛 값 finance · shopping · health 는 유니온에서 뺐다 — ClosureType 과 달리
+ * 화면 분기를 더 이상 만들지 않는다. 되돌리기는 git 이력.
+ */
+export type DemoDomain = "dasan";
 
 /** 목록·이력 계약에서 쓰는 이름. 값은 DemoDomain 과 같다. */
 export type Domain = DemoDomain;
 
-export const DEMO_DOMAINS: readonly DemoDomain[] = [
-  "finance",
-  "dasan",
-  "shopping",
-  "health",
-];
+export const DEMO_DOMAINS: readonly DemoDomain[] = ["dasan"];
 
 export const DEMO_DOMAIN_LABELS: Record<DemoDomain, string> = {
-  finance: "금융보험",
   dasan: "다산콜센터",
-  shopping: "쇼핑",
-  health: "질병관리본부",
 };
 
-/** §2.7 처리 유형. 다산콜센터·질병관리본부는 F-2 미적용이라 이 값이 오지 않는다. */
+/**
+ * 금융·쇼핑 F-2 처리 유형.
+ * 4도메인 시절 코드. decisions/201로 다산 단일화되며 신규 시나리오에는 쓰지 않는다.
+ * 삭제하지 않는다 — 4도메인으로 되돌릴 가능성 대비 기록으로 남긴다.
+ */
 export type ClosureType = "상품해지" | "보상" | "반품" | "교환";
+
+/**
+ * 다산 민원 서비스명. 지식베이스 69종 실측이 오면 그 이름을 그대로 넣는다.
+ * mock은 예시 서비스명만 쓴다 (`is_example`).
+ */
+export type RequiredDocsType = string;
 
 export interface TranscriptEvent {
   call_id: string;
@@ -45,6 +52,27 @@ export interface TranscriptEvent {
   is_final: boolean;
   utterance_end_ms: number;
   domain?: DemoDomain;
+}
+
+/**
+ * A-5 통번역 — §7.3 계약에 아직 없다. 프론트가 mock용으로 먼저 정의했다.
+ * 고객 외국어 원문 + 한글 번역. original_lang 후보는 decisions/201 부록 A.
+ */
+export interface TranslatedUtterance {
+  segment_id: number;
+  original_text: string;
+  original_lang: "vi" | "en" | "ja" | "zh" | "th";
+  translated_text: string;
+}
+
+/**
+ * A-5 상담원 한국어 → 고객 모국어 TTS. 실제 음성 재생은 이번 범위 밖.
+ * 화면은 전송 상태만 표시한다. §7.3 미정.
+ */
+export interface AgentTtsStatus {
+  segment_id: number;
+  target_lang: string;
+  status: "sent" | "pending";
 }
 
 export interface DocumentSource {
@@ -99,17 +127,29 @@ export interface CallWrapUp {
   follow_ups: string[];
 }
 
+/**
+ * 4도메인 시절 F-2 판정값. decisions/201로 다산 단일화되며 화면 카피는 쓰지 않는다.
+ * DTO를 재사용하므로 필드는 남긴다 — approved 는 missing 이 비었다는 뜻.
+ */
 export type ClosureVerdict = "approved" | "blocked";
 
 export interface ClosureEvent {
   call_id: string;
-  closure_type: ClosureType;
+  /** 금융·쇼핑이면 ClosureType, 다산이면 서비스명(RequiredDocsType). */
+  closure_type: ClosureType | RequiredDocsType;
   reason: string;
+  /** 키 = 종결 요건 항목 → 다산에서는 이 서비스에 필요한 서류 하나. */
   evidence: Record<string, boolean>;
   verdict: ClosureVerdict;
+  /** 상담원이 아직 안내하지 않은 서류(다산) / 미충족 종결 항목(4도메인). */
   missing: string[];
   source: DocumentSource;
   domain?: DemoDomain;
+  /**
+   * 프론트 전용. 69종 구비서류 실측이 지식베이스에 오기 전 mock임을 표시한다.
+   * 서버가 안 보내면 예시로 보지 않는다.
+   */
+  is_example?: boolean;
 }
 
 export function hasCardSource(card: RecommendationCard): boolean {

@@ -280,6 +280,9 @@ function parseClosure(body: Record<string, unknown>): ClosureEvent | null {
   if (domain !== undefined) {
     event.domain = domain;
   }
+  if (body.is_example === true) {
+    event.is_example = true;
+  }
   return event;
 }
 
@@ -361,7 +364,12 @@ function readSpeaker(value: unknown): Speaker | null {
   return null;
 }
 
-function readClosureType(value: unknown): ClosureType | null {
+function readClosureType(value: unknown): ClosureType | string | null {
+  if (typeof value !== "string" || value.length === 0) {
+    return null;
+  }
+  // 금융·쇼핑 ClosureType — 4도메인 시절 코드, decisions/201로 다산 단일화되며
+  // 신규 시나리오에는 쓰지 않는다. 파서는 그대로 받는다.
   if (
     value === "상품해지" ||
     value === "보상" ||
@@ -370,7 +378,8 @@ function readClosureType(value: unknown): ClosureType | null {
   ) {
     return value;
   }
-  return null;
+  // 다산 RequiredDocsType — 서비스명 문자열.
+  return value;
 }
 
 function readVerdict(value: unknown): ClosureVerdict | null {
@@ -396,12 +405,7 @@ function readMaskType(value: unknown): MaskType | null {
 }
 
 function readDomain(value: unknown): DemoDomain | undefined {
-  if (
-    value === "finance" ||
-    value === "dasan" ||
-    value === "shopping" ||
-    value === "health"
-  ) {
+  if (value === "dasan") {
     return value;
   }
   return undefined;
