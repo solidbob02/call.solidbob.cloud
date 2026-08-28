@@ -219,7 +219,7 @@ button {
   left: 0;
   right: auto;
   z-index: 20;
-  width: min(440px, calc(100vw - 48px));
+  width: min(560px, calc(100vw - 48px));
   max-height: min(70vh, 560px);
   overflow: auto;
   padding: 12px;
@@ -245,12 +245,20 @@ button {
   gap: 4px;
 }
 
+.call-history-item {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+}
+
 .call-history-row {
   display: grid;
   grid-template-columns: 7.2em auto minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
+  width: auto;
   padding: 8px 10px;
   border: 0;
   border-radius: 7px;
@@ -292,6 +300,33 @@ button {
 .call-history-ref {
   color: var(--muted);
   white-space: nowrap;
+}
+
+.call-history-flag {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.call-history-replay {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.call-history-replay:hover,
+.call-history-replay:focus-visible {
+  background: #f5f4f1;
+  color: var(--text);
+  outline: none;
 }
 
 .call-history-row.is-active {
@@ -694,11 +729,51 @@ button {
   margin-bottom: 2px;
 }
 
+.speaker-cluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .speaker {
   font-family: var(--font);
   font-size: 11px;
   font-weight: 600;
   color: var(--muted);
+}
+
+.tts-sent {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.lang-badge {
+  flex-shrink: 0;
+  margin-top: 3px;
+  padding: 1px 6px;
+  border-radius: var(--radius-badge);
+  background: #f1f0ec;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
+.utterance-translation {
+  margin: 4px 0 0;
+  padding-left: 12px;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.55;
 }
 
 .utterance-text {
@@ -840,6 +915,25 @@ button {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.term-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.example-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-badge);
+  background: #f1f0ec;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   white-space: nowrap;
 }
 

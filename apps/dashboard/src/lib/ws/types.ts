@@ -4,6 +4,8 @@ import type {
   ManualSearchRequest,
   RecommendationBatch,
   TranscriptEvent,
+  TranslatedUtterance,
+  AgentTtsStatus,
 } from "../../types/contract";
 
 export interface GatewayListener {
@@ -12,6 +14,12 @@ export interface GatewayListener {
   onClosure: (event: ClosureEvent) => void;
   onStatus: (status: GatewayStatus) => void;
   onError: (message: string) => void;
+  /** A-5. §7.3 미정 — mock만 보낸다. 키는 자막 segment_id. */
+  onTranslation?: (
+    transcriptSegmentId: string,
+    event: TranslatedUtterance,
+  ) => void;
+  onAgentTts?: (transcriptSegmentId: string, event: AgentTtsStatus) => void;
 }
 
 export type GatewayMode = "mock" | "live";

@@ -1,12 +1,18 @@
 import { useMemo, type ReactElement } from "react";
-import { listCallHistory } from "../lib/api/coreClient";
-import { DOMAIN_COLORS } from "../lib/domainColors";
+import { listCallHistoryRows } from "../mock/callHistory";
+import { setSelectedMockScenarioId } from "../mock/scenarios";
 import { formatCallStartedAt } from "../lib/formatCallTime";
 import { useCallStore } from "../store/callStore";
 import { DEMO_DOMAIN_LABELS } from "../types/contract";
 
-export function CallHistoryPanel(): ReactElement {
-  const items = useMemo(() => listCallHistory(), []);
+interface CallHistoryPanelProps {
+  onReplay: () => void;
+}
+
+export function CallHistoryPanel({
+  onReplay,
+}: CallHistoryPanelProps): ReactElement {
+  const rows = useMemo(() => listCallHistoryRows(), []);
   const openHistory = useCallStore((state) => state.openHistory);
   const historyCallId = useCallStore((state) => state.historyCallId);
 
@@ -14,32 +20,56 @@ export function CallHistoryPanel(): ReactElement {
     <div className="call-history">
       <p className="call-history-heading">상담기록</p>
       <ul className="call-history-list">
-        {items.map((row) => (
-          <li key={row.call_id}>
+        {rows.map((row) => (
+          <li key={row.item.call_id} className="call-history-item">
             <button
               type="button"
-              className={`call-history-row${historyCallId === row.call_id ? " is-active" : ""}`}
+              className={`call-history-row${historyCallId === row.item.call_id ? " is-active" : ""}`}
               onClick={() => {
-                openHistory(row);
+                openHistory(row.item);
               }}
             >
-              <time dateTime={row.started_at}>
-                {formatCallStartedAt(row.started_at)}
+              <time dateTime={row.item.started_at}>
+                {formatCallStartedAt(row.item.started_at)}
               </time>
               <span className="call-history-badge">
-                <span
-                  className="arrow-select-dot"
-                  style={{ background: DOMAIN_COLORS[row.domain] }}
-                  aria-hidden="true"
-                />
-                {DEMO_DOMAIN_LABELS[row.domain]}
+                <span className="call-history-flag" aria-hidden="true">
+                  {row.langFlag}
+                </span>
+                {DEMO_DOMAIN_LABELS[row.item.domain]}
               </span>
-              <span className="call-history-type">{row.inquiry_type}</span>
-              <span className="call-history-ref">{row.customer_ref}</span>
+              <span className="call-history-type">{row.item.inquiry_type}</span>
+              <span className="call-history-ref">{row.item.customer_ref}</span>
+            </button>
+            <button
+              type="button"
+              className="call-history-replay"
+              title="다시 재생"
+              aria-label={`${row.item.inquiry_type} 다시 재생`}
+              onClick={() => {
+                setSelectedMockScenarioId(row.scenarioId);
+                onReplay();
+              }}
+            >
+              <ReplayIcon />
             </button>
           </li>
         ))}
       </ul>
     </div>
+  );
+}
+
+function ReplayIcon(): ReactElement {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M6 4.75v14.5a.75.75 0 0 0 1.13.65l12.5-7.25a.75.75 0 0 0 0-1.3L7.13 4.1A.75.75 0 0 0 6 4.75z" />
+    </svg>
   );
 }
