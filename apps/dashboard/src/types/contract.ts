@@ -31,7 +31,7 @@ export const DEMO_DOMAIN_LABELS: Record<DemoDomain, string> = {
 };
 
 /** §2.7 처리 유형. 다산콜센터·질병관리본부는 F-2 미적용이라 이 값이 오지 않는다. */
-export type ClosureType = "상품해지" | "사고·보상" | "반품" | "교환";
+export type ClosureType = "상품해지" | "보상" | "반품" | "교환";
 
 export interface TranscriptEvent {
   call_id: string;
@@ -49,11 +49,28 @@ export interface DocumentSource {
   title: string;
 }
 
+/** 자동 트리거(B-1)로 뜬 카드인지, 상담원이 직접 찾은 카드인지. */
+export type CardSourceType = "auto" | "manual";
+
 export interface RecommendationCard {
   title: string;
   summary: string;
   source: DocumentSource;
   similarity_score: number;
+  /**
+   * 7.3절 계약에는 아직 없다 — 수동 검색(B-6 보완 경로)을 화면에서 구분하려고
+   * 프론트가 먼저 정의했다. 서버가 안 보내면 "auto" 로 본다.
+   */
+  source_type?: CardSourceType;
+}
+
+/**
+ * 수동 검색 요청 — §2.3 B-6 으로 "관련 문서 없음"이 떴을 때 상담원이 직접 찾는 경로.
+ * 서버 메시지 형식이 정해지면 7.3절로 올린다.
+ */
+export interface ManualSearchRequest {
+  call_id: string;
+  query: string;
 }
 
 export interface RecommendationBatch {
@@ -63,6 +80,20 @@ export interface RecommendationBatch {
   internal_latency_ms: number;
   e2e_latency_ms: number;
   domain?: DemoDomain;
+}
+
+/**
+ * §2.5 D. 통화 후 처리 결과. 7.3절 계약에 아직 없다 — 프론트가 먼저 정의했다.
+ * D-4(지식베이스 공백)는 이 통화에서 화면이 직접 관찰한 것이라 서버가 주지 않는다.
+ */
+export interface CallWrapUp {
+  call_id: string;
+  /** D-1 상담 요약. 한 줄씩. */
+  summary: string[];
+  /** D-2 문의 유형. */
+  category: string;
+  /** D-3 후속조치 항목. */
+  follow_ups: string[];
 }
 
 export type ClosureVerdict = "approved" | "blocked";
@@ -80,4 +111,8 @@ export interface ClosureEvent {
 
 export function hasCardSource(card: RecommendationCard): boolean {
   return card.source.doc_id.length > 0 && card.source.title.length > 0;
+}
+
+export function cardSourceType(card: RecommendationCard): CardSourceType {
+  return card.source_type === "manual" ? "manual" : "auto";
 }

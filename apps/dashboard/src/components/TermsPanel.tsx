@@ -1,8 +1,45 @@
-import { useRef, type ReactElement } from "react";
-import type { ClosureEvent } from "../types/contract";
-import { evidenceTally, useCallStore } from "../store/callStore";
+import {
+  useRef,
+  useState,
+  type ReactElement,
+} from "react";
+import {
+  DEMO_DOMAIN_LABELS,
+  DEMO_DOMAINS,
+  cardSourceType,
+  type ClosureEvent,
+  type DemoDomain,
+} from "../types/contract";
+import { cardId, evidenceTally, useCallStore } from "../store/callStore";
 import type { PanelCard } from "../store/callStore";
+import { SessionControls } from "./AppHeader";
+import {
+  ArrowSelectChip,
+  type ArrowSelectOption,
+} from "./ArrowSelectChip";
 import { BookmarkDock } from "./BookmarkDock";
+
+type TermsContentView = "closure" | "popup";
+
+const VIEW_OPTIONS: readonly ArrowSelectOption<TermsContentView>[] = [
+  { value: "closure", label: "충족요건" },
+  { value: "popup", label: "팝업창" },
+];
+
+const DOMAIN_COLORS: Record<DemoDomain, string> = {
+  finance: "#2DD4BF",
+  dasan: "#818cf8",
+  shopping: "#F5A623",
+  health: "#2DD4BF",
+};
+
+const DOMAIN_OPTIONS: readonly ArrowSelectOption<DemoDomain>[] = DEMO_DOMAINS.map(
+  (domain) => ({
+    value: domain,
+    label: DEMO_DOMAIN_LABELS[domain],
+    color: DOMAIN_COLORS[domain],
+  }),
+);
 
 function categoryFromDocId(docId: string): string {
   return docId.split("-")[0] ?? docId;
@@ -12,8 +49,21 @@ function cardDomId(index: number): string {
   return `term-card-${index}`;
 }
 
-export function TermsPanel(): ReactElement {
+interface TermsPanelProps {
+  onReplay: () => void;
+  onEndCall: () => void;
+}
+
+export function TermsPanel({
+  onReplay,
+  onEndCall,
+}: TermsPanelProps): ReactElement {
   const cards = useCallStore((state) => state.cards);
+  const mode = useCallStore((state) => state.mode);
+  const demoDomain = useCallStore((state) => state.demoDomain);
+  const setDemoDomain = useCallStore((state) => state.setDemoDomain);
+  const error = useCallStore((state) => state.error);
+  const [view, setView] = useState<TermsContentView>("closure");
   const pending = cards.find((item) => item.closure !== null && !item.settled);
   const tally =
     pending?.closure !== undefined && pending.closure !== null
@@ -29,9 +79,31 @@ export function TermsPanel(): ReactElement {
 
   return (
     <section className="panel terms-panel" aria-labelledby="terms-heading">
+      <header className="pane-header right-pane-header">
+        <SessionControls onReplay={onReplay} onEndCall={onEndCall} />
+        {error !== null ? <p className="header-error">{error}</p> : null}
+      </header>
       <header className="panel-head terms-head">
-        <h2 id="terms-heading">이용약관 · 충족요건</h2>
-        {tally !== null ? (
+        <h2 id="terms-heading" className="sr-only">
+          이용약관 · 충족요건
+        </h2>
+        <div className="terms-chips">
+          <ArrowSelectChip
+            options={VIEW_OPTIONS}
+            value={view}
+            onChange={setView}
+            aria-label="콘텐츠 보기"
+          />
+          {mode === "mock" ? (
+            <ArrowSelectChip
+              options={DOMAIN_OPTIONS}
+              value={demoDomain}
+              onChange={setDemoDomain}
+              aria-label="도메인"
+            />
+          ) : null}
+        </div>
+        {view === "closure" && tally !== null ? (
           <div className="tally-chip">
             <ProgressRing met={tally.met} total={tally.total} />
             <span>{`근거 ${tally.met}/${tally.total} 충족`}</span>
@@ -45,7 +117,7 @@ export function TermsPanel(): ReactElement {
           <ul className="term-card-list">
             {cards.map((item, index) => (
               <li key={`${item.card.source.doc_id}-${item.card.title}`}>
-                <TermCard item={item} index={index} />
+                <TermCard item={item} index={index} view={view} />
               </li>
             ))}
           </ul>
@@ -59,31 +131,51 @@ export function TermsPanel(): ReactElement {
 function TermCard({
   item,
   index,
+  view,
 }: {
   item: PanelCard;
   index: number;
+  view: TermsContentView;
 }): ReactElement {
   const settleClosure = useCallStore((state) => state.settleClosure);
+  const toggleAdoption = useCallStore((state) => state.toggleAdoption);
+  const adopted = useCallStore(
+    (state) => state.adoptions[cardId(item.card)]?.adopted === true,
+  );
   const category = categoryFromDocId(item.card.source.doc_id);
   const closure = item.closure;
+  const manual = cardSourceType(item.card) === "manual";
   const canSettle =
     closure !== null && closure.missing.length === 0 && !item.settled;
+
+  function onAdopt(): void {
+    toggleAdoption(item.card);
+  }
 
   return (
     <article
       id={cardDomId(index)}
-      className="term-card"
+      className={`term-card${manual ? " manual" : ""}${adopted ? " adopted" : ""}`}
       data-category={category}
     >
       <div className="term-card-body">
-        <p className={`card-category cat-${category.toLowerCase()}`}>{category}</p>
-        <h3>{item.card.title}</h3>
-        <p className="card-summary">{item.card.summary}</p>
-        <p className="card-source">
-          <FileTextIcon />
-          <span>{item.card.source.title}</span>
-        </p>
-        {closure !== null ? (
+        {view === "popup" ? (
+          <>
+            <div className="card-head">
+              <p className={`card-category cat-${category.toLowerCase()}`}>
+                {category}
+              </p>
+              {manual ? <span className="card-flag">수동 검색</span> : null}
+              <AdoptToggle adopted={adopted} onToggle={onAdopt} />
+            </div>
+            <h3>{item.card.title}</h3>
+            <p className="card-summary">{item.card.summary}</p>
+            <p className="card-source">
+              <FileTextIcon />
+              <span>{item.card.source.title}</span>
+            </p>
+          </>
+        ) : closure !== null ? (
           <ClosureBlock
             closure={closure}
             canSettle={canSettle}
@@ -92,9 +184,39 @@ function TermCard({
               settleClosure(closure.closure_type);
             }}
           />
-        ) : null}
+        ) : (
+          <p className="closure-empty">충족요건 없음</p>
+        )}
       </div>
     </article>
+  );
+}
+
+/**
+ * 어떤 문서가 실제로 쓰였는지 남기는 기록. 지식베이스 보강용이지 상담원 평가가 아니라서
+ * 누르지 않은 것을 문제처럼 보이게 하지 않는다 — 기본 상태는 조용한 회색이다.
+ */
+function AdoptToggle({
+  adopted,
+  onToggle,
+}: {
+  adopted: boolean;
+  onToggle: () => void;
+}): ReactElement {
+  return (
+    <button
+      type="button"
+      className={`adopt-toggle${adopted ? " on" : ""}`}
+      aria-pressed={adopted}
+      aria-label="사용 표시"
+      title="사용 표시"
+      onClick={onToggle}
+    >
+      <span className="adopt-box" aria-hidden="true">
+        {adopted ? <CircleCheckIcon /> : null}
+      </span>
+      <span>사용 표시</span>
+    </button>
   );
 }
 
@@ -114,7 +236,6 @@ function ClosureBlock({
 
   return (
     <div className="closure-block">
-      <hr className="closure-split" />
       <h4 className="closure-subhead">종결 충족요건</h4>
       <div className={`tally-row cat-${category.toLowerCase()}`}>
         <ProgressRing met={tally.met} total={tally.total} />
@@ -125,9 +246,7 @@ function ClosureBlock({
           const met = closure.evidence[key] === true;
           return (
             <li key={key} className={met ? "met" : "missing"}>
-              <span className={`evidence-icon-wrap ${met ? "met" : "missing"}`}>
-                {met ? <CheckIcon /> : <CrossIcon />}
-              </span>
+              {met ? <CheckIcon /> : <CrossIcon />}
               <span>{key.replace(/_/g, " ")}</span>
             </li>
           );
@@ -150,7 +269,7 @@ function ProgressRing({
   total: number;
 }): ReactElement {
   const size = 38;
-  const stroke = 3;
+  const stroke = 2.2;
   const radius = (size - stroke) / 2;
   const center = size / 2;
   const circumference = 2 * Math.PI * radius;
@@ -159,7 +278,7 @@ function ProgressRing({
 
   return (
     <svg
-      className="progress-ring"
+      className={`progress-ring${met === total && total > 0 ? " is-complete" : ""}`}
       width={size}
       height={size}
       viewBox={`0 0 ${size} ${size}`}
@@ -170,7 +289,7 @@ function ProgressRing({
         cy={center}
         r={radius}
         fill="none"
-        stroke="#ecece7"
+        stroke="var(--line)"
         strokeWidth={stroke}
       />
       <circle
@@ -195,6 +314,27 @@ function ProgressRing({
       >
         {`${met}/${total}`}
       </text>
+    </svg>
+  );
+}
+
+function CircleCheckIcon(): ReactElement {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+    >
+      <circle cx="8" cy="8" r="8" fill="currentColor" />
+      <path
+        d="M4.4 8.15 6.85 10.5 11.6 5.5"
+        fill="none"
+        stroke="#fff"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -232,15 +372,15 @@ function CheckIcon(): ReactElement {
     <svg
       className="evidence-icon"
       viewBox="0 0 16 16"
-      width="11"
-      height="11"
+      width="14"
+      height="14"
+      fill="none"
       aria-hidden="true"
     >
       <path
         d="M3.4 8.2 6.5 11.1 12.6 4.8"
-        fill="none"
-        stroke="#1F7A43"
-        strokeWidth="1.8"
+        stroke="currentColor"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -253,15 +393,15 @@ function CrossIcon(): ReactElement {
     <svg
       className="evidence-icon"
       viewBox="0 0 16 16"
-      width="11"
-      height="11"
+      width="14"
+      height="14"
+      fill="none"
       aria-hidden="true"
     >
       <path
         d="M4.6 4.6l6.8 6.8M11.4 4.6l-6.8 6.8"
-        fill="none"
-        stroke="#8F2A29"
-        strokeWidth="1.8"
+        stroke="currentColor"
+        strokeWidth="2"
         strokeLinecap="round"
       />
     </svg>

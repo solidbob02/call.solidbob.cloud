@@ -1,14 +1,28 @@
 import { useCallback, useEffect, useRef } from "react";
 import { createGatewayClient } from "../lib/ws";
 import type { GatewayClient } from "../lib/ws";
-import type { TranscriptEvent } from "../types/contract";
+import type { CallWrapUp, TranscriptEvent } from "../types/contract";
 import { useCallStore } from "../store/callStore";
+
+/** 수동 검색 한 번의 결과. 못 찾은 것과 이미 있는 것을 구분한다. */
+export type ManualSearchOutcome =
+  | { kind: "added"; count: number }
+  | { kind: "empty" }
+  | { kind: "duplicate" }
+  | { kind: "error"; message: string };
+
+export interface GatewaySession {
+  replay: () => void;
+  manualSearch: (query: string) => Promise<ManualSearchOutcome>;
+  endCall: () => void;
+  wrapUp: () => Promise<CallWrapUp>;
+}
 
 /**
  * 같은 segment_id 의 interim 은 누적하지 않고 rAF 한 프레임에 최신 것만 반영.
  * 7.3절: requestAnimationFrame 또는 100ms 디바운스.
  */
-export function useGatewaySession(): { replay: () => void } {
+export function useGatewaySession(): GatewaySession {
   const clientRef = useRef<GatewayClient | null>(null);
   const pendingRef = useRef<Map<string, TranscriptEvent>>(new Map());
   const rafRef = useRef<number>(0);
@@ -85,5 +99,46 @@ export function useGatewaySession(): { replay: () => void } {
     attach(client);
   }, [attach]);
 
-  return { replay };
+  const manualSearch = useCallback(
+    async (query: string): Promise<ManualSearchOutcome> => {
+      const client = clientRef.current;
+      if (client === null) {
+        return { kind: "error", message: "게이트웨이에 연결되어 있지 않습니다." };
+      }
+      const callId = useCallStore.getState().callId ?? "";
+      try {
+        const batch = await client.manualSearch({ call_id: callId, query });
+        // 못 찾은 질의가 D-4 공백 후보다. 오류는 지식베이스 문제가 아니라 세지 않는다.
+        useCallStore.getState().logManualSearch(query, batch.cards.length > 0);
+        if (batch.cards.length === 0) {
+          return { kind: "empty" };
+        }
+        const added = useCallStore.getState().applyManualResult(batch.cards);
+        return added === 0 ? { kind: "duplicate" } : { kind: "added", count: added };
+      } catch (error) {
+        return {
+          kind: "error",
+          message:
+            error instanceof Error ? error.message : "검색에 실패했습니다.",
+        };
+      }
+    },
+    [],
+  );
+
+  // 통화를 끝내면 재생을 멈춘다. 자막이 뒤에서 계속 쌓이면 랩업이 통화 내용과 어긋난다.
+  const endCall = useCallback(() => {
+    clientRef.current?.disconnect();
+    useCallStore.getState().endCall();
+  }, []);
+
+  const wrapUp = useCallback(async (): Promise<CallWrapUp> => {
+    const client = clientRef.current;
+    if (client === null) {
+      throw new Error("게이트웨이에 연결되어 있지 않습니다.");
+    }
+    return client.wrapUp(useCallStore.getState().callId ?? "");
+  }, []);
+
+  return { replay, manualSearch, endCall, wrapUp };
 }

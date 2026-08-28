@@ -62,6 +62,23 @@ export class RealGatewayClient implements GatewayClient {
     this.listeners = null;
   }
 
+  /**
+   * 수동 검색 메시지는 7.3절 계약에 아직 없다. 임의의 형식을 보내면 서버가
+   * 모르는 메시지로 버리고 화면은 결과를 기다리게 되므로, 안 된다고 말한다.
+   */
+  manualSearch(): Promise<never> {
+    return Promise.reject(
+      new Error("수동 검색은 아직 게이트웨이에 연결되지 않았습니다."),
+    );
+  }
+
+  /** §2.5 D 통화 후 처리도 계약이 없다. 지어내지 않고 없다고 말한다. */
+  wrapUp(): Promise<never> {
+    return Promise.reject(
+      new Error("통화 후 처리는 아직 게이트웨이에 연결되지 않았습니다."),
+    );
+  }
+
   private handleMessage(raw: string): void {
     const listeners = this.listeners;
     if (listeners === null) {
@@ -223,7 +240,12 @@ function parseCard(body: Record<string, unknown>): RecommendationCard | null {
   if (title === null || summary === null || similarity_score === null || source === null) {
     return null;
   }
-  return { title, summary, source, similarity_score };
+  const card: RecommendationCard = { title, summary, source, similarity_score };
+  // 계약에 없는 필드라 없어도 통과시킨다 — 없으면 auto 로 본다.
+  if (body.source_type === "manual" || body.source_type === "auto") {
+    card.source_type = body.source_type;
+  }
+  return card;
 }
 
 function parseClosure(body: Record<string, unknown>): ClosureEvent | null {
@@ -342,7 +364,7 @@ function readSpeaker(value: unknown): Speaker | null {
 function readClosureType(value: unknown): ClosureType | null {
   if (
     value === "상품해지" ||
-    value === "사고·보상" ||
+    value === "보상" ||
     value === "반품" ||
     value === "교환"
   ) {
