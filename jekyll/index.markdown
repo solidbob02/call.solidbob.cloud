@@ -5,12 +5,11 @@ permalink: /
 eyebrow: "개발제안서"
 title_lines:
   - "StreamRAG : CallGuard"
-  - "통화 음성 스트림을 실시간으로 분석하고,"
-  - "하이브리드 RAG와 가드레일로"
-  - "지식과 컴플라이언스를 동시에 지원하는"
-  - "AICC 어시스트"
-  - "(오류율 10%에서 Recall@5 0.48 → 0.66 복구 목표)"
-subtitle: "Real-time Hybrid RAG & Compliance Guardrail for AICC Agent Assist"
+  - "다산콜센터 상담원이 통화 중에,"
+  - "그 절차에 필요한 구비서류를 바로 보고"
+  - "외국인 고객의 말을 한글로 듣는다"
+  - "실시간 상담원 어시스트"
+subtitle: "Real-time Agent Assist for Seoul 120 — Document Guidance & Live Interpretation"
 meta:
   - label: "개발기간"
     value: "2026년 8월 20일 (목) ~ 2026년 10월 27일 (화)"
