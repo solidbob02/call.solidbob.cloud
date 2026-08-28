@@ -31,7 +31,7 @@ F·G·H·I 동결 판정은 **6주차 종료 시점**이다(그 전까지는 적
 | `server/` | 장민석 | 엔드포인트 14개 · 테스트 321 + integration 3. **모델 없이 할 수 있는 일은 끝났다.** 남은 501 은 `POST /hub/recommendations`(트리거 대기) 하나 |
 | `ai/` | 류준 | 검색(BM25+nori) ✅ · 트리거 v1 ✅ · B-0 v1 ✅ · 평가 하네스 ✅. 분류기는 학습했으나 v1 을 못 넘어 기본값에서 뺐다. 컴플라이언스(6주차) 미착수 |
 | 인프라 · CI | 정성윤 | CI 3종 · main 보호 · Pages 배포 ✅. **A(STT) 는 `services/` 디렉터리 자체가 없다 — 코드 0줄** |
-| `apps/` | 조서희 | 상담원 대시보드(자막·이용약관·충족요건) · 홍보 랜딩 `apps/platform`. 고객 화면은 `decisions/014` 로 철회 |
+| `apps/` | 조서희 | 대시보드: 상담기록은 왼쪽 자막 패널로 상세. 랜딩 `apps/platform` → [www.solidbob.cloud](https://www.solidbob.cloud/) (Vercel). 고객 화면은 `decisions/014` 로 철회 |
 
 ---
 
