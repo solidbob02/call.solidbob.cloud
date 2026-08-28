@@ -2,7 +2,7 @@
 title: "커스텀 도메인 docs.solidbob.cloud 연결 (배포 사이트 404 수정)"
 assignee: "정성윤"
 role: "infra"
-status: "in-progress"
+status: "done"
 sprint: 2
 priority: 3
 date: 2026-08-28
@@ -30,15 +30,26 @@ depends_on:
 - `jekyll/index.markdown` — 표지 「데모 사이트」를 「문서 사이트 `docs.solidbob.cloud`」 + 「데모 사이트 `solidbob.cloud`」 두 줄로
 - `.github/workflows/pages.yml` — `--baseurl` 이 왜 자동으로 비워지는지 주석
 
-**남은 것 — 사람이 해야 한다 (정성윤)**
+**완료 (2026-08-28)** — `https://docs.solidbob.cloud/` 정상. **404 가 사라졌다.**
 
-⚠ 이름이 `call` → **`docs`** 로 바뀌었다(`_project/decisions/104` — `call` 은 프론트가 쓴다).
-DNS 는 **클라우드플레어**다(`decisions/103`). 네임서버 전환은 2026-08-28 완료됐다.
+```
+docs.solidbob.cloud → solidbob02.github.io → 185.199.109.153 (GitHub Pages)
+/  ·  /docs/09/  ·  /toc/  ·  /progress/  ·  /kanban/  ·  /open-items/   전부 200
+http:// → 301 https://          Enforce HTTPS ✅
+인증서  Let's Encrypt, CN=docs.solidbob.cloud, 2026-08-28 ~ 11-26
+```
 
-1. 클라우드플레어 `DNS → Records → Add record`
-   `CNAME` / `docs` / `solidbob02.github.io` / **DNS only(회색 구름)** / TTL Auto
-2. GitHub Settings → Pages → Custom domain 에 `docs.solidbob.cloud` → Save
-3. DNS check 통과 후 **Enforce HTTPS** (인증서 발급까지 몇 분~한 시간)
+**표지·목차·개발 로그·칸반·미결에서 내부 링크 86개를 수집해 전부 열어봤다 — 200 아닌 것 0건.**
 
-**완료 조건** — `https://docs.solidbob.cloud/docs/09/` 가 200 이고 HTTPS 가 강제된다.
-표지의 「문서 사이트」 주소와 실제 주소가 같아진다.
+밟은 경로: 클라우드플레어 존 이관(`decisions/103`) → `CNAME docs → solidbob02.github.io`(회색 구름)
+→ Settings → Pages 커스텀 도메인 → Enforce HTTPS. 이름은 `call` → `docs` 로 바뀌었다(`decisions/104`).
+
+**비용은 0원이다** — Pages(공개 저장소)·Let's Encrypt·Cloudflare Free 전부 무료다.
+Settings → Pages 아래쪽 `Visibility` 의 「Start free for 30 days」는 **GitHub Enterprise 광고**이고
+Pages 사이트를 **비공개로** 만드는 기능이라 이 프로젝트와 방향이 반대다(`CLAUDE.md §8` — 공개가 목적). 누르지 않는다.
+
+**완료 조건** — ✅ `https://docs.solidbob.cloud/docs/09/` 200 · ✅ HTTPS 강제 ·
+✅ 표지의 「문서 사이트」 주소와 실제 주소가 일치.
+
+**남은 것(이 티켓 밖)**: `call.solidbob.cloud` 는 프론트 몫이라 클라우드플레어에 레코드가 필요하고,
+`ai`·`server` 자리표시자는 AWS 배포 때 실제 주소로 바꾼다.
