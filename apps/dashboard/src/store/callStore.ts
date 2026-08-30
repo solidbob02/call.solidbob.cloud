@@ -3,15 +3,17 @@ import { cardSourceType, hasCardSource } from "../types/contract";
 import type {
   CallHistoryItem,
   ClosureEvent,
-  DemoDomain,
   MaskType,
   RecommendationCard,
   Speaker,
   TranscriptEvent,
   TranscriptQuerySegment,
   MaskedSpan,
+  TranslatedUtterance,
+  AgentTtsStatus,
 } from "../types/contract";
-import { getCallTranscript } from "../lib/api/coreClient";
+import { getHistoryPlayback } from "../lib/api/coreClient";
+import { getScenarioById } from "../mock/scenarios";
 import type { GatewayMode } from "../lib/ws";
 import { sliceByCodepoints } from "../lib/text/codepoints";
 
@@ -69,7 +71,6 @@ export interface CallState {
   mode: GatewayMode;
   connected: boolean;
   error: string | null;
-  demoDomain: DemoDomain;
   phase: CallPhase;
   callId: string | null;
   utterances: Utterance[];
@@ -77,12 +78,20 @@ export interface CallState {
   historyCallId: string | null;
   historyStartedAt: string | null;
   historySegments: TranscriptQuerySegment[];
+  /** 히스토리 모드 전용. 실시간 translations 과 섞지 않는다. */
+  historyTranslations: Record<string, TranslatedUtterance>;
+  historyAgentTts: Record<string, AgentTtsStatus>;
+  /** 히스토리 모드 전용. 실시간 cards 와 섞지 않는다. */
+  historyCards: PanelCard[];
   cards: PanelCard[];
   maskingLog: MaskingLogEntry[];
   manualSearches: ManualSearchLogEntry[];
   /** 카드 식별자 → 채택 기록. 통화가 바뀌면 함께 비워진다. */
   adoptions: Record<string, CardAdoption>;
   closure: ClosureEvent | null;
+  /** A-5 mock. 키는 TranscriptEvent.segment_id. */
+  translations: Record<string, TranslatedUtterance>;
+  agentTts: Record<string, AgentTtsStatus>;
   applyTranscript: (event: TranscriptEvent) => void;
   applyRecommendation: (
     cards: RecommendationCard[],
@@ -99,7 +108,11 @@ export interface CallState {
   settleClosure: (closureType: ClosureEvent["closure_type"]) => void;
   setStatus: (mode: GatewayMode, connected: boolean) => void;
   setError: (message: string) => void;
-  setDemoDomain: (domain: DemoDomain) => void;
+  applyTranslation: (
+    transcriptSegmentId: string,
+    event: TranslatedUtterance,
+  ) => void;
+  applyAgentTts: (transcriptSegmentId: string, event: AgentTtsStatus) => void;
   resetCall: () => void;
   openHistory: (item: CallHistoryItem) => void;
   resumeLive: () => void;
@@ -113,11 +126,16 @@ const emptyCall = {
   historyCallId: null as string | null,
   historyStartedAt: null as string | null,
   historySegments: [] as TranscriptQuerySegment[],
+  historyTranslations: {} as Record<string, TranslatedUtterance>,
+  historyAgentTts: {} as Record<string, AgentTtsStatus>,
+  historyCards: [] as PanelCard[],
   cards: [] as PanelCard[],
   maskingLog: [] as MaskingLogEntry[],
   manualSearches: [] as ManualSearchLogEntry[],
   adoptions: {} as Record<string, CardAdoption>,
   closure: null as ClosureEvent | null,
+  translations: {} as Record<string, TranslatedUtterance>,
+  agentTts: {} as Record<string, AgentTtsStatus>,
 };
 
 /**
@@ -134,8 +152,8 @@ function isAuto(item: PanelCard): boolean {
 }
 
 /**
- * F-2 종결은 자동 추천 카드에만 붙인다. 상담원이 직접 찾아온 카드에 붙으면
- * 종결 요건이 그 검색 결과에 딸린 것처럼 읽힌다.
+ * F-2(필요서류) 게이트는 자동 추천 카드에만 붙인다. 상담원이 직접 찾아온 카드에
+ * 붙으면 서류 목록이 그 검색 결과에 딸린 것처럼 읽힌다.
  */
 function attachIndex(cards: PanelCard[], event: ClosureEvent): number {
   const sameType = cards.findIndex(
@@ -173,6 +191,37 @@ function withClosure(
   );
 }
 
+/** 끝난 통화: 시나리오가 가진 카드를 한꺼번에. 실시간처럼 순차로 쌓지 않는다. */
+function panelFromScenario(scenario: {
+  cardBatches: { trigger_at_ms: number; cards: RecommendationCard[] }[];
+  closures: { event: ClosureEvent }[];
+}): PanelCard[] {
+  const cards: PanelCard[] = [];
+  const seen = new Set<string>();
+  for (const batch of scenario.cardBatches) {
+    for (const card of batch.cards) {
+      if (!hasCardSource(card)) {
+        continue;
+      }
+      const id = cardId(card);
+      if (seen.has(id)) {
+        continue;
+      }
+      seen.add(id);
+      cards.push({
+        card,
+        trigger_at_ms: batch.trigger_at_ms,
+        closure: null,
+        settled: false,
+      });
+    }
+  }
+  return scenario.closures.reduce(
+    (acc, item) => withClosure(acc, item.event),
+    cards,
+  );
+}
+
 export function evidenceTally(closure: ClosureEvent): {
   met: number;
   total: number;
@@ -188,7 +237,6 @@ export const useCallStore = create<CallState>((set) => ({
   mode: "mock",
   connected: false,
   error: null,
-  demoDomain: "finance",
   ...emptyCall,
 
   applyTranscript: (event) => {
@@ -347,8 +395,22 @@ export const useCallStore = create<CallState>((set) => ({
     set({ error: message, connected: false });
   },
 
-  setDemoDomain: (demoDomain) => {
-    set({ demoDomain });
+  applyTranslation: (transcriptSegmentId, event) => {
+    set((state) => ({
+      translations: {
+        ...state.translations,
+        [transcriptSegmentId]: event,
+      },
+    }));
+  },
+
+  applyAgentTts: (transcriptSegmentId, event) => {
+    set((state) => ({
+      agentTts: {
+        ...state.agentTts,
+        [transcriptSegmentId]: event,
+      },
+    }));
   },
 
   resetCall: () => {
@@ -356,15 +418,18 @@ export const useCallStore = create<CallState>((set) => ({
   },
 
   openHistory: (item) => {
-    const page = getCallTranscript(item.call_id);
-    if (page === null) {
+    const playback = getHistoryPlayback(item.call_id);
+    if (playback === null) {
       return;
     }
     set({
       viewMode: "history",
       historyCallId: item.call_id,
       historyStartedAt: item.started_at,
-      historySegments: page.segments,
+      historySegments: playback.page.segments,
+      historyTranslations: playback.translations,
+      historyAgentTts: playback.agentTts,
+      historyCards: panelFromScenario(getScenarioById(playback.scenarioId)),
     });
   },
 
@@ -374,6 +439,9 @@ export const useCallStore = create<CallState>((set) => ({
       historyCallId: null,
       historyStartedAt: null,
       historySegments: [],
+      historyTranslations: {},
+      historyAgentTts: {},
+      historyCards: [],
     });
   },
 }));

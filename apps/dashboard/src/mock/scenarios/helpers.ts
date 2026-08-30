@@ -1,4 +1,5 @@
 import type {
+  AgentTtsStatus,
   DemoDomain,
   RecommendationBatch,
   RecommendationCard,
@@ -39,6 +40,22 @@ export function utterance(
     utterance_end_ms,
     domain,
   };
+}
+
+/** A-5 mock. 상담원 세그먼트마다 TTS 「전송됨」. */
+export function agentTtsSent(
+  targetLang: AgentTtsStatus["target_lang"],
+  segmentIds: readonly string[],
+): Record<string, AgentTtsStatus> {
+  const out: Record<string, AgentTtsStatus> = {};
+  for (const [index, id] of segmentIds.entries()) {
+    out[id] = {
+      segment_id: (index + 1) * 2,
+      target_lang: targetLang,
+      status: "sent",
+    };
+  }
+  return out;
 }
 
 export function cardBatch(

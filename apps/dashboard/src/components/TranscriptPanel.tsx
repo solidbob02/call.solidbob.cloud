@@ -46,6 +46,14 @@ export function TranscriptPanel({
   onManualSearch,
 }: TranscriptPanelProps): ReactElement {
   const liveUtterances = useCallStore((state) => state.utterances);
+  const translations = useCallStore((state) =>
+    state.viewMode === "history"
+      ? state.historyTranslations
+      : state.translations,
+  );
+  const agentTts = useCallStore((state) =>
+    state.viewMode === "history" ? state.historyAgentTts : state.agentTts,
+  );
   const viewMode = useCallStore((state) => state.viewMode);
   const historySegments = useCallStore((state) => state.historySegments);
   const historyStartedAt = useCallStore((state) => state.historyStartedAt);
@@ -89,9 +97,15 @@ export function TranscriptPanel({
       findMatches(item.text, needle).forEach((range) => {
         found.push({ segmentId: item.segment_id, range });
       });
+      const translated = translations[item.segment_id]?.translated_text;
+      if (translated !== undefined) {
+        findMatches(translated, needle).forEach((range) => {
+          found.push({ segmentId: `${item.segment_id}::tr`, range });
+        });
+      }
     });
     return found;
-  }, [utterances, needle]);
+  }, [utterances, needle, translations]);
 
   const hitsBySegment = useMemo(() => {
     const grouped = new Map<string, CharRange[]>();
@@ -205,17 +219,19 @@ export function TranscriptPanel({
 
   const activeSegmentId = activeMatch === null ? null : activeMatch.segmentId;
   const activeStart = activeMatch === null ? -1 : activeMatch.range.start;
+  const scrollSegmentId =
+    activeSegmentId === null ? null : activeSegmentId.replace(/::tr$/, "");
 
   useEffect(() => {
-    if (activeSegmentId === null) {
+    if (scrollSegmentId === null) {
       return;
     }
-    const el = itemRefs.current.get(activeSegmentId);
+    const el = itemRefs.current.get(scrollSegmentId);
     if (el === undefined) {
       return;
     }
     el.scrollIntoView({ block: "center", behavior: "smooth" });
-  }, [activeSegmentId, activeStart]);
+  }, [scrollSegmentId, activeStart]);
 
   function stepHit(delta: number): void {
     if (total === 0) {
@@ -367,9 +383,18 @@ export function TranscriptPanel({
             {utterances.map((item) => {
               const hasAlert = item.masked.length > 0;
               const hits = hitsBySegment.get(item.segment_id) ?? [];
+              const translation = translations[item.segment_id];
+              const tts = agentTts[item.segment_id];
+              const translationHits =
+                hitsBySegment.get(`${item.segment_id}::tr`) ?? [];
               const activeHit =
                 activeMatch !== null &&
                 activeMatch.segmentId === item.segment_id
+                  ? activeMatch.range
+                  : null;
+              const activeTranslationHit =
+                activeMatch !== null &&
+                activeMatch.segmentId === `${item.segment_id}::tr`
                   ? activeMatch.range
                   : null;
               return (
@@ -387,8 +412,16 @@ export function TranscriptPanel({
                   <span className="bar" aria-hidden="true" />
                   <div className="utterance-body">
                     <div className="utterance-meta">
-                      <span className="speaker">
-                        {item.speaker === "customer" ? "고객" : "상담원"}
+                      <span className="speaker-cluster">
+                        <span className="speaker">
+                          {item.speaker === "customer" ? "고객" : "상담원"}
+                        </span>
+                        {item.speaker === "agent" && tts !== undefined ? (
+                          <span className="tts-sent">
+                            <TtsIcon />
+                            {`${tts.target_lang.toUpperCase()} ${tts.status === "sent" ? "전송됨" : "대기"}`}
+                          </span>
+                        ) : null}
                       </span>
                       {!isHistory || item.utterance_end_ms > 0 ? (
                         <time
@@ -400,6 +433,11 @@ export function TranscriptPanel({
                       ) : null}
                     </div>
                     <div className="utterance-line">
+                      {translation !== undefined ? (
+                        <span className="lang-badge">
+                          {translation.original_lang.toUpperCase()}
+                        </span>
+                      ) : null}
                       <p className="utterance-text">
                         <MaskedText
                           text={item.text}
@@ -412,6 +450,16 @@ export function TranscriptPanel({
                         <span className="alert-pill">⚠ 경고</span>
                       ) : null}
                     </div>
+                    {translation !== undefined ? (
+                      <p className="utterance-translation">
+                        <MaskedText
+                          text={translation.translated_text}
+                          masked={[]}
+                          hits={translationHits}
+                          activeHit={activeTranslationHit}
+                        />
+                      </p>
+                    ) : null}
                   </div>
                 </li>
               );
@@ -442,5 +490,30 @@ export function TranscriptPanel({
         </button>
       ) : null}
     </section>
+  );
+}
+
+function TtsIcon(): ReactElement {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M2.5 6.2v3.6h2.2L8 13.2V2.8L4.7 6.2H2.5Z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10.2 5.6a3 3 0 0 1 0 4.8"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }

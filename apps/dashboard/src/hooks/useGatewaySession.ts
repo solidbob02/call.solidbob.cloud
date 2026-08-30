@@ -69,15 +69,19 @@ export function useGatewaySession(): GatewaySession {
         onError: (message) => {
           useCallStore.getState().setError(message);
         },
+        onTranslation: (segmentId, event) => {
+          useCallStore.getState().applyTranslation(segmentId, event);
+        },
+        onAgentTts: (segmentId, event) => {
+          useCallStore.getState().applyAgentTts(segmentId, event);
+        },
       });
     },
     [queueTranscript],
   );
 
-  const demoDomain = useCallStore((state) => state.demoDomain);
-
   useEffect(() => {
-    const client = createGatewayClient(demoDomain);
+    const client = createGatewayClient();
     clientRef.current = client;
     attach(client);
     return () => {
@@ -89,7 +93,7 @@ export function useGatewaySession(): GatewaySession {
       client.disconnect();
       clientRef.current = null;
     };
-  }, [attach, demoDomain]);
+  }, [attach]);
 
   const replay = useCallback(() => {
     const client = clientRef.current;
