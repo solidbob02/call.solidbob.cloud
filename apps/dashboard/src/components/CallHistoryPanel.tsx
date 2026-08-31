@@ -1,5 +1,9 @@
 import { useMemo, type ReactElement } from "react";
 import { listCallHistoryRows } from "../mock/callHistory";
+import {
+  ResolutionStats,
+  SHOW_RESOLUTION_STATS,
+} from "./ResolutionStats";
 import { setSelectedMockScenarioId } from "../mock/scenarios";
 import { formatCallStartedAt } from "../lib/formatCallTime";
 import { useCallStore } from "../store/callStore";
@@ -19,6 +23,7 @@ export function CallHistoryPanel({
   return (
     <div className="call-history">
       <p className="call-history-heading">상담기록</p>
+      {SHOW_RESOLUTION_STATS ? <ResolutionStats /> : null}
       <ul className="call-history-list">
         {rows.map((row) => (
           <li key={row.item.call_id} className="call-history-item">
