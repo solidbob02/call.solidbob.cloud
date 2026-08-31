@@ -75,6 +75,12 @@ export function useGatewaySession(): GatewaySession {
         onAgentTts: (segmentId, event) => {
           useCallStore.getState().applyAgentTts(segmentId, event);
         },
+        onCallGuard: (segmentId, event) => {
+          useCallStore.getState().applyCallGuard(segmentId, event);
+        },
+        onAccentRecognition: (segmentId) => {
+          useCallStore.getState().applyAccentHint(segmentId);
+        },
       });
     },
     [queueTranscript],

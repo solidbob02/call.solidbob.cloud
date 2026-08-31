@@ -11,6 +11,7 @@ import type {
   MaskedSpan,
   TranslatedUtterance,
   AgentTtsStatus,
+  CallGuardFlag,
 } from "../types/contract";
 import { getHistoryPlayback } from "../lib/api/coreClient";
 import { getScenarioById } from "../mock/scenarios";
@@ -81,6 +82,8 @@ export interface CallState {
   /** 히스토리 모드 전용. 실시간 translations 과 섞지 않는다. */
   historyTranslations: Record<string, TranslatedUtterance>;
   historyAgentTts: Record<string, AgentTtsStatus>;
+  historyCallGuard: Record<string, CallGuardFlag>;
+  historyAccentHints: Record<string, true>;
   /** 히스토리 모드 전용. 실시간 cards 와 섞지 않는다. */
   historyCards: PanelCard[];
   cards: PanelCard[];
@@ -92,6 +95,10 @@ export interface CallState {
   /** A-5 mock. 키는 TranscriptEvent.segment_id. */
   translations: Record<string, TranslatedUtterance>;
   agentTts: Record<string, AgentTtsStatus>;
+  /** C-6 mock. 키는 TranscriptEvent.segment_id. */
+  callGuard: Record<string, CallGuardFlag>;
+  /** A-5 ⓑ. 키만. 점수는 없다. */
+  accentHints: Record<string, true>;
   applyTranscript: (event: TranscriptEvent) => void;
   applyRecommendation: (
     cards: RecommendationCard[],
@@ -113,6 +120,8 @@ export interface CallState {
     event: TranslatedUtterance,
   ) => void;
   applyAgentTts: (transcriptSegmentId: string, event: AgentTtsStatus) => void;
+  applyCallGuard: (transcriptSegmentId: string, event: CallGuardFlag) => void;
+  applyAccentHint: (transcriptSegmentId: string) => void;
   resetCall: () => void;
   openHistory: (item: CallHistoryItem) => void;
   resumeLive: () => void;
@@ -128,6 +137,8 @@ const emptyCall = {
   historySegments: [] as TranscriptQuerySegment[],
   historyTranslations: {} as Record<string, TranslatedUtterance>,
   historyAgentTts: {} as Record<string, AgentTtsStatus>,
+  historyCallGuard: {} as Record<string, CallGuardFlag>,
+  historyAccentHints: {} as Record<string, true>,
   historyCards: [] as PanelCard[],
   cards: [] as PanelCard[],
   maskingLog: [] as MaskingLogEntry[],
@@ -136,6 +147,8 @@ const emptyCall = {
   closure: null as ClosureEvent | null,
   translations: {} as Record<string, TranslatedUtterance>,
   agentTts: {} as Record<string, AgentTtsStatus>,
+  callGuard: {} as Record<string, CallGuardFlag>,
+  accentHints: {} as Record<string, true>,
 };
 
 /**
@@ -413,6 +426,24 @@ export const useCallStore = create<CallState>((set) => ({
     }));
   },
 
+  applyCallGuard: (transcriptSegmentId, event) => {
+    set((state) => ({
+      callGuard: {
+        ...state.callGuard,
+        [transcriptSegmentId]: event,
+      },
+    }));
+  },
+
+  applyAccentHint: (transcriptSegmentId) => {
+    set((state) => ({
+      accentHints: {
+        ...state.accentHints,
+        [transcriptSegmentId]: true,
+      },
+    }));
+  },
+
   resetCall: () => {
     set({ ...emptyCall, error: null });
   },
@@ -429,6 +460,8 @@ export const useCallStore = create<CallState>((set) => ({
       historySegments: playback.page.segments,
       historyTranslations: playback.translations,
       historyAgentTts: playback.agentTts,
+      historyCallGuard: playback.callGuard,
+      historyAccentHints: playback.accentHints,
       historyCards: panelFromScenario(getScenarioById(playback.scenarioId)),
     });
   },
@@ -441,6 +474,8 @@ export const useCallStore = create<CallState>((set) => ({
       historySegments: [],
       historyTranslations: {},
       historyAgentTts: {},
+      historyCallGuard: {},
+      historyAccentHints: {},
       historyCards: [],
     });
   },

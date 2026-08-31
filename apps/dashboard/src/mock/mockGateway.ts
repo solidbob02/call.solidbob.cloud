@@ -7,6 +7,7 @@ import type {
 } from "../types/contract";
 import type { GatewayClient, GatewayListener } from "../lib/ws/types";
 import { getScenario } from "./scenarios";
+import { sentimentFromScenario } from "./sentiment";
 
 /** 발화 직후 종결 상태를 보내는 간격. 실측이 아님. */
 const CLOSURE_AFTER_UTTERANCE_MS = 800;
@@ -48,6 +49,16 @@ export class MockGatewayClient implements GatewayClient {
         const tts = scenario.agentTts?.[event.segment_id];
         if (tts !== undefined) {
           listeners.onAgentTts?.(event.segment_id, tts);
+        }
+        const guard = scenario.callGuard?.[event.segment_id];
+        if (guard !== undefined) {
+          listeners.onCallGuard?.(event.segment_id, guard);
+        }
+        if (
+          scenario.accentRecognition === true &&
+          event.speaker === "customer"
+        ) {
+          listeners.onAccentRecognition?.(event.segment_id);
         }
       });
     }
@@ -106,11 +117,15 @@ export class MockGatewayClient implements GatewayClient {
     });
   }
 
-  /** 요약·분류 모델이 없어 시나리오에 적어둔 문장을 그대로 돌려준다. */
+  /** 요약·분류·감정분석 모델이 없어 시나리오 문장과 C-6 건수만 돌려준다. */
   wrapUp(callId: string): Promise<CallWrapUp> {
     return new Promise((resolve) => {
       window.setTimeout(() => {
-        resolve({ call_id: callId, ...this.playing.wrapUp });
+        resolve({
+          call_id: callId,
+          ...this.playing.wrapUp,
+          sentiment: sentimentFromScenario(this.playing, callId),
+        });
       }, WRAP_UP_MS);
     });
   }

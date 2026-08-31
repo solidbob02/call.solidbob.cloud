@@ -1,10 +1,11 @@
 /**
  * GET /hub/calls 목록 API 연결 전 임시 mock.
  * 자막 페이지는 GET /hub/calls/{call_id}/transcript (`TranscriptPage`) 형태.
- * 목록은 A-5 mock 시나리오 5종과 같은 데이터다 — 상담기록 칩이 시나리오 칩을 겸한다.
+ * 목록은 mock 시나리오와 같은 데이터다 — 상담기록 칩이 시나리오 칩을 겸한다.
  */
 import type {
   AgentTtsStatus,
+  CallGuardFlag,
   CallHistoryItem,
   Domain,
   TranscriptPage,
@@ -27,6 +28,8 @@ interface HistoryRecord extends CallHistoryRow {
   page: TranscriptPage;
   translations: Record<string, TranslatedUtterance>;
   agentTts: Record<string, AgentTtsStatus>;
+  callGuard: Record<string, CallGuardFlag>;
+  accentHints: Record<string, true>;
 }
 
 function item(
@@ -48,9 +51,14 @@ function item(
 function playbackFromScenario(
   callId: string,
   scenario: MockScenario,
-): Pick<HistoryRecord, "page" | "translations" | "agentTts"> {
+): Pick<
+  HistoryRecord,
+  "page" | "translations" | "agentTts" | "callGuard" | "accentHints"
+> {
   const translations: Record<string, TranslatedUtterance> = {};
   const agentTts: Record<string, AgentTtsStatus> = {};
+  const callGuard: Record<string, CallGuardFlag> = {};
+  const accentHints: Record<string, true> = {};
   const segments = scenario.transcripts.map((event, index) => {
     const key = String(index + 1);
     const translation = scenario.translations?.[event.segment_id];
@@ -60,6 +68,13 @@ function playbackFromScenario(
     const tts = scenario.agentTts?.[event.segment_id];
     if (tts !== undefined) {
       agentTts[key] = tts;
+    }
+    const guard = scenario.callGuard?.[event.segment_id];
+    if (guard !== undefined) {
+      callGuard[key] = guard;
+    }
+    if (scenario.accentRecognition === true && event.speaker === "customer") {
+      accentHints[key] = true;
     }
     return {
       segment_id: index + 1,
@@ -80,6 +95,8 @@ function playbackFromScenario(
     },
     translations,
     agentTts,
+    callGuard,
+    accentHints,
   };
 }
 
@@ -134,6 +151,16 @@ const HISTORY_META: Record<
     inquiry_type: "민원 접수 본인확인",
     hex: "b8e1",
   },
+  "ko-callguard": {
+    started_at: "2026-08-31T09:12:00+09:00",
+    inquiry_type: "시설 민원 · 콜가드",
+    hex: "c6a1",
+  },
+  "ko-accent": {
+    started_at: "2026-08-31T10:04:00+09:00",
+    inquiry_type: "교통약자 이동 지원 · 억양",
+    hex: "a5b2",
+  },
 };
 
 const RECORDS: readonly HistoryRecord[] = (
@@ -166,6 +193,8 @@ export function getHistoryPlayback(callId: string): {
   page: TranscriptPage;
   translations: Record<string, TranslatedUtterance>;
   agentTts: Record<string, AgentTtsStatus>;
+  callGuard: Record<string, CallGuardFlag>;
+  accentHints: Record<string, true>;
   scenarioId: MockScenarioId;
 } | null {
   const found = RECORDS.find((row) => row.item.call_id === callId);
@@ -176,6 +205,8 @@ export function getHistoryPlayback(callId: string): {
     page: found.page,
     translations: found.translations,
     agentTts: found.agentTts,
+    callGuard: found.callGuard,
+    accentHints: found.accentHints,
     scenarioId: found.scenarioId,
   };
 }

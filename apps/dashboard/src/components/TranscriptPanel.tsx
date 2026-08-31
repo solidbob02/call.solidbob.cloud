@@ -54,6 +54,12 @@ export function TranscriptPanel({
   const agentTts = useCallStore((state) =>
     state.viewMode === "history" ? state.historyAgentTts : state.agentTts,
   );
+  const callGuard = useCallStore((state) =>
+    state.viewMode === "history" ? state.historyCallGuard : state.callGuard,
+  );
+  const accentHints = useCallStore((state) =>
+    state.viewMode === "history" ? state.historyAccentHints : state.accentHints,
+  );
   const viewMode = useCallStore((state) => state.viewMode);
   const historySegments = useCallStore((state) => state.historySegments);
   const historyStartedAt = useCallStore((state) => state.historyStartedAt);
@@ -382,6 +388,7 @@ export function TranscriptPanel({
           <ol className="utterance-list">
             {utterances.map((item) => {
               const hasAlert = item.masked.length > 0;
+              const guard = callGuard[item.segment_id];
               const hits = hitsBySegment.get(item.segment_id) ?? [];
               const translation = translations[item.segment_id];
               const tts = agentTts[item.segment_id];
@@ -438,6 +445,10 @@ export function TranscriptPanel({
                           {translation.original_lang.toUpperCase()}
                         </span>
                       ) : null}
+                      {accentHints[item.segment_id] === true &&
+                      translation === undefined ? (
+                        <span className="accent-badge">억양 인식</span>
+                      ) : null}
                       <p className="utterance-text">
                         <MaskedText
                           text={item.text}
@@ -450,6 +461,18 @@ export function TranscriptPanel({
                         <span className="alert-pill">⚠ 경고</span>
                       ) : null}
                     </div>
+                    {guard !== undefined ? (
+                      <div className="callguard-row">
+                        <span
+                          className={`callguard-pill${guard.severity === "high" ? " is-high" : ""}`}
+                        >
+                          🚫 콜가드
+                        </span>
+                        <span className="callguard-hint">
+                          고객이 흥분한 상태입니다. 안내는 이어가시면 됩니다.
+                        </span>
+                      </div>
+                    ) : null}
                     {translation !== undefined ? (
                       <p className="utterance-translation">
                         <MaskedText

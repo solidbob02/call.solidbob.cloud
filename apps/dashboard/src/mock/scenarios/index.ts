@@ -1,4 +1,6 @@
+import { accentKoScenario } from "./accentKo";
 import { adminThScenario } from "./adminTh";
+import { callGuardKoScenario } from "./callGuardKo";
 import { covidZhScenario } from "./covidZh";
 import { dasanScenario, maskingKoScenario } from "./dasan";
 import { sewerJaScenario } from "./sewerJa";
@@ -14,7 +16,9 @@ export type MockScenarioId =
   | "ja-sewer"
   | "zh-covid"
   | "th-admin"
-  | "ko-masking";
+  | "ko-masking"
+  | "ko-callguard"
+  | "ko-accent";
 
 const BY_ID: Record<MockScenarioId, MockScenario> = {
   "vi-deungbon": dasanScenario,
@@ -23,6 +27,8 @@ const BY_ID: Record<MockScenarioId, MockScenario> = {
   "zh-covid": covidZhScenario,
   "th-admin": adminThScenario,
   "ko-masking": maskingKoScenario,
+  "ko-callguard": callGuardKoScenario,
+  "ko-accent": accentKoScenario,
 };
 
 let selectedId: MockScenarioId = "vi-deungbon";
@@ -46,4 +52,6 @@ export const MOCK_SCENARIO_FLAG: Record<MockScenarioId, string> = {
   "zh-covid": "🇨🇳",
   "th-admin": "🇹🇭",
   "ko-masking": "🇰🇷",
+  "ko-callguard": "🇰🇷",
+  "ko-accent": "🇰🇷",
 };

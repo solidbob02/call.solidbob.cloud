@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactElement } from "react";
-import type { CallWrapUp } from "../types/contract";
+import type { CallWrapUp, SentimentSummary } from "../types/contract";
 import { cardId, useCallStore } from "../store/callStore";
 
 interface WrapUpPanelProps {
@@ -11,6 +11,7 @@ interface WrapUpPanelProps {
 /**
  * §2.5 D 통화 후 처리. D-1 요약 · D-2 유형 · D-3 후속조치는 게이트웨이가 주고,
  * D-4 지식베이스 공백은 이 통화에서 화면이 직접 본 것(수동 검색 실패)만 센다.
+ * 상담 분위기는 감정분석 모델이 없어 정성 라벨·C-6 건수만 보여 준다.
  */
 export function WrapUpPanel({
   onResume,
@@ -216,11 +217,68 @@ export function WrapUpPanel({
                 )}
               </section>
             ) : null}
+
+            {wrapUp.sentiment !== undefined ? (
+              <MoodSection sentiment={wrapUp.sentiment} isMock={mode === "mock"} />
+            ) : null}
           </>
         )}
         </div>
       </div>
     </main>
+  );
+}
+
+function moodTone(label: string): "calm" | "lift" | "peak" {
+  if (label === "격앙") {
+    return "peak";
+  }
+  if (label.includes("격앙")) {
+    return "lift";
+  }
+  return "calm";
+}
+
+function MoodSection({
+  sentiment,
+  isMock,
+}: {
+  sentiment: SentimentSummary;
+  isMock: boolean;
+}): ReactElement {
+  return (
+    <section className="wrapup-card">
+      <div className="wrapup-card-head">
+        <h3>상담 분위기</h3>
+        <span
+          className={`mood-overall${sentiment.overall === "주의 필요" ? " is-watch" : ""}`}
+        >
+          {sentiment.overall}
+        </span>
+      </div>
+      <ol className="mood-track" aria-label="통화 흐름">
+        {sentiment.trajectory.map((label, index) => (
+          <li key={`${label}-${index}`} className="mood-step">
+            <span
+              className={`mood-dot is-${moodTone(label)}`}
+              aria-hidden="true"
+            />
+            <span className="mood-label">{label}</span>
+          </li>
+        ))}
+      </ol>
+      <p className="mood-guard">
+        콜가드 경고 {sentiment.guard_flag_count}건
+        {sentiment.guard_flag_count > 0
+          ? " — 이번 통화에서 뜬 C-6 태그와 같은 수입니다."
+          : " — 이 통화에는 콜가드 태그가 없습니다."}
+      </p>
+      {isMock ? (
+        <p className="wrapup-note">
+          감정분석 모델 연동 전 — mock 라벨입니다. 점수는 없습니다.
+        </p>
+      ) : null}
+    </section>
   );
 }
 
