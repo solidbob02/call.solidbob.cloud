@@ -20,6 +20,7 @@ const MANUAL_2_1 = {
 
 export const transitEnScenario: MockScenario = {
   domain: DOMAIN,
+  targetLanguage: "EN",
   transcripts: [
     utterance(
       CALL_ID,

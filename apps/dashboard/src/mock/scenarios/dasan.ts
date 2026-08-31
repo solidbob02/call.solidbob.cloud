@@ -6,6 +6,7 @@
  * 지식베이스에 없다.
  */
 import type { ClosureEvent } from "../../types/contract";
+import { DASAN_DEUNGBON_RESOURCES } from "../localResources";
 import type { MockScenario } from "./types";
 import { agentTtsSent, cardBatch, utterance } from "./helpers";
 
@@ -34,6 +35,7 @@ function requiredDocsEvent(
 
 export const dasanScenario: MockScenario = {
   domain: DOMAIN,
+  targetLanguage: "VI",
   transcripts: [
     utterance(
       CALL_ID,
@@ -107,6 +109,78 @@ export const dasanScenario: MockScenario = {
       34800,
       null,
     ),
+    utterance(
+      CALL_ID,
+      DOMAIN,
+      "seg_d009",
+      "customer",
+      "Nếu quá hạn cư trú thì sao ạ?",
+      39200,
+      null,
+    ),
+    utterance(
+      CALL_ID,
+      DOMAIN,
+      "seg_d010",
+      "agent",
+      "불법체류이시면 창구에서 따로 확인이 필요합니다. 소관 부서 확인 후 안내드리겠습니다.",
+      44000,
+      null,
+    ),
+    utterance(
+      CALL_ID,
+      DOMAIN,
+      "seg_d011",
+      "customer",
+      "안내가 이렇게 늦으면 가만 안 둔다, 이거예요.",
+      48800,
+      null,
+    ),
+    utterance(
+      CALL_ID,
+      DOMAIN,
+      "seg_d012",
+      "agent",
+      "불편을 드려 죄송합니다. 센터는 절차와 기준을 안내하는 창구입니다. 개별 민원의 최종 처리는 소관 부서에 있습니다.",
+      53600,
+      null,
+    ),
+    utterance(
+      CALL_ID,
+      DOMAIN,
+      "seg_d013",
+      "customer",
+      "서류가 너무 많아서 너무 힘들어요. 어떻게 해야 할지 모르겠어요.",
+      58200,
+      null,
+    ),
+    utterance(
+      CALL_ID,
+      DOMAIN,
+      "seg_d014",
+      "agent",
+      "본인 신청은 신분증, 대리 신청은 위임장과 대리인 신분증을 지참하시면 됩니다. 그 이상은 요구하지 않습니다.",
+      62800,
+      null,
+    ),
+    utterance(
+      CALL_ID,
+      DOMAIN,
+      "seg_d015",
+      "customer",
+      "등본에 주민번호가 000000-0000000으로 나오나요?",
+      67400,
+      null,
+    ),
+    utterance(
+      CALL_ID,
+      DOMAIN,
+      "seg_d016",
+      "agent",
+      "주민등록번호 전체를 통화 중 구두로 요청하지 않습니다. 신분증을 지참하시면 창구에서 확인합니다.",
+      72200,
+      null,
+    ),
   ],
   cardBatches: [
     cardBatch(CALL_ID, DOMAIN, 9600, [
@@ -121,13 +195,19 @@ export const dasanScenario: MockScenario = {
   ],
   wrapUp: {
     summary: [
-      "베트남어로 주민등록등본 재발급에 필요한 서류를 문의했습니다.",
-      "본인 신청은 신분증, 대리 신청은 위임장과 대리인 신분증을 안내했습니다.",
+      "베트남어 화자가 주민등록등본 재발급에 필요한 서류를 문의했습니다.",
+      "본인 신청은 신분증, 대리 신청은 위임장과 대리인 신분증을 빠짐없이 안내했습니다.",
+      "창구 즉시 수령과 처리 확정은 센터 권한이 아니라 소관 부서 확인으로 안내했습니다.",
+      "체류 기한 경과 문의에는 창구에서 따로 확인이 필요하다고 전했습니다.",
     ],
     category: "일반행정 · 등본 재발급",
+    tags: ["주민등록등본 재발급", "행정 절차 안내"],
     follow_ups: [
-      "방문 창구·온라인 신청 경로는 지식베이스에 없어 안내하지 않았습니다.",
+      "관할 출입국관리사무소 안내 완료",
+      "위임장 양식 발송",
+      "재발급 처리 상태 콜백 예약",
     ],
+    local_resources: [...DASAN_DEUNGBON_RESOURCES],
   },
   translations: {
     seg_d001: {
@@ -157,12 +237,22 @@ export const dasanScenario: MockScenario = {
       original_lang: "vi",
       translated_text: "창구에서 바로 받을 수 있나요?",
     },
+    seg_d009: {
+      segment_id: 9,
+      original_text: "Nếu quá hạn cư trú thì sao ạ?",
+      original_lang: "vi",
+      translated_text: "체류 기한이 지나면요?",
+    },
   },
   agentTts: agentTtsSent("vi", [
     "seg_d002",
     "seg_d004",
     "seg_d006",
     "seg_d008",
+    "seg_d010",
+    "seg_d012",
+    "seg_d014",
+    "seg_d016",
   ]),
   closures: [
     {

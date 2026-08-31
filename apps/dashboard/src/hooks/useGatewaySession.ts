@@ -81,6 +81,9 @@ export function useGatewaySession(): GatewaySession {
         onAccentRecognition: (segmentId) => {
           useCallStore.getState().applyAccentHint(segmentId);
         },
+        onCallLanguage: (lang) => {
+          useCallStore.getState().setTargetLanguage(lang);
+        },
       });
     },
     [queueTranscript],

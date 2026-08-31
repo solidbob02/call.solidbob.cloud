@@ -20,6 +20,7 @@ const TERM_1_2 = {
 
 export const adminThScenario: MockScenario = {
   domain: DOMAIN,
+  targetLanguage: "TH",
   transcripts: [
     utterance(
       CALL_ID,

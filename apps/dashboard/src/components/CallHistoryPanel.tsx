@@ -1,4 +1,5 @@
 import { useMemo, type ReactElement } from "react";
+import { LanguageBadge } from "./LanguageBadge";
 import { listCallHistoryRows } from "../mock/callHistory";
 import {
   ResolutionStats,
@@ -38,9 +39,13 @@ export function CallHistoryPanel({
                 {formatCallStartedAt(row.item.started_at)}
               </time>
               <span className="call-history-badge">
-                <span className="call-history-flag" aria-hidden="true">
-                  {row.langFlag}
-                </span>
+                {row.item.targetLanguage !== undefined ? (
+                  <LanguageBadge lang={row.item.targetLanguage} compact />
+                ) : (
+                  <span className="call-history-flag" aria-hidden="true">
+                    {row.langFlag}
+                  </span>
+                )}
                 {DEMO_DOMAIN_LABELS[row.item.domain]}
               </span>
               <span className="call-history-type">{row.item.inquiry_type}</span>

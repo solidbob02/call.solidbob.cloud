@@ -7,16 +7,21 @@ import type {
   AgentTtsStatus,
   CallGuardFlag,
   CallHistoryItem,
+  CallWrapUp,
   Domain,
   TranscriptPage,
   TranslatedUtterance,
 } from "../types/contract";
+import type { TargetLanguage } from "../lib/language/languageMeta";
 import {
   getScenarioById,
   MOCK_SCENARIO_FLAG,
   type MockScenarioId,
 } from "./scenarios";
 import type { MockScenario } from "./scenarios/types";
+import { mockAgentTts, mockCustomerTranslation } from "../lib/translation/mockSource";
+import { DEFAULT_LOCAL_RESOURCES } from "./localResources";
+import { sentimentFromScenario } from "./sentiment";
 
 export interface CallHistoryRow {
   item: CallHistoryItem;
@@ -30,6 +35,7 @@ interface HistoryRecord extends CallHistoryRow {
   agentTts: Record<string, AgentTtsStatus>;
   callGuard: Record<string, CallGuardFlag>;
   accentHints: Record<string, true>;
+  wrapUp: CallWrapUp;
 }
 
 function item(
@@ -38,6 +44,7 @@ function item(
   domain: Domain,
   inquiry_type: string,
   hex: string,
+  targetLanguage?: TargetLanguage,
 ): CallHistoryItem {
   return {
     call_id: callId,
@@ -45,6 +52,7 @@ function item(
     domain,
     inquiry_type,
     customer_ref: `고객 #${hex}`,
+    targetLanguage,
   };
 }
 
@@ -61,11 +69,11 @@ function playbackFromScenario(
   const accentHints: Record<string, true> = {};
   const segments = scenario.transcripts.map((event, index) => {
     const key = String(index + 1);
-    const translation = scenario.translations?.[event.segment_id];
+    const translation = mockCustomerTranslation(scenario, event.segment_id);
     if (translation !== undefined) {
       translations[key] = translation;
     }
-    const tts = scenario.agentTts?.[event.segment_id];
+    const tts = mockAgentTts(scenario, event.segment_id);
     if (tts !== undefined) {
       agentTts[key] = tts;
     }
@@ -100,6 +108,19 @@ function playbackFromScenario(
   };
 }
 
+function completeWrapUp(callId: string, scenario: MockScenario): CallWrapUp {
+  return {
+    call_id: callId,
+    ...scenario.wrapUp,
+    local_resources:
+      scenario.wrapUp.local_resources !== undefined &&
+      scenario.wrapUp.local_resources.length > 0
+        ? scenario.wrapUp.local_resources
+        : [...DEFAULT_LOCAL_RESOURCES],
+    sentiment: sentimentFromScenario(scenario, callId),
+  };
+}
+
 function record(
   scenarioId: MockScenarioId,
   started_at: string,
@@ -110,9 +131,17 @@ function record(
   const callId = scenario.transcripts[0]?.call_id ?? `c_hist_${scenarioId}`;
   const played = playbackFromScenario(callId, scenario);
   return {
-    item: item(callId, started_at, "dasan", inquiry_type, hex),
+    item: item(
+      callId,
+      started_at,
+      "dasan",
+      inquiry_type,
+      hex,
+      scenario.targetLanguage,
+    ),
     scenarioId,
     langFlag: MOCK_SCENARIO_FLAG[scenarioId],
+    wrapUp: completeWrapUp(callId, scenario),
     ...played,
   };
 }
@@ -196,6 +225,8 @@ export function getHistoryPlayback(callId: string): {
   callGuard: Record<string, CallGuardFlag>;
   accentHints: Record<string, true>;
   scenarioId: MockScenarioId;
+  targetLanguage: TargetLanguage | undefined;
+  wrapUp: CallWrapUp;
 } | null {
   const found = RECORDS.find((row) => row.item.call_id === callId);
   if (found === undefined) {
@@ -208,6 +239,8 @@ export function getHistoryPlayback(callId: string): {
     callGuard: found.callGuard,
     accentHints: found.accentHints,
     scenarioId: found.scenarioId,
+    targetLanguage: found.item.targetLanguage,
+    wrapUp: found.wrapUp,
   };
 }
 

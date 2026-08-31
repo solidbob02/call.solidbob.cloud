@@ -1,3 +1,4 @@
+import type { TargetLanguage } from "../../lib/language/languageMeta";
 import type {
   AgentTtsStatus,
   CallGuardFlag,
@@ -18,6 +19,8 @@ export interface ScheduledClosure {
 
 export interface MockScenario {
   domain: DemoDomain;
+  /** A-5. 외국어 통화만. 한국어 전용 시나리오는 두지 않는다. */
+  targetLanguage?: TargetLanguage;
   transcripts: TranscriptEvent[];
   cardBatches: RecommendationBatch[];
   closures: ScheduledClosure[];

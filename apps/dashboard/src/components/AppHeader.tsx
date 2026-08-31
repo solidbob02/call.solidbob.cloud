@@ -1,10 +1,12 @@
 import type { ReactElement } from "react";
 import { isCoreApiConfigured } from "../lib/api/coreClient";
 import { useCallStore } from "../store/callStore";
+import { LanguageBadge } from "./LanguageBadge";
 
 interface SessionControlsProps {
   onReplay: () => void;
   onEndCall: () => void;
+  onStartNewCall?: () => void;
 }
 
 export function BrandLockup(): ReactElement {
@@ -20,16 +22,30 @@ export function BrandLockup(): ReactElement {
 export function SessionControls({
   onReplay,
   onEndCall,
+  onStartNewCall,
 }: SessionControlsProps): ReactElement {
   const mode = useCallStore((state) => state.mode);
   const connected = useCallStore((state) => state.connected);
   const callId = useCallStore((state) => state.callId);
+  const viewMode = useCallStore((state) => state.viewMode);
+  const targetLanguage = useCallStore((state) => state.targetLanguage);
+  const historyTargetLanguage = useCallStore(
+    (state) => state.historyTargetLanguage,
+  );
+  const historyCallId = useCallStore((state) => state.historyCallId);
   const phase = useCallStore((state) => state.phase);
   const hasCall = useCallStore((state) => state.utterances.length > 0);
+  const displayLang =
+    viewMode === "history" ? historyTargetLanguage : targetLanguage;
+  const displayCallId =
+    viewMode === "history" ? (historyCallId ?? "대기") : (callId ?? "대기");
+
+  const overlay =
+    phase === "wrapup" || viewMode === "history";
 
   return (
     <div className="header-meta">
-      {phase === "live" ? (
+      {phase === "live" && viewMode !== "history" ? (
         <button
           type="button"
           className="btn-outline"
@@ -53,13 +69,18 @@ export function SessionControls({
           통화 종료
         </button>
       ) : null}
-      <span className="call-id">{callId ?? "대기"}</span>
-      <span className={`conn-badge ${connected ? "on" : "off"}`}>
-        {connected ? <span className="conn-dot" aria-hidden="true" /> : null}
-        {connected ? "연결됨" : "끊김"}
+      <span className="call-id">{displayCallId}</span>
+      {displayLang !== null ? <LanguageBadge lang={displayLang} /> : null}
+      <span
+        className={`conn-badge ${overlay ? "ended" : connected ? "on" : "off"}`}
+      >
+        {connected && !overlay ? (
+          <span className="conn-dot" aria-hidden="true" />
+        ) : null}
+        {overlay ? "종료됨" : connected ? "연결됨" : "끊김"}
       </span>
       {isCoreApiConfigured() ? <span className="status">REST</span> : null}
-      {mode === "mock" && phase === "live" ? (
+      {mode === "mock" ? (
         <button type="button" className="btn-replay" onClick={onReplay}>
           <svg
             className="btn-replay-icon"
@@ -74,17 +95,30 @@ export function SessionControls({
           다시 재생
         </button>
       ) : null}
+      {overlay && onStartNewCall !== undefined ? (
+        <button type="button" className="btn-primary" onClick={onStartNewCall}>
+          새 통화 시작
+        </button>
+      ) : null}
     </div>
   );
 }
 
-export function AppHeader({ onReplay, onEndCall }: SessionControlsProps): ReactElement {
+export function AppHeader({
+  onReplay,
+  onEndCall,
+  onStartNewCall,
+}: SessionControlsProps): ReactElement {
   const error = useCallStore((state) => state.error);
 
   return (
     <header className="app-header">
       <BrandLockup />
-      <SessionControls onReplay={onReplay} onEndCall={onEndCall} />
+      <SessionControls
+        onReplay={onReplay}
+        onEndCall={onEndCall}
+        onStartNewCall={onStartNewCall}
+      />
       {error !== null ? <p className="header-error">{error}</p> : null}
     </header>
   );

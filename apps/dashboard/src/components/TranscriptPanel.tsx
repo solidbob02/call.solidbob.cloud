@@ -14,6 +14,19 @@ import { formatOffsetMs } from "../lib/text/codepoints";
 import { formatCallStartedAt } from "../lib/formatCallTime";
 import { findMatches, type CharRange } from "../lib/text/highlight";
 import { ManualSearchBar } from "./ManualSearchBar";
+import { ComplianceWarningBanner } from "./ComplianceWarningBanner";
+import { CustomerRiskBanner } from "./CustomerRiskBanner";
+import { LanguageBadge } from "./LanguageBadge";
+import { detectComplianceRisk } from "../lib/compliance/detectComplianceRisk";
+import { detectCustomerRisk } from "../lib/customerRisk/detectCustomerRisk";
+import type { BannerRiskMatch } from "../lib/customerRisk/detectCustomerRisk";
+import type { CustomerRiskMatch } from "../lib/customerRisk/detectCustomerRisk";
+import { targetLanguageFromCode } from "../lib/language/languageMeta";
+import { maskSensitiveText } from "../lib/customerRisk/maskSensitiveText";
+import {
+  logSupervisorAlert,
+  type SupervisorAlert,
+} from "../lib/customerRisk/supervisorAlert";
 import type { ManualSearchOutcome } from "../hooks/useGatewaySession";
 import { useCallStore, type Utterance } from "../store/callStore";
 import type { TranscriptQuerySegment } from "../types/contract";
@@ -29,6 +42,27 @@ interface SearchMatch {
 
 interface TranscriptPanelProps {
   onManualSearch: (query: string) => Promise<ManualSearchOutcome>;
+  onSupervisorAlert?: (alert: SupervisorAlert) => void;
+}
+
+const CUSTOMER_GUIDANCE = {
+  abuse: "안전 문구 사용을 권장합니다",
+  distress: "슈퍼바이저 연결을 고려하세요",
+} as const;
+
+function uniqueCustomerBanners(
+  risks: readonly CustomerRiskMatch[],
+): BannerRiskMatch[] {
+  const seen = new Set<"abuse" | "distress">();
+  const out: BannerRiskMatch[] = [];
+  for (const risk of risks) {
+    if (risk.type === "pii" || seen.has(risk.type)) {
+      continue;
+    }
+    seen.add(risk.type);
+    out.push(risk as BannerRiskMatch);
+  }
+  return out;
 }
 
 function historyAsUtterance(segment: TranscriptQuerySegment): Utterance {
@@ -44,6 +78,7 @@ function historyAsUtterance(segment: TranscriptQuerySegment): Utterance {
 
 export function TranscriptPanel({
   onManualSearch,
+  onSupervisorAlert = logSupervisorAlert,
 }: TranscriptPanelProps): ReactElement {
   const liveUtterances = useCallStore((state) => state.utterances);
   const translations = useCallStore((state) =>
@@ -72,6 +107,18 @@ export function TranscriptPanel({
         : liveUtterances,
     [isHistory, historySegments, liveUtterances],
   );
+  const historyCallId = useCallStore((state) => state.historyCallId);
+  const callId = useCallStore((state) => state.callId);
+  const targetLanguage = useCallStore((state) =>
+    state.viewMode === "history"
+      ? state.historyTargetLanguage
+      : state.targetLanguage,
+  );
+  const [dismissed, setDismissed] = useState<ReadonlySet<string>>(new Set());
+  const [notifiedKeys, setNotifiedKeys] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const notifiedRef = useRef(new Set<string>());
   const prevModeRef = useRef(viewMode);
 
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -91,6 +138,55 @@ export function TranscriptPanel({
     }
     prevModeRef.current = viewMode;
   }, [viewMode]);
+
+  useEffect(() => {
+    setDismissed(new Set());
+    notifiedRef.current = new Set();
+    setNotifiedKeys(new Set());
+  }, [callId, historyCallId, viewMode]);
+
+  useEffect(() => {
+    if (isHistory) {
+      return;
+    }
+    const fresh: SupervisorAlert[] = [];
+    const keys: string[] = [];
+    for (const item of utterances) {
+      if (item.speaker !== "customer") {
+        continue;
+      }
+      for (const risk of detectCustomerRisk(item.text)) {
+        if (risk.type === "pii") {
+          continue;
+        }
+        const key = `${item.segment_id}:${risk.type}:${risk.startIndex}`;
+        if (notifiedRef.current.has(key)) {
+          continue;
+        }
+        notifiedRef.current.add(key);
+        keys.push(key);
+        fresh.push({
+          type: risk.type,
+          matchedText: risk.matchedText,
+          callId: callId ?? "",
+          timestamp: Date.now(),
+        });
+      }
+    }
+    if (keys.length === 0) {
+      return;
+    }
+    for (const alert of fresh) {
+      onSupervisorAlert(alert);
+    }
+    setNotifiedKeys((current) => {
+      const next = new Set(current);
+      for (const key of keys) {
+        next.add(key);
+      }
+      return next;
+    });
+  }, [utterances, isHistory, callId, onSupervisorAlert]);
 
   const needle = query.trim();
 
@@ -392,8 +488,41 @@ export function TranscriptPanel({
               const hits = hitsBySegment.get(item.segment_id) ?? [];
               const translation = translations[item.segment_id];
               const tts = agentTts[item.segment_id];
+              const customerRisks =
+                item.speaker === "customer"
+                  ? detectCustomerRisk(item.text)
+                  : [];
+              const piiMatches = customerRisks.filter(
+                (risk) => risk.type === "pii",
+              );
+              const displayText =
+                piiMatches.length > 0
+                  ? maskSensitiveText(item.text, piiMatches)
+                  : item.text;
+              const bannerRisks = uniqueCustomerBanners(customerRisks).filter(
+                (risk) =>
+                  !dismissed.has(
+                    `${item.segment_id}:${risk.type}:${risk.startIndex}`,
+                  ),
+              );
+              const hideLegacyGuard = customerRisks.some(
+                (risk) => risk.type !== "pii",
+              );
+              const compliance =
+                item.speaker === "agent" && !dismissed.has(item.segment_id)
+                  ? detectComplianceRisk(item.text)
+                  : null;
               const translationHits =
                 hitsBySegment.get(`${item.segment_id}::tr`) ?? [];
+              const ttsLang =
+                tts === undefined
+                  ? null
+                  : (targetLanguage ?? targetLanguageFromCode(tts.target_lang));
+              const lineLang =
+                translation === undefined
+                  ? null
+                  : (targetLanguageFromCode(translation.original_lang) ??
+                    targetLanguage);
               const activeHit =
                 activeMatch !== null &&
                 activeMatch.segmentId === item.segment_id
@@ -426,7 +555,12 @@ export function TranscriptPanel({
                         {item.speaker === "agent" && tts !== undefined ? (
                           <span className="tts-sent">
                             <TtsIcon />
-                            {`${tts.target_lang.toUpperCase()} ${tts.status === "sent" ? "전송됨" : "대기"}`}
+                            {ttsLang !== null ? (
+                              <LanguageBadge lang={ttsLang} />
+                            ) : (
+                              tts.target_lang.toUpperCase()
+                            )}
+                            {tts.status === "sent" ? "전송됨" : "대기"}
                           </span>
                         ) : null}
                       </span>
@@ -440,28 +574,39 @@ export function TranscriptPanel({
                       ) : null}
                     </div>
                     <div className="utterance-line">
-                      {translation !== undefined ? (
-                        <span className="lang-badge">
-                          {translation.original_lang.toUpperCase()}
-                        </span>
+                      {lineLang !== null ? (
+                        <LanguageBadge lang={lineLang} />
                       ) : null}
                       {accentHints[item.segment_id] === true &&
                       translation === undefined ? (
                         <span className="accent-badge">억양 인식</span>
                       ) : null}
-                      <p className="utterance-text">
-                        <MaskedText
-                          text={item.text}
-                          masked={item.masked}
-                          hits={hits}
-                          activeHit={activeHit}
-                        />
-                      </p>
+                      <div
+                        className={`utterance-bubble${piiMatches.length > 0 ? " has-pii-lock" : ""}`}
+                      >
+                        {piiMatches.length > 0 ? (
+                          <span
+                            className="pii-lock"
+                            title="민감정보가 마스킹되었습니다"
+                            aria-label="민감정보가 마스킹되었습니다"
+                          >
+                            <LockIcon />
+                          </span>
+                        ) : null}
+                        <p className="utterance-text">
+                          <MaskedText
+                            text={displayText}
+                            masked={piiMatches.length > 0 ? [] : item.masked}
+                            hits={hits}
+                            activeHit={activeHit}
+                          />
+                        </p>
+                      </div>
                       {hasAlert ? (
                         <span className="alert-pill">⚠ 경고</span>
                       ) : null}
                     </div>
-                    {guard !== undefined ? (
+                    {guard !== undefined && !hideLegacyGuard ? (
                       <div className="callguard-row">
                         <span
                           className={`callguard-pill${guard.severity === "high" ? " is-high" : ""}`}
@@ -482,6 +627,38 @@ export function TranscriptPanel({
                           activeHit={activeTranslationHit}
                         />
                       </p>
+                    ) : null}
+                    {bannerRisks.map((risk) => {
+                      const key = `${item.segment_id}:${risk.type}:${risk.startIndex}`;
+                      return (
+                        <CustomerRiskBanner
+                          key={key}
+                          type={risk.type}
+                          matchedText={risk.matchedText}
+                          guidance={CUSTOMER_GUIDANCE[risk.type]}
+                          supervisorNotified={notifiedKeys.has(key)}
+                          onDismiss={() => {
+                            setDismissed((current) => {
+                              const next = new Set(current);
+                              next.add(key);
+                              return next;
+                            });
+                          }}
+                        />
+                      );
+                    })}
+                    {compliance !== null ? (
+                      <ComplianceWarningBanner
+                        detectedPhrase={compliance.detectedPhrase}
+                        suggestedPhrase={compliance.suggestedPhrase}
+                        onDismiss={() => {
+                          setDismissed((current) => {
+                            const next = new Set(current);
+                            next.add(item.segment_id);
+                            return next;
+                          });
+                        }}
+                      />
                     ) : null}
                   </div>
                 </li>
@@ -513,6 +690,25 @@ export function TranscriptPanel({
         </button>
       ) : null}
     </section>
+  );
+}
+
+function LockIcon(): ReactElement {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </svg>
   );
 }
 

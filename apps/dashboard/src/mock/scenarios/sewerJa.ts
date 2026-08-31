@@ -20,6 +20,7 @@ const TERM_3_2 = {
 
 export const sewerJaScenario: MockScenario = {
   domain: DOMAIN,
+  targetLanguage: "JA",
   transcripts: [
     utterance(
       CALL_ID,

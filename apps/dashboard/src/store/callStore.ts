@@ -17,6 +17,7 @@ import { getHistoryPlayback } from "../lib/api/coreClient";
 import { getScenarioById } from "../mock/scenarios";
 import type { GatewayMode } from "../lib/ws";
 import { sliceByCodepoints } from "../lib/text/codepoints";
+import type { TargetLanguage } from "../lib/language/languageMeta";
 
 export interface Utterance {
   segment_id: string;
@@ -74,11 +75,14 @@ export interface CallState {
   error: string | null;
   phase: CallPhase;
   callId: string | null;
+  /** A-5. 실시간 통화의 대상 언어. 한국어 전용 mock은 null. */
+  targetLanguage: TargetLanguage | null;
   utterances: Utterance[];
   viewMode: TranscriptViewMode;
   historyCallId: string | null;
   historyStartedAt: string | null;
   historySegments: TranscriptQuerySegment[];
+  historyTargetLanguage: TargetLanguage | null;
   /** 히스토리 모드 전용. 실시간 translations 과 섞지 않는다. */
   historyTranslations: Record<string, TranslatedUtterance>;
   historyAgentTts: Record<string, AgentTtsStatus>;
@@ -122,6 +126,7 @@ export interface CallState {
   applyAgentTts: (transcriptSegmentId: string, event: AgentTtsStatus) => void;
   applyCallGuard: (transcriptSegmentId: string, event: CallGuardFlag) => void;
   applyAccentHint: (transcriptSegmentId: string) => void;
+  setTargetLanguage: (lang: TargetLanguage | null) => void;
   resetCall: () => void;
   openHistory: (item: CallHistoryItem) => void;
   resumeLive: () => void;
@@ -130,11 +135,13 @@ export interface CallState {
 const emptyCall = {
   phase: "live" as CallPhase,
   callId: null as string | null,
+  targetLanguage: null as TargetLanguage | null,
   utterances: [] as Utterance[],
   viewMode: "live" as TranscriptViewMode,
   historyCallId: null as string | null,
   historyStartedAt: null as string | null,
   historySegments: [] as TranscriptQuerySegment[],
+  historyTargetLanguage: null as TargetLanguage | null,
   historyTranslations: {} as Record<string, TranslatedUtterance>,
   historyAgentTts: {} as Record<string, AgentTtsStatus>,
   historyCallGuard: {} as Record<string, CallGuardFlag>,
@@ -444,6 +451,10 @@ export const useCallStore = create<CallState>((set) => ({
     }));
   },
 
+  setTargetLanguage: (lang) => {
+    set({ targetLanguage: lang });
+  },
+
   resetCall: () => {
     set({ ...emptyCall, error: null });
   },
@@ -458,6 +469,7 @@ export const useCallStore = create<CallState>((set) => ({
       historyCallId: item.call_id,
       historyStartedAt: item.started_at,
       historySegments: playback.page.segments,
+      historyTargetLanguage: playback.targetLanguage ?? null,
       historyTranslations: playback.translations,
       historyAgentTts: playback.agentTts,
       historyCallGuard: playback.callGuard,
@@ -472,6 +484,7 @@ export const useCallStore = create<CallState>((set) => ({
       historyCallId: null,
       historyStartedAt: null,
       historySegments: [],
+      historyTargetLanguage: null,
       historyTranslations: {},
       historyAgentTts: {},
       historyCallGuard: {},
