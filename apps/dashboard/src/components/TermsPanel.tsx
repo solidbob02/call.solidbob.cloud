@@ -41,11 +41,13 @@ function hasClosureType(item: PanelCard): boolean {
 interface TermsPanelProps {
   onReplay: () => void;
   onEndCall: () => void;
+  onLeaveToStandby: () => void;
 }
 
 export function TermsPanel({
   onReplay,
   onEndCall,
+  onLeaveToStandby,
 }: TermsPanelProps): ReactElement {
   const cards = useCallStore((state) =>
     state.viewMode === "history" ? state.historyCards : state.cards,
@@ -68,7 +70,11 @@ export function TermsPanel({
   return (
     <section className="panel terms-panel" aria-labelledby="terms-heading">
       <header className="pane-header right-pane-header">
-        <SessionControls onReplay={onReplay} onEndCall={onEndCall} />
+        <SessionControls
+          onReplay={onReplay}
+          onEndCall={onEndCall}
+          onLeaveToStandby={onLeaveToStandby}
+        />
         {error !== null ? <p className="header-error">{error}</p> : null}
       </header>
       <header className="panel-head terms-head">

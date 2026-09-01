@@ -31,7 +31,7 @@ F·G·H·I 동결 판정은 **6주차 종료 시점**이다(그 전까지는 적
 | `server/` | 장민석 | 엔드포인트 14개 · 테스트 321 + integration 3. **모델 없이 할 수 있는 일은 끝났다.** 남은 501 은 `POST /hub/recommendations`(트리거 대기) 하나 |
 | `ai/` | 류준 | 검색(BM25+nori) ✅ · 트리거 v1 ✅ · B-0 v1 ✅ · 평가 하네스 ✅. 분류기는 학습했으나 v1 을 못 넘어 기본값에서 뺐다. 컴플라이언스(6주차) 미착수 |
 | 인프라 · CI | 정성윤 | CI 3종 · main 보호 · **사이트 배포 ✅ `https://docs.solidbob.cloud`**(DNS 는 클라우드플레어, HTTPS 강제, 내부 링크 86개 전수 200 — `decisions/102~104`). **A(STT) 는 `services/` 디렉터리 자체가 없다 — 코드 0줄.** 배치 전사 `scripts/transcribe_batch.py` 는 결함 3건 수정(헤더 샘플레이트·60초 한도·dry-run 캡)했으나 **실제 API 경로는 여전히 미검증** — 이 머신에 오디오도 `.venv` 도 없다 |
-| `apps/` | 조서희 | 대시보드: C-1~C-4·C-6·A-5 5언어 + 통화 후 요약(D-1~D-4, G-2 mock). 랜딩 Tailwind. |
+| `apps/` | 조서희 | 대시보드: 최초 비밀번호 강제 설정(mock) → 대기화면 ⇄ 어시스트/요약. 랜딩 Tailwind. |
 
 ---
 

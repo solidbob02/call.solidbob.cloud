@@ -7,24 +7,32 @@ import {
 } from "./ResolutionStats";
 import { setSelectedMockScenarioId } from "../mock/scenarios";
 import { formatCallStartedAt } from "../lib/formatCallTime";
-import { useCallStore } from "../store/callStore";
+import { useCallStore, type SummaryReturn } from "../store/callStore";
 import { DEMO_DOMAIN_LABELS } from "../types/contract";
 
 interface CallHistoryPanelProps {
   onReplay: () => void;
+  variant?: "menu" | "page";
+  returnTo?: SummaryReturn;
 }
 
 export function CallHistoryPanel({
   onReplay,
+  variant = "menu",
+  returnTo = "assist",
 }: CallHistoryPanelProps): ReactElement {
   const rows = useMemo(() => listCallHistoryRows(), []);
   const openHistory = useCallStore((state) => state.openHistory);
   const historyCallId = useCallStore((state) => state.historyCallId);
 
   return (
-    <div className="call-history">
-      <p className="call-history-heading">상담기록</p>
-      {SHOW_RESOLUTION_STATS ? <ResolutionStats /> : null}
+    <div className={`call-history is-${variant}`}>
+      <p className="call-history-heading">
+        {variant === "page" ? "최근 상담기록" : "상담기록"}
+      </p>
+      {SHOW_RESOLUTION_STATS && variant === "menu" ? (
+        <ResolutionStats />
+      ) : null}
       <ul className="call-history-list">
         {rows.map((row) => (
           <li key={row.item.call_id} className="call-history-item">
@@ -32,7 +40,7 @@ export function CallHistoryPanel({
               type="button"
               className={`call-history-row${historyCallId === row.item.call_id ? " is-active" : ""}`}
               onClick={() => {
-                openHistory(row.item);
+                openHistory(row.item, { returnTo });
               }}
             >
               <time dateTime={row.item.started_at}>

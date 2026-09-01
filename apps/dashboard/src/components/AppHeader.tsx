@@ -2,11 +2,13 @@ import type { ReactElement } from "react";
 import { isCoreApiConfigured } from "../lib/api/coreClient";
 import { useCallStore } from "../store/callStore";
 import { LanguageBadge } from "./LanguageBadge";
+import { StandbyBackButton } from "./StandbyBackButton";
 
 interface SessionControlsProps {
   onReplay: () => void;
   onEndCall: () => void;
   onStartNewCall?: () => void;
+  onLeaveToStandby?: () => void;
 }
 
 export function BrandLockup(): ReactElement {
@@ -23,6 +25,7 @@ export function SessionControls({
   onReplay,
   onEndCall,
   onStartNewCall,
+  onLeaveToStandby,
 }: SessionControlsProps): ReactElement {
   const mode = useCallStore((state) => state.mode);
   const connected = useCallStore((state) => state.connected);
@@ -42,9 +45,17 @@ export function SessionControls({
 
   const overlay =
     phase === "wrapup" || viewMode === "history";
+  const liveInProgress =
+    connected && phase === "live" && viewMode !== "history";
 
   return (
     <div className="header-meta">
+      {onLeaveToStandby !== undefined ? (
+        <StandbyBackButton
+          liveInProgress={liveInProgress}
+          onLeave={onLeaveToStandby}
+        />
+      ) : null}
       {phase === "live" && viewMode !== "history" ? (
         <button
           type="button"
@@ -108,12 +119,26 @@ export function AppHeader({
   onReplay,
   onEndCall,
   onStartNewCall,
+  onLeaveToStandby,
 }: SessionControlsProps): ReactElement {
   const error = useCallStore((state) => state.error);
+  const connected = useCallStore((state) => state.connected);
+  const phase = useCallStore((state) => state.phase);
+  const viewMode = useCallStore((state) => state.viewMode);
+  const liveInProgress =
+    connected && phase === "live" && viewMode !== "history";
 
   return (
     <header className="app-header">
-      <BrandLockup />
+      <div className="header-lead">
+        {onLeaveToStandby !== undefined ? (
+          <StandbyBackButton
+            liveInProgress={liveInProgress}
+            onLeave={onLeaveToStandby}
+          />
+        ) : null}
+        <BrandLockup />
+      </div>
       <SessionControls
         onReplay={onReplay}
         onEndCall={onEndCall}
