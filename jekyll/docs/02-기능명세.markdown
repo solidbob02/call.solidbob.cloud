@@ -7,7 +7,7 @@ permalink: /docs/02/
 > ## ⚠ 2026-08-28 기능 재편 — 아래 본문보다 이 표가 우선한다
 >
 > `_project/decisions/201` 로 도메인을 **다산콜센터 하나**로 줄이고 기능을 재편했다.
-> 문서 우선순위상 **결정 기록이 이 문서보다 위**다([CLAUDE.md](https://github.com/solidbob02/call.solidbob.cloud/blob/main/CLAUDE.md)).
+> 문서 우선순위상 **결정 기록이 이 문서보다 위**다([CLAUDE.md](https://github.com/SeongYuna/call.solidbob.cloud/blob/main/CLAUDE.md)).
 >
 > | 블록 | 바뀐 내용 |
 > |---|---|
@@ -171,7 +171,7 @@ STT 전사 결과
 
 ### 배경 — 문제 구조
 
-신고·요청 처리 시스템에서 반복되는 실패 유형이 있다. **종결 사유는 기재되었으나 그것을 뒷받침하는 근거가 검증되지 않는 것**이다. 처리자가 "확인했다"고 적으면 그대로 닫힌다. [4개 데모 도메인](/docs/01/) 중 **종결(closure)이 있는 처리 유형**을 가진 금융보험·쇼핑에도 같은 구조가 존재한다 — 다산콜센터·질병관리본부는 안내형 업무라 F-2 대상이 아니다([지식베이스 README](https://github.com/solidbob02/call.solidbob.cloud/blob/main/knowledge-base/README.md)).
+신고·요청 처리 시스템에서 반복되는 실패 유형이 있다. **종결 사유는 기재되었으나 그것을 뒷받침하는 근거가 검증되지 않는 것**이다. 처리자가 "확인했다"고 적으면 그대로 닫힌다. [4개 데모 도메인](/docs/01/) 중 **종결(closure)이 있는 처리 유형**을 가진 금융보험·쇼핑에도 같은 구조가 존재한다 — 다산콜센터·질병관리본부는 안내형 업무라 F-2 대상이 아니다([지식베이스 README](https://github.com/SeongYuna/call.solidbob.cloud/blob/main/knowledge-base/README.md)).
 
 | 도메인 | 처리 유형 | 규정상 필수 확인 | 누락 시 |
 |---|---|---|---|
