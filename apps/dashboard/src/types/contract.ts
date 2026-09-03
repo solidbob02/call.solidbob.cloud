@@ -75,6 +75,16 @@ export interface AgentTtsStatus {
   status: "sent" | "pending";
 }
 
+/**
+ * C-6 콜가드 — §7.3 계약에 아직 없다. 프론트가 mock용으로 먼저 정의했다.
+ * 고객 발화 텍스트만 본다. 오디오 톤·자동 차단은 decisions/201 범위 밖.
+ */
+export interface CallGuardFlag {
+  segment_id: number;
+  category: "폭언" | "욕설" | "위협";
+  severity: "low" | "high";
+}
+
 export interface DocumentSource {
   doc_id: string;
   title: string;
@@ -114,17 +124,44 @@ export interface RecommendationBatch {
 }
 
 /**
+ * D 감정분석 기반 상담품질 평가. §7.3에 아직 없다 — 프론트가 mock용으로 먼저 정의했다.
+ * 모델은 ai/(류준) 담당. 점수는 없다 — 정성 라벨과 C-6 건수만.
+ */
+export interface SentimentSummary {
+  call_id: string;
+  /** 통화 흐름 순 정성 라벨. 예: ["차분", "약간 격앙", "차분"] */
+  trajectory: string[];
+  /** 정밀 점수가 아니다. */
+  overall: "양호" | "주의 필요";
+  /** C-6 콜가드 경고 건수. 새로 만들지 않고 시나리오 callGuard 키 수를 쓴다. */
+  guard_flag_count: number;
+}
+
+export interface LocalResource {
+  orgName: string;
+  address: string;
+  phone: string;
+}
+
+/**
  * §2.5 D. 통화 후 처리 결과. 7.3절 계약에 아직 없다 — 프론트가 먼저 정의했다.
  * D-4(지식베이스 공백)는 이 통화에서 화면이 직접 관찰한 것이라 서버가 주지 않는다.
+ * G-2 지역자원도 계약 전 — mock 목록만 붙인다.
  */
 export interface CallWrapUp {
   call_id: string;
-  /** D-1 상담 요약. 한 줄씩. */
+  /** D-1 상담 요약. 문장 단위. 화면에서는 한 문단으로 붙인다. */
   summary: string[];
   /** D-2 문의 유형. */
   category: string;
+  /** D-2 태그. 없으면 category 한 개만 쓴다. */
+  tags?: string[];
   /** D-3 후속조치 항목. */
   follow_ups: string[];
+  /** G-2. 연계 가능한 지역자원. */
+  local_resources?: LocalResource[];
+  /** 확장 — 감정분석. 계약 확정 전 선택. */
+  sentiment?: SentimentSummary;
 }
 
 /**
@@ -170,6 +207,8 @@ export interface CallHistoryItem {
   domain: Domain;
   inquiry_type: string;
   customer_ref: string;
+  /** A-5. 외국어 통화만. 화면 LanguageBadge 와 상담기록 국기를 맞춘다. */
+  targetLanguage?: "VI" | "EN" | "JA" | "ZH" | "TH";
 }
 
 /**

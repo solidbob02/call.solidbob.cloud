@@ -12,7 +12,9 @@ export type ManualSearchOutcome =
   | { kind: "error"; message: string };
 
 export interface GatewaySession {
+  startCall: () => void;
   replay: () => void;
+  leaveToStandby: () => void;
   manualSearch: (query: string) => Promise<ManualSearchOutcome>;
   endCall: () => void;
   wrapUp: () => Promise<CallWrapUp>;
@@ -50,6 +52,7 @@ export function useGatewaySession(): GatewaySession {
 
   const attach = useCallback(
     (client: GatewayClient) => {
+      useCallStore.getState().enterAssist();
       useCallStore.getState().resetCall();
       client.connect({
         onTranscript: queueTranscript,
@@ -75,6 +78,15 @@ export function useGatewaySession(): GatewaySession {
         onAgentTts: (segmentId, event) => {
           useCallStore.getState().applyAgentTts(segmentId, event);
         },
+        onCallGuard: (segmentId, event) => {
+          useCallStore.getState().applyCallGuard(segmentId, event);
+        },
+        onAccentRecognition: (segmentId) => {
+          useCallStore.getState().applyAccentHint(segmentId);
+        },
+        onCallLanguage: (lang) => {
+          useCallStore.getState().setTargetLanguage(lang);
+        },
       });
     },
     [queueTranscript],
@@ -83,7 +95,6 @@ export function useGatewaySession(): GatewaySession {
   useEffect(() => {
     const client = createGatewayClient();
     clientRef.current = client;
-    attach(client);
     return () => {
       if (rafRef.current !== 0) {
         window.cancelAnimationFrame(rafRef.current);
@@ -93,6 +104,14 @@ export function useGatewaySession(): GatewaySession {
       client.disconnect();
       clientRef.current = null;
     };
+  }, []);
+
+  const startCall = useCallback(() => {
+    const client = clientRef.current;
+    if (client === null) {
+      return;
+    }
+    attach(client);
   }, [attach]);
 
   const replay = useCallback(() => {
@@ -136,6 +155,17 @@ export function useGatewaySession(): GatewaySession {
     useCallStore.getState().endCall();
   }, []);
 
+  const leaveToStandby = useCallback(() => {
+    clientRef.current?.disconnect();
+    pendingRef.current.clear();
+    if (rafRef.current !== 0) {
+      window.cancelAnimationFrame(rafRef.current);
+      rafRef.current = 0;
+    }
+    useCallStore.getState().resumeLive();
+    useCallStore.getState().enterStandby();
+  }, []);
+
   const wrapUp = useCallback(async (): Promise<CallWrapUp> => {
     const client = clientRef.current;
     if (client === null) {
@@ -144,5 +174,5 @@ export function useGatewaySession(): GatewaySession {
     return client.wrapUp(useCallStore.getState().callId ?? "");
   }, []);
 
-  return { replay, manualSearch, endCall, wrapUp };
+  return { startCall, replay, leaveToStandby, manualSearch, endCall, wrapUp };
 }

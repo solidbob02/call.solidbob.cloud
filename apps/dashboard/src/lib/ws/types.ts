@@ -6,7 +6,9 @@ import type {
   TranscriptEvent,
   TranslatedUtterance,
   AgentTtsStatus,
+  CallGuardFlag,
 } from "../../types/contract";
+import type { TargetLanguage } from "../language/languageMeta";
 
 export interface GatewayListener {
   onTranscript: (event: TranscriptEvent) => void;
@@ -20,6 +22,12 @@ export interface GatewayListener {
     event: TranslatedUtterance,
   ) => void;
   onAgentTts?: (transcriptSegmentId: string, event: AgentTtsStatus) => void;
+  /** C-6. §7.3 미정 — mock만 보낸다. 키는 자막 segment_id. */
+  onCallGuard?: (transcriptSegmentId: string, event: CallGuardFlag) => void;
+  /** A-5 ⓑ. 번역이 아님. 키만 보낸다. 점수는 없다. */
+  onAccentRecognition?: (transcriptSegmentId: string) => void;
+  /** A-5. 통화 시작 시 대상 언어. 한국어 전용 mock은 null. */
+  onCallLanguage?: (lang: TargetLanguage | null) => void;
 }
 
 export type GatewayMode = "mock" | "live";

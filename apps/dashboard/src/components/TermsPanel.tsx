@@ -15,6 +15,7 @@ import {
   ArrowSelectChip,
   type ArrowSelectOption,
 } from "./ArrowSelectChip";
+import { ProgressRing } from "./ProgressRing";
 import { BookmarkDock } from "./BookmarkDock";
 import { CallHistoryPanel } from "./CallHistoryPanel";
 
@@ -40,11 +41,13 @@ function hasClosureType(item: PanelCard): boolean {
 interface TermsPanelProps {
   onReplay: () => void;
   onEndCall: () => void;
+  onLeaveToStandby: () => void;
 }
 
 export function TermsPanel({
   onReplay,
   onEndCall,
+  onLeaveToStandby,
 }: TermsPanelProps): ReactElement {
   const cards = useCallStore((state) =>
     state.viewMode === "history" ? state.historyCards : state.cards,
@@ -67,7 +70,11 @@ export function TermsPanel({
   return (
     <section className="panel terms-panel" aria-labelledby="terms-heading">
       <header className="pane-header right-pane-header">
-        <SessionControls onReplay={onReplay} onEndCall={onEndCall} />
+        <SessionControls
+          onReplay={onReplay}
+          onEndCall={onEndCall}
+          onLeaveToStandby={onLeaveToStandby}
+        />
         {error !== null ? <p className="header-error">{error}</p> : null}
       </header>
       <header className="panel-head terms-head">
@@ -297,63 +304,6 @@ function ClosureBlock({
         </button>
       ) : null}
     </div>
-  );
-}
-
-function ProgressRing({
-  met,
-  total,
-}: {
-  met: number;
-  total: number;
-}): ReactElement {
-  const size = 38;
-  const stroke = 2.2;
-  const radius = (size - stroke) / 2;
-  const center = size / 2;
-  const circumference = 2 * Math.PI * radius;
-  const ratio = total === 0 ? 0 : met / total;
-  const offset = circumference * (1 - ratio);
-
-  return (
-    <svg
-      className={`progress-ring${met === total && total > 0 ? " is-complete" : ""}`}
-      width={size}
-      height={size}
-      viewBox={`0 0 ${size} ${size}`}
-      aria-hidden="true"
-    >
-      <circle
-        cx={center}
-        cy={center}
-        r={radius}
-        fill="none"
-        stroke="var(--line)"
-        strokeWidth={stroke}
-      />
-      <circle
-        className="progress-ring-arc"
-        cx={center}
-        cy={center}
-        r={radius}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={stroke}
-        strokeLinecap="round"
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        transform={`rotate(-90 ${center} ${center})`}
-      />
-      <text
-        x={center}
-        y={center}
-        textAnchor="middle"
-        dominantBaseline="central"
-        className="progress-ring-label"
-      >
-        {`${met}/${total}`}
-      </text>
-    </svg>
   );
 }
 

@@ -1,4 +1,7 @@
+import { LANGUAGE_META } from "../../lib/language/languageMeta";
+import { accentKoScenario } from "./accentKo";
 import { adminThScenario } from "./adminTh";
+import { callGuardKoScenario } from "./callGuardKo";
 import { covidZhScenario } from "./covidZh";
 import { dasanScenario, maskingKoScenario } from "./dasan";
 import { sewerJaScenario } from "./sewerJa";
@@ -14,7 +17,9 @@ export type MockScenarioId =
   | "ja-sewer"
   | "zh-covid"
   | "th-admin"
-  | "ko-masking";
+  | "ko-masking"
+  | "ko-callguard"
+  | "ko-accent";
 
 const BY_ID: Record<MockScenarioId, MockScenario> = {
   "vi-deungbon": dasanScenario,
@@ -23,6 +28,8 @@ const BY_ID: Record<MockScenarioId, MockScenario> = {
   "zh-covid": covidZhScenario,
   "th-admin": adminThScenario,
   "ko-masking": maskingKoScenario,
+  "ko-callguard": callGuardKoScenario,
+  "ko-accent": accentKoScenario,
 };
 
 let selectedId: MockScenarioId = "vi-deungbon";
@@ -40,10 +47,12 @@ export function getScenarioById(id: MockScenarioId): MockScenario {
 }
 
 export const MOCK_SCENARIO_FLAG: Record<MockScenarioId, string> = {
-  "vi-deungbon": "🇻🇳",
-  "en-transit": "🇺🇸",
-  "ja-sewer": "🇯🇵",
-  "zh-covid": "🇨🇳",
-  "th-admin": "🇹🇭",
+  "vi-deungbon": LANGUAGE_META.VI.flag,
+  "en-transit": LANGUAGE_META.EN.flag,
+  "ja-sewer": LANGUAGE_META.JA.flag,
+  "zh-covid": LANGUAGE_META.ZH.flag,
+  "th-admin": LANGUAGE_META.TH.flag,
   "ko-masking": "🇰🇷",
+  "ko-callguard": "🇰🇷",
+  "ko-accent": "🇰🇷",
 };

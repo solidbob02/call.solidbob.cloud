@@ -1,24 +1,38 @@
 import { useMemo, type ReactElement } from "react";
+import { LanguageBadge } from "./LanguageBadge";
 import { listCallHistoryRows } from "../mock/callHistory";
+import {
+  ResolutionStats,
+  SHOW_RESOLUTION_STATS,
+} from "./ResolutionStats";
 import { setSelectedMockScenarioId } from "../mock/scenarios";
 import { formatCallStartedAt } from "../lib/formatCallTime";
-import { useCallStore } from "../store/callStore";
+import { useCallStore, type SummaryReturn } from "../store/callStore";
 import { DEMO_DOMAIN_LABELS } from "../types/contract";
 
 interface CallHistoryPanelProps {
   onReplay: () => void;
+  variant?: "menu" | "page";
+  returnTo?: SummaryReturn;
 }
 
 export function CallHistoryPanel({
   onReplay,
+  variant = "menu",
+  returnTo = "assist",
 }: CallHistoryPanelProps): ReactElement {
   const rows = useMemo(() => listCallHistoryRows(), []);
   const openHistory = useCallStore((state) => state.openHistory);
   const historyCallId = useCallStore((state) => state.historyCallId);
 
   return (
-    <div className="call-history">
-      <p className="call-history-heading">상담기록</p>
+    <div className={`call-history is-${variant}`}>
+      <p className="call-history-heading">
+        {variant === "page" ? "최근 상담기록" : "상담기록"}
+      </p>
+      {SHOW_RESOLUTION_STATS && variant === "menu" ? (
+        <ResolutionStats />
+      ) : null}
       <ul className="call-history-list">
         {rows.map((row) => (
           <li key={row.item.call_id} className="call-history-item">
@@ -26,16 +40,20 @@ export function CallHistoryPanel({
               type="button"
               className={`call-history-row${historyCallId === row.item.call_id ? " is-active" : ""}`}
               onClick={() => {
-                openHistory(row.item);
+                openHistory(row.item, { returnTo });
               }}
             >
               <time dateTime={row.item.started_at}>
                 {formatCallStartedAt(row.item.started_at)}
               </time>
               <span className="call-history-badge">
-                <span className="call-history-flag" aria-hidden="true">
-                  {row.langFlag}
-                </span>
+                {row.item.targetLanguage !== undefined ? (
+                  <LanguageBadge lang={row.item.targetLanguage} compact />
+                ) : (
+                  <span className="call-history-flag" aria-hidden="true">
+                    {row.langFlag}
+                  </span>
+                )}
                 {DEMO_DOMAIN_LABELS[row.item.domain]}
               </span>
               <span className="call-history-type">{row.item.inquiry_type}</span>

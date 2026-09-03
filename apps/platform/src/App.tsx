@@ -1,22 +1,26 @@
 import type { ReactElement } from "react";
-import { Header } from "./components/Header";
+import { CTASection } from "./components/CTASection";
+import { FeatureGrid } from "./components/FeatureGrid";
+import { Footer } from "./components/Footer";
 import { Hero } from "./components/Hero";
-import { Problem } from "./components/Problem";
-import { Features } from "./components/Features";
-import { Domains } from "./components/Domains";
-import { TeamCta } from "./components/TeamCta";
+import { HowItWorks } from "./components/HowItWorks";
+import { Nav } from "./components/Nav";
+import { ProblemSection } from "./components/ProblemSection";
+import { StatsStrip } from "./components/StatsStrip";
 
 export function App(): ReactElement {
   return (
     <>
-      <Header />
+      <Nav />
       <main>
         <Hero />
-        <Problem />
-        <Features />
-        <Domains />
-        <TeamCta />
+        <ProblemSection />
+        <FeatureGrid />
+        <HowItWorks />
+        <StatsStrip />
+        <CTASection />
       </main>
+      <Footer />
     </>
   );
 }

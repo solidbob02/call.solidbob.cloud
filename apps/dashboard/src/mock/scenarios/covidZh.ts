@@ -21,6 +21,7 @@ const MANUAL_4_1 = {
 
 export const covidZhScenario: MockScenario = {
   domain: DOMAIN,
+  targetLanguage: "ZH",
   transcripts: [
     utterance(
       CALL_ID,
