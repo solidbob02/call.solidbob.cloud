@@ -216,12 +216,15 @@ golden-set/              골든셋 (v1-10.json …)
 docs/                    구조 하네스(harness.md) · 아키텍처(architecture.md) · 도메인(domain.md) · 기획서 rev.4.1 사본. 공개, 지킬 밖
 server/                  요청이 흐르는 길 (Python 3.13). 계약(포트·DTO)·파이프라인 배선·클린 아키텍처.
                          main.py(합성 루트) · core/config.py · apps/hub/(7.3절 계약 DTO+포트, 슬라이스 transcript_ingest·myself)
-                         · .importlinter(계약 4종) · requirements.txt · pytest.ini · CLAUDE.md(영역 규칙). 배포: server.solidbob.cloud
+                         · .importlinter(계약 4종) · requirements.txt · pytest.ini · CLAUDE.md(영역 규칙).
+                         배포: server.solidbob.cloud — **프로젝트의 유일한 배포 단위다**(decisions/105)
                          실행: cd server && uvicorn main:app --reload --env-file ../.env
                          검증: cd server && pytest && PYTHONPATH=apps lint-imports --config .importlinter
 ai/                      품질을 만들고 재는 쪽 (Python 3.13). 청킹·BM25·리랭크·임베딩·모델 학습·랭그래프.
                          apps/retrieval/(검색) · apps/evaluation/(평가 하네스) · .importlinter(계약 3종)
-                         · requirements.txt · pytest.ini · CLAUDE.md(영역 규칙). 배포: ai.solidbob.cloud
+                         · requirements.txt · pytest.ini · CLAUDE.md(영역 규칙).
+                         ⚠ 배포 도메인이 없다 — **서비스가 아니라 라이브러리**라 server 프로세스에
+                         함께 실린다(decisions/024·105). 옛 `ai.solidbob.cloud` 서술은 2026-09-03 삭제
                          검증: cd ai && pytest && PYTHONPATH=apps:../server/apps lint-imports --config .importlinter
                          의존 방향은 ai → server 한쪽뿐이다 (evaluation 이 hub 계약을 import). 역방향은 계약이 막는다
 apps/                    dashboard(상담원). 고객 화면은 `_project/decisions/014` 로 철회(013 철회)
@@ -437,7 +440,7 @@ main push 에서만 도는데, 보호 설정 이후 그 push 는 **PR 머지로�
 
 필수 통과 검사 이름은 `test.yml` 의 **job 이름**이지 브랜치 이름이 아니다 — 브랜치를
 개명해도 룰셋은 건드릴 필요가 없다. 반대로 **job 이름을 바꾸면 룰셋을 같이 고쳐야 한다**
-(없는 검사를 기다리며 PR 이 영원히 머지되지 않는다). 룰셋 변경은 `solidbob02`(admin) 몫이다.
+(없는 검사를 기다리며 PR 이 영원히 머지되지 않는다). 룰셋 변경은 저장소 admin 몫이다 — **2026-09-03 소유권이 `SeongYuna` 로 넘어와 정성윤이 직접 한다**(`decisions/106`).
 
 ---
 
